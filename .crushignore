@@ -1,9 +1,7 @@
 # Ignore everything except the ad reporting data
-*
-!*.csv
 !crush.json
 !.crush.json
-!victoria_prompt.md
+!VICTORIA.md
 
 # Ignore common development files
 .git/
