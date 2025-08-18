@@ -11,6 +11,10 @@ This setup configures Victoria (Elcano's AI agent) to work with Crush CLI for an
 * ```VICTORIA.md```: Make sure you have an updated VICTORIA.md in this repo, the [```victoria-main```](https://github.com/ElcanoTek/victoria-main) repo has the latest changes, the file has a version number on the top.
 * ```ghostty``` (optional but recommended, see [ghostty.org](https://ghostty.org/))
 
+## .csv or excel files in the ```data``` folder
+
+Add your csv or Excel files to the ```./data``` folder in this repository and they will be available for analysis
+
 ## Snowflake Integration (Optional)
 
 To enable Snowflake database access through Victoria, configure these environment variables:
