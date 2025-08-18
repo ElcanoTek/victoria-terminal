@@ -29,7 +29,7 @@ The Snowflake MCP server will be automatically installed via ```uvx``` when firs
 
 ## Getting Started
 * ```cd``` to project folder
-* type ```crush```
+* type ```./victoria```
 * ask questions!
 * try different models!
 

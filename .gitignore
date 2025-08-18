@@ -1,6 +1,8 @@
 # crush-specific stuff
 .crush/
 
+# THIS GETS TEMPLATED vvv
+crush.json
 
 # Data folder
 data/

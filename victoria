@@ -1,0 +1,156 @@
+#!/bin/bash
+
+# Colors for enhanced visual appeal
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+MAGENTA='\033[0;35m'
+CYAN='\033[0;36m'
+WHITE='\033[1;37m'
+BOLD='\033[1m'
+NC='\033[0m' # No Color
+
+# Source the configuration generator
+source ./generate_config.sh
+
+# Clear screen for dramatic effect
+clear
+
+# Impressive ASCII Art
+echo -e "${CYAN}${BOLD}"
+cat << "EOF"
+██╗   ██╗██╗ ██████╗████████╗ ██████╗ ██████╗ ██╗ █████╗
+██║   ██║██║██╔════╝╚══██╔══╝██╔═══██╗██╔══██╗██║██╔══██╗
+██║   ██║██║██║        ██║   ██║   ██║██████╔╝██║███████║
+╚██╗ ██╔╝██║██║        ██║   ██║   ██║██╔══██╗██║██╔══██║
+ ╚████╔╝ ██║╚██████╗   ██║   ╚██████╔╝██║  ██║██║██║  ██║
+  ╚═══╝  ╚═╝ ╚═════╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚═╝╚═╝  ╚═╝
+EOF
+
+echo -e "${WHITE}${BOLD}"
+cat << "EOF"
+⚓ NAVIGATION READY ⚓
+
+🚢 "Not all who wander are lost" 🚢
+
+───────────────────────────────────────
+Charting the Digital Seas of AdTech
+───────────────────────────────────────
+EOF
+
+echo -e "${YELLOW}${BOLD}"
+cat << "EOF"
+⭐ ⭐ ⭐
+🧭 COURSE SELECTION 🧭
+⭐ ⭐ ⭐
+EOF
+
+echo -e "${NC}"
+
+# Animated loading effect
+echo -e "${CYAN}Initializing navigation systems..."
+for i in {1..3}; do
+    echo -ne "${BLUE}▓"
+    sleep 0.3
+done
+echo -e "${GREEN} ✓ Ready${NC}"
+
+echo ""
+echo -e "${WHITE}${BOLD}Choose your data exploration voyage:${NC}"
+echo ""
+echo -e "${GREEN}${BOLD}[1]${NC} ${CYAN}🌊 Full Ocean Expedition${NC} - Connect to Snowflake + Local Data"
+echo -e "    ${MAGENTA}├─${NC} Access enterprise Snowflake databases"
+echo -e "    ${MAGENTA}├─${NC} Query local CSV/Excel files via MotherDuck"
+echo -e "    ${MAGENTA}└─${NC} Complete programmatic advertising analytics"
+echo ""
+echo -e "${YELLOW}${BOLD}[2]${NC} ${CYAN}🏝️  Coastal Navigation${NC} - Local Data Only"
+echo -e "    ${MAGENTA}├─${NC} Query local CSV/Excel files via MotherDuck"
+echo -e "    ${MAGENTA}├─${NC} Fast startup, no external dependencies"
+echo -e "    ${MAGENTA}└─${NC} Perfect for local data analysis"
+echo ""
+
+# Interactive prompt with validation
+while true; do
+    echo -ne "${BOLD}${WHITE}⚓ Select your course [1-2]: ${NC}"
+    read -r choice
+
+    case $choice in
+        1)
+            echo ""
+            echo -e "${GREEN}${BOLD}🌊 FULL OCEAN EXPEDITION SELECTED 🌊${NC}"
+            echo -e "${CYAN}Preparing to set sail with Snowflake integration...${NC}"
+
+            # Check for Snowflake environment variables
+            missing_vars=()
+            required_vars=("SNOWFLAKE_ACCOUNT" "SNOWFLAKE_USER" "SNOWFLAKE_PASSWORD" "SNOWFLAKE_WAREHOUSE" "SNOWFLAKE_ROLE")
+
+            for var in "${required_vars[@]}"; do
+                if [[ -z "${!var}" ]]; then
+                    missing_vars+=("$var")
+                fi
+            done
+
+            if [[ ${#missing_vars[@]} -gt 0 ]]; then
+                echo ""
+                echo -e "${RED}${BOLD}⚠️  NAVIGATION WARNING ⚠️${NC}"
+                echo -e "${YELLOW}Missing Snowflake environment variables:${NC}"
+                for var in "${missing_vars[@]}"; do
+                    echo -e "${RED}  ✗ $var${NC}"
+                done
+                echo ""
+                echo -e "${CYAN}Please set these variables before continuing:${NC}"
+                echo -e "${WHITE}export SNOWFLAKE_ACCOUNT=\"your_account\"${NC}"
+                echo -e "${WHITE}export SNOWFLAKE_USER=\"your_user\"${NC}"
+                echo -e "${WHITE}export SNOWFLAKE_PASSWORD=\"your_password\"${NC}"
+                echo -e "${WHITE}export SNOWFLAKE_WAREHOUSE=\"your_warehouse\"${NC}"
+                echo -e "${WHITE}export SNOWFLAKE_ROLE=\"your_role\"${NC}"
+                echo ""
+                echo -e "${YELLOW}See SNOWFLAKE_INSTALL.md for detailed setup instructions.${NC}"
+                exit 1
+            fi
+
+            echo -e "${GREEN}✓ Snowflake credentials detected${NC}"
+            echo -e "${CYAN}🚢 Generating configuration with Snowflake integration...${NC}"
+            
+            # Generate configuration with Snowflake
+            generate_crush_config "true" "crush.json"
+            
+            echo -e "${CYAN}🚢 Launching Victoria with full data access...${NC}"
+            echo ""
+
+            # Launch crush with generated configuration
+            if [[ -f "crush.json" ]]; then
+                exec crush
+            else
+                echo -e "${RED}Error: Failed to generate configuration!${NC}"
+                exit 1
+            fi
+            ;;
+        2)
+            echo ""
+            echo -e "${YELLOW}${BOLD}🏝️  COASTAL NAVIGATION SELECTED 🏝️${NC}"
+            echo -e "${CYAN}Preparing for local data exploration...${NC}"
+            echo -e "${GREEN}✓ Local data access ready${NC}"
+            echo -e "${CYAN}🚢 Generating configuration for local data access...${NC}"
+            
+            # Generate configuration without Snowflake
+            generate_crush_config "false" "crush_active.json"
+            
+            echo -e "${CYAN}🚢 Launching Victoria with local data access...${NC}"
+            echo ""
+
+            # Launch crush with generated configuration
+            if [[ -f "crush.json" ]]; then
+                exec crush
+            else
+                echo -e "${RED}Error: Failed to generate configuration!${NC}"
+                exit 1
+            fi
+            ;;
+        *)
+            echo -e "${RED}Invalid selection. Please choose 1 or 2.${NC}"
+            ;;
+    esac
+done
+

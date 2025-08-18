@@ -1,0 +1,35 @@
+{
+  "$schema": "https://charm.land/crush.json",
+  "permissions": {
+    "allowed_tools": [
+      "view",
+      "ls",
+      "grep",
+      "cat",
+      "head",
+      "rg",
+      "q",
+      "awk"
+    ]
+  },
+  "options": {
+    "context_paths": [
+      "VICTORIA.md"
+    ],
+    "tui": {
+      "compact": true
+    }
+  },
+  "mcp": {
+    "motherduck": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "mcp-server-motherduck",
+        "--db-path",
+        "data/adtech.duckdb"
+      ]
+    }{{SNOWFLAKE_MCP}}
+  }
+}
+

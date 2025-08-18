@@ -1,0 +1,21 @@
+{
+  "snowflake": {
+    "type": "stdio",
+    "command": "uvx",
+    "args": [
+      "--python=3.12",
+      "mcp_snowflake_server",
+      "--account",
+      "$(echo $SNOWFLAKE_ACCOUNT)",
+      "--warehouse",
+      "$(echo $SNOWFLAKE_WAREHOUSE)",
+      "--user",
+      "$(echo $SNOWFLAKE_USER)",
+      "--password",
+      "$(echo $SNOWFLAKE_PASSWORD)",
+      "--role",
+      "$(echo $SNOWFLAKE_ROLE)"
+    ]
+  }
+}
+
