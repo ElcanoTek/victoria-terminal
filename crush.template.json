@@ -8,7 +8,6 @@
       "cat",
       "head",
       "rg",
-      "q",
       "awk"
     ]
   },
@@ -17,7 +16,7 @@
       "VICTORIA.md"
     ],
     "tui": {
-      "compact": true
+      "compact_mode": true
     }
   },
   "mcp": {

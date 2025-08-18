@@ -135,7 +135,7 @@ while true; do
             echo -e "${CYAN}🚢 Generating configuration for local data access...${NC}"
             
             # Generate configuration without Snowflake
-            generate_crush_config "false" "crush_active.json"
+            generate_crush_config "false" "crush.json"
             
             echo -e "${CYAN}🚢 Launching Victoria with local data access...${NC}"
             echo ""
