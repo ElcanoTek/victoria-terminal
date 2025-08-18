@@ -1,0 +1,47 @@
+# Ignore everything except the ad reporting data
+*
+!*.csv
+!crush.json
+!.crush.json
+!victoria_prompt.md
+
+# Ignore common development files
+.git/
+node_modules/
+.env
+*.log
+.DS_Store
+*.tmp
+*.temp
+
+# Ignore documentation and images (Victoria should focus on data analysis)
+*.md
+!victoria_prompt.md
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+
+# Ignore code files (not relevant for adtech analysis)
+*.js
+*.ts
+*.py
+*.go
+*.java
+*.cpp
+*.c
+*.h
+*.css
+*.html
+*.json
+!crush.json
+!.crush.json
+
+# Ignore build and dist directories
+build/
+dist/
+target/
+bin/
+obj/
+
