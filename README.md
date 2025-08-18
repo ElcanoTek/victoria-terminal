@@ -9,6 +9,7 @@ This setup configures Victoria (Elcano's AI agent) to work with Crush CLI for an
 * ```ghostty``` (optional but recommended, see [ghostty.org](https://ghostty.org/))
 * ```uv``` (see [astral.sh](https://docs.astral.sh/uv/getting-started/installation/))
 * ```OPENROUTER_API_KEY```: You need this set as an environment variable to run crush, GEMINI and OPENAI are supported as well. Email [brad@elcanotek.com](mailto:brad@elcanotek.com) for a company key.
+* ```VICTORIA.md```: Make sure you have an updated VICTORIA.md in this repo, the [```victoria-main```](https://github.com/ElcanoTek/victoria-main) repo has the latest changes, the file has a version number on the top.
 
 ## Getting Started
 * ```cd``` to project folder
