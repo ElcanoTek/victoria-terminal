@@ -1,3 +1,7 @@
+# crush-specific stuff
+.crush/
+
+
 # Data folder
 data/
 
