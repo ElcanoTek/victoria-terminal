@@ -6,16 +6,32 @@ This setup configures Victoria (Elcano's AI agent) to work with Crush CLI for an
 
 * ```crush``` (see [github](https://github.com/charmbracelet/crush))
 * ```ripgrep``` (see [github](https://github.com/BurntSushi/ripgrep))
-* ```ghostty``` (optional but recommended, see [ghostty.org](https://ghostty.org/))
 * ```uv``` (see [astral.sh](https://docs.astral.sh/uv/getting-started/installation/))
 * ```OPENROUTER_API_KEY```: You need this set as an environment variable to run crush, GEMINI and OPENAI are supported as well. Email [brad@elcanotek.com](mailto:brad@elcanotek.com) for a company key.
 * ```VICTORIA.md```: Make sure you have an updated VICTORIA.md in this repo, the [```victoria-main```](https://github.com/ElcanoTek/victoria-main) repo has the latest changes, the file has a version number on the top.
+* ```ghostty``` (optional but recommended, see [ghostty.org](https://ghostty.org/))
+
+## Snowflake Integration (Optional)
+
+To enable Snowflake database access through Victoria, configure these environment variables:
+
+```bash
+export SNOWFLAKE_ACCOUNT="your_account_identifier"
+export SNOWFLAKE_USER="your_username@domain.com"
+export SNOWFLAKE_PASSWORD="your_password"
+export SNOWFLAKE_WAREHOUSE="your_warehouse"
+export SNOWFLAKE_ROLE="your_read_only_role"
+```
+
+**Important**: The role should have read-only SELECT permissions across all databases you want to access. Omitting database/schema parameters allows Victoria to query across ALL available databases.
+
+The Snowflake MCP server will be automatically installed via ```uvx``` when first used. No manual installation required.
 
 ## Getting Started
 * ```cd``` to project folder
 * type ```crush```
 * ask questions!
-* try different models! 
+* try different models!
 
 ## Models to try
 
@@ -36,7 +52,7 @@ This setup configures Victoria (Elcano's AI agent) to work with Crush CLI for an
 ### Quick Picks
 
 - **🎯 Start Here**: DeepSeek V3 ($0.27/$1.10) - Best overall value
-- **💰 Budget**: GLM 4.5 ($0.20/$0.20) - Cheapest balanced option  
+- **💰 Budget**: GLM 4.5 ($0.20/$0.20) - Cheapest balanced option
 - **🆓 Free**: gpt-oss-20b (free) ($0/$0) - Completely free
 - **🏆 Best**: GPT-5 ($1.25/$10) - Top performance
 - **⚡ Fast**: GPT-5 Nano ($0.05/$0.40) - Ultra-fast responses
