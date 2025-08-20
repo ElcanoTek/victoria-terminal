@@ -11,6 +11,48 @@ WHITE='\033[1;37m'
 BOLD='\033[1m'
 NC='\033[0m' # No Color
 
+# VICTORIA.md download configuration
+VICTORIA_REPO="git@github.com:ElcanoTek/victoria-main.git"
+VICTORIA_FILE="VICTORIA.md"
+VICTORIA_BRANCH="main"
+
+# Function to download VICTORIA.md using SSH clone method
+download_victoria() {
+    echo -e "${CYAN}📋 Downloading VICTORIA.md from ElcanoTek/victoria-main...${NC}"
+    
+    local temp_dir="/tmp/victoria_clone_$$"
+    local success=false
+    
+    # Clone the repository temporarily
+    if git clone --depth 1 --branch "$VICTORIA_BRANCH" "$VICTORIA_REPO" "$temp_dir" 2>/dev/null; then
+        if [[ -f "$temp_dir/$VICTORIA_FILE" ]]; then
+            # Copy the file to current directory
+            cp "$temp_dir/$VICTORIA_FILE" "./$VICTORIA_FILE"
+            success=true
+            
+            # Show file info
+            local file_size=$(wc -c < "$VICTORIA_FILE")
+            echo -e "${GREEN}✅ VICTORIA.md downloaded successfully!${NC}"
+            echo -e "${CYAN}   📄 Size: $file_size bytes${NC}"
+            echo -e "${CYAN}   📍 Location: ./$VICTORIA_FILE${NC}"
+            
+            # Show first few lines as preview
+            echo -e "${MAGENTA}   📝 Preview (first 3 lines):${NC}"
+            head -3 "$VICTORIA_FILE" | sed 's/^/      /'
+        else
+            echo -e "${RED}❌ VICTORIA.md not found in repository${NC}"
+        fi
+        
+        # Clean up temporary directory
+        rm -rf "$temp_dir"
+    else
+        echo -e "${RED}❌ Failed to clone repository${NC}"
+        echo -e "${YELLOW}💡 Make sure your SSH key is configured: ssh -T git@github.com${NC}"
+    fi
+    
+    return $success
+}
+
 # Source the configuration generator
 source ./generate_config.sh
 
@@ -39,6 +81,41 @@ Charting the Digital Seas of AdTech
 ───────────────────────────────────────
 EOF
 
+echo -e "${NC}"
+
+# Check for VICTORIA.md update at the beginning
+echo -e "${YELLOW}${BOLD}📋 VICTORIA.md Update Check${NC}"
+echo ""
+
+if [[ -f "$VICTORIA_FILE" ]]; then
+    echo -e "${CYAN}VICTORIA.md already exists in current directory${NC}"
+    echo -ne "${BOLD}${WHITE}Would you like to update it with the latest version? [y/N]: ${NC}"
+    read -r update_choice
+    
+    case $update_choice in
+        [Yy]|[Yy][Ee][Ss])
+            download_victoria
+            ;;
+        *)
+            echo -e "${GREEN}Using existing VICTORIA.md${NC}"
+            ;;
+    esac
+else
+    echo -e "${CYAN}VICTORIA.md not found in current directory${NC}"
+    echo -ne "${BOLD}${WHITE}Would you like to download it? [Y/n]: ${NC}"
+    read -r download_choice
+    
+    case $download_choice in
+        [Nn]|[Nn][Oo])
+            echo -e "${YELLOW}Skipping VICTORIA.md download${NC}"
+            ;;
+        *)
+            download_victoria
+            ;;
+    esac
+fi
+
+echo ""
 echo -e "${YELLOW}${BOLD}"
 cat << "EOF"
 ⭐ ⭐ ⭐
