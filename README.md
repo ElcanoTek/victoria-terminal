@@ -79,14 +79,49 @@ Victoria is Elcano's AI agent that connects to programmatic advertising reports 
 
 ---
 
-## ▶️ Running Victoria
+## 🚀 Launching Victoria
 
-Open a terminal, change directory to the 'victoria-crush' folder and run the python starter command.
+You can start Victoria in a couple of different ways, depending on your platform and comfort with the terminal.
+
+### ▶️ From a Terminal (macOS, Linux, Windows)
+
+Open your terminal, change into the `victoria-crush` folder, and run:
 
 ```bash
 cd /path/to/victoria-crush
 python3 victoria.py
 ```
+
+This gives you the most control and is the same across macOS, Linux, and Windows (PowerShell).
+
+---
+
+### 🖱️ Double-Click (Windows)
+
+For Windows users who prefer a one-click launch:
+
+1. Open the `victoria-crush` folder.
+2. Double-click `victoria.bat`.
+
+That’s it — Victoria will start in a terminal window automatically.
+*(If nothing happens, check that Python is installed and available in your PATH.)*
+
+---
+
+### 🖱️ Double-Click (macOS)
+
+On macOS, you can launch Victoria from Finder:
+
+1. Open the `victoria-crush` folder.
+2. Double-click `Victoria.command`.
+
+> ⚠️ The first time, you may need to make the file executable:
+>
+> ```bash
+> chmod +x Victoria.command
+> ```
+
+After that, it’s double-click and go.
 
 ---
 
