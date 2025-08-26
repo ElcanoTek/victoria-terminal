@@ -126,7 +126,7 @@ jobs:
         chcp 65001
         set PYTHONIOENCODING=utf-8
         echo Testing Victoria script in CMD environment
-        echo. | timeout /t 5 python victoria.py || echo Script handled CMD environment gracefully
+        echo. | timeout 5 python victoria.py || echo Script handled CMD environment gracefully
 
     - name: Test with various environment variables
       shell: bash
