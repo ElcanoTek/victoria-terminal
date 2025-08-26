@@ -10,14 +10,12 @@ Victoria is Elcano's AI agent that connects to programmatic advertising reports 
 
 #### Dependencies
 
-* [`crush`](https://github.com/charmbracelet/crush)
-* [`ripgrep`](https://github.com/BurntSushi/ripgrep)
-* [`uv`](https://docs.astral.sh/uv/getting-started/installation/)
-* `OPENROUTER_API_KEY` – set this as an environment variable. Supports **OpenRouter**, **Gemini**, and **OpenAI**.
-
+* [crush](https://github.com/charmbracelet/crush)
+* [uv](https://docs.astral.sh/uv/getting-started/installation/)
+* OPENROUTER_API_KEY – set this as an environment variable. Supports **OpenRouter**, **Gemini**, and **OpenAI**.
   * Email [brad@elcanotek.com](mailto:brad@elcanotek.com) for a company key.
 * `VICTORIA.md` – keep updated from the [victoria-main repo](https://github.com/ElcanoTek/victoria-main).
-* [`ghostty`](https://ghostty.org/) *(optional but recommended)*
+* [ghostty](https://ghostty.org/) *(optional but recommended)*
 
 #### Data Files
 
