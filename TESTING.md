@@ -9,8 +9,8 @@ This repository includes comprehensive tests for the `victoria.py` starter scrip
 The GitHub Actions workflow (`.github/workflows/test-victoria.yml`) automatically tests the script on:
 
 - **Operating Systems**: Ubuntu (Linux), Windows, macOS
-- **Python Versions**: 3.8, 3.9, 3.10, 3.11, 3.12
-- **Terminal Environments**: Various TERM settings, different shells
+- **Python Version**: Latest stable Python (3.x)
+- **Terminal Environments**: Various TERM settings, PowerShell (Windows), Bash (Unix)
 - **Locale Settings**: UTF-8, C locale, and others
 
 ### Test Categories

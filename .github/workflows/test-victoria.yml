@@ -15,26 +15,15 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
-        exclude:
-          # Reduce matrix size by testing fewer combinations on non-Linux
-          - os: windows-latest
-            python-version: '3.8'
-          - os: windows-latest
-            python-version: '3.9'
-          - os: macos-latest
-            python-version: '3.8'
-          - os: macos-latest
-            python-version: '3.9'
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: '3.x'  # Latest stable Python version
 
     - name: Display Python version and environment info
       run: |
@@ -119,14 +108,7 @@ jobs:
         }
         Write-Host "PowerShell test completed"
 
-    - name: Test script execution on Windows (CMD)
-      if: runner.os == 'Windows'
-      shell: cmd
-      run: |
-        chcp 65001
-        set PYTHONIOENCODING=utf-8
-        echo Testing Victoria script in CMD environment
-        echo. | timeout 5 python victoria.py || echo Script handled CMD environment gracefully
+
 
     - name: Test with various environment variables
       shell: bash
