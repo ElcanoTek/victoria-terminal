@@ -85,9 +85,6 @@ Victoria is Elcano's AI agent that connects to programmatic advertising reports 
 cd victoria-crush
 ./victoria
 ```
-
-Then just **ask questions** — try different models and explore your data.
-
 ---
 
 ### Windows
