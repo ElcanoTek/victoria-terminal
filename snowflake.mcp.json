@@ -1,21 +1,17 @@
 {
-  "snowflake": {
-    "type": "stdio",
-    "command": "uvx",
-    "args": [
-      "--python=3.12",
-      "mcp_snowflake_server",
-      "--account",
-      "$(echo $SNOWFLAKE_ACCOUNT)",
-      "--warehouse",
-      "$(echo $SNOWFLAKE_WAREHOUSE)",
-      "--user",
-      "$(echo $SNOWFLAKE_USER)",
-      "--password",
-      "$(echo $SNOWFLAKE_PASSWORD)",
-      "--role",
-      "$(echo $SNOWFLAKE_ROLE)"
-    ]
+  "mcp": {
+    "snowflake": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "--python", "3.12",
+        "mcp_snowflake_server",
+        "--account", "${SNOWFLAKE_ACCOUNT}",
+        "--warehouse", "${SNOWFLAKE_WAREHOUSE}",
+        "--user", "${SNOWFLAKE_USER}",
+        "--password", "${SNOWFLAKE_PASSWORD}",
+        "--role", "${SNOWFLAKE_ROLE}"
+      ]
+    }
   }
 }
-

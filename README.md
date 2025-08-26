@@ -80,32 +80,13 @@ Victoria is Elcano's AI agent that connects to programmatic advertising reports 
 
 ## ▶️ Running Victoria
 
-### Linux / macOS
+Open a terminal, change directory to the 'victoria-crush' folder and run the python starter command.
 
 ```bash
-cd victoria-crush
-./victoria
+cd /path/to/victoria-crush
+python3 victoria.py
 ```
 ---
-
-### Windows
-
-**Method 1: Double-Click (Easiest)**
-
-1. Double-click `victoria.bat` in File Explorer
-2. Follow the interactive prompts
-
-**Method 2: PowerShell Direct**
-
-```powershell
-# enable ps1 execution
-Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
-
-cd path\to\victoria-crush
-
-# Main Victoria interface
-.\victoria.ps1
-```
 
 ---
 

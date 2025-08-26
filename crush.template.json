@@ -1,17 +1,11 @@
 {
   "$schema": "https://charm.land/crush.json",
   "permissions": {
-    "allowed_tools": [
-      "ls"
-    ]
+    "allowed_tools": ["ls"]
   },
   "options": {
-    "context_paths": [
-      "VICTORIA.md"
-    ],
-    "tui": {
-      "compact_mode": true
-    }
+    "context_paths": ["VICTORIA.md"],
+    "tui": { "compact_mode": true }
   },
   "mcp": {
     "motherduck": {
@@ -22,7 +16,6 @@
         "--db-path",
         "data/adtech.duckdb"
       ]
-    }{{SNOWFLAKE_MCP}}
+    }
   }
 }
-
