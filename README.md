@@ -52,6 +52,7 @@ Victoria is Elcano's AI agent that connects to programmatic advertising reports 
 * [Git for Windows](https://git-scm.com/download/win)
 * [crush](https://github.com/charmbracelet/crush)
 * [uv](https://docs.astral.sh/uv/getting-started/installation/)
+* `python` - just open the windows terminal and type `python` to install or download the latest at [python.org](https://www.python.org/downloads/windows/)
 
 #### Environment Variables
 
