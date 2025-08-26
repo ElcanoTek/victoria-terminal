@@ -97,6 +97,9 @@ cd victoria-crush
 **Method 2: PowerShell Direct**
 
 ```powershell
+# enable ps1 execution
+Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+
 cd path\to\victoria-crush
 
 # Main Victoria interface
