@@ -10,6 +10,9 @@ data/
 # VICTORIA.md master is kept in victoria-main
 VICTORIA.md
 
+# mac BS
+.DS_Store
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
