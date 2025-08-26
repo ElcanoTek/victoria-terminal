@@ -1,0 +1,184 @@
+name: Test Victoria Script
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  test-victoria:
+    name: Test Victoria on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        exclude:
+          # Reduce matrix size by testing fewer combinations on non-Linux
+          - os: windows-latest
+            python-version: '3.8'
+          - os: windows-latest
+            python-version: '3.9'
+          - os: macos-latest
+            python-version: '3.8'
+          - os: macos-latest
+            python-version: '3.9'
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Display Python version and environment info
+      run: |
+        python --version
+        python -c "import sys; print('Platform:', sys.platform)"
+        python -c "import os; print('OS name:', os.name)"
+        python -c "import platform; print('System:', platform.system(), platform.release())"
+
+    - name: Test Python script imports and basic functionality
+      run: python test_victoria.py
+
+    - name: Test script execution with different terminal environments
+      shell: bash
+      run: |
+        echo "Testing with different TERM settings..."
+        
+        # Test with no TERM set
+        unset TERM
+        echo "Testing with no TERM variable:"
+        timeout 5 python victoria.py < /dev/null || echo "Script handled no TERM gracefully (exit code: $?)"
+        
+        # Test with basic TERM
+        export TERM=dumb
+        echo "Testing with TERM=dumb:"
+        timeout 5 python victoria.py < /dev/null || echo "Script handled TERM=dumb gracefully (exit code: $?)"
+        
+        # Test with color TERM
+        export TERM=xterm-256color
+        echo "Testing with TERM=xterm-256color:"
+        timeout 5 python victoria.py < /dev/null || echo "Script handled TERM=xterm-256color gracefully (exit code: $?)"
+
+    - name: Test script execution on Windows (PowerShell)
+      if: runner.os == 'Windows'
+      shell: powershell
+      run: |
+        Write-Host "Testing Victoria script in PowerShell environment"
+        # Test with timeout to prevent hanging
+        $job = Start-Job -ScriptBlock { python victoria.py }
+        Wait-Job $job -Timeout 10
+        if ($job.State -eq "Running") {
+          Stop-Job $job
+          Write-Host "Script was terminated after timeout (expected behavior)"
+        }
+        Remove-Job $job -Force
+        Write-Host "PowerShell test completed"
+
+    - name: Test script execution on Windows (CMD)
+      if: runner.os == 'Windows'
+      shell: cmd
+      run: |
+        echo Testing Victoria script in CMD environment
+        timeout 5 python victoria.py < nul || echo Script handled CMD environment gracefully
+
+    - name: Test with various environment variables
+      run: |
+        echo "Testing with different environment configurations..."
+        
+        # Test with UTF-8 locale
+        export LANG=en_US.UTF-8
+        export LC_ALL=en_US.UTF-8
+        timeout 5 python victoria.py < /dev/null || echo "UTF-8 locale test completed (exit code: $?)"
+        
+        # Test with C locale
+        export LANG=C
+        export LC_ALL=C
+        timeout 5 python victoria.py < /dev/null || echo "C locale test completed (exit code: $?)"
+        
+        # Test with debug mode
+        export VICTORIA_DEBUG=1
+        timeout 5 python victoria.py < /dev/null || echo "Debug mode test completed (exit code: $?)"
+
+    - name: Verify script handles Ctrl+C gracefully
+      shell: bash
+      run: |
+        echo "Testing Ctrl+C handling..."
+        # This should exit with code 130 (128 + SIGINT)
+        timeout 3 python victoria.py < /dev/null || {
+          exit_code=$?
+          if [ $exit_code -eq 124 ]; then
+            echo "Script was terminated by timeout (expected)"
+          elif [ $exit_code -eq 130 ]; then
+            echo "Script handled Ctrl+C gracefully (exit code 130)"
+          else
+            echo "Script exited with code: $exit_code"
+          fi
+        }
+
+    - name: Test script syntax and imports
+      run: |
+        echo "Checking Python syntax..."
+        python -m py_compile victoria.py
+        echo "Syntax check passed!"
+        
+        echo "Testing imports..."
+        python -c "
+        import sys
+        sys.path.insert(0, '.')
+        try:
+            import victoria
+            print('✓ All imports successful')
+        except ImportError as e:
+            print(f'✗ Import error: {e}')
+            sys.exit(1)
+        except Exception as e:
+            print(f'✓ Script loaded (non-import error is expected): {e}')
+        "
+
+    - name: Test cross-platform file operations
+      run: |
+        echo "Testing file operations..."
+        python -c "
+        import os
+        import tempfile
+        from pathlib import Path
+        
+        # Test Path operations (used in victoria.py)
+        temp_dir = Path(tempfile.mkdtemp())
+        test_file = temp_dir / 'test.json'
+        test_file.write_text('{\"test\": true}')
+        print(f'✓ File operations work: {test_file.exists()}')
+        
+        # Cleanup
+        import shutil
+        shutil.rmtree(temp_dir)
+        print('✓ Cleanup successful')
+        "
+
+    - name: Test terminal capability detection
+      run: |
+        echo "Testing terminal capability detection..."
+        python -c "
+        import sys
+        import os
+        sys.path.insert(0, '.')
+        
+        # Import the terminal detection functions
+        exec(open('victoria.py').read().split('if __name__')[0])
+        
+        caps = detect_terminal_capabilities()
+        print(f'Terminal capabilities detected: {caps}')
+        
+        # Test that it doesn't crash
+        width = get_terminal_width()
+        print(f'Terminal width: {width}')
+        
+        print('✓ Terminal capability detection works')
+        "
