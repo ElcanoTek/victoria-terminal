@@ -21,7 +21,7 @@ import sys
 import tempfile
 import time
 from pathlib import Path
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, NamedTuple
 import platform
 
 # ------------------ Config ------------------
@@ -215,6 +215,40 @@ class T:
         WRENCH    = "[+]"
         PACKAGE   = "[PKG]"
 
+class BoxStyle(NamedTuple):
+    tl: str; h: str; tr: str; v: str; bl: str; br: str; tee_l: str; tee_r: str
+
+class UI:
+    @staticmethod
+    def style() -> BoxStyle:
+        if TERM_CAPS['unicode_box']:
+            return BoxStyle("┌", "─", "┐", "│", "└", "┘", "├", "┤")
+        return BoxStyle("+", "-", "+", "|", "+", "+", "+", "+")
+
+    @staticmethod
+    def hr(width: int = None, color: str = None, heavy: bool = False) -> str:
+        w = min(T._width, 80) if width is None else width
+        char = "═" if TERM_CAPS['unicode_box'] and heavy else ("─" if TERM_CAPS['unicode_box'] else "-")
+        s = char * w
+        return f"{color}{s}{T.NC}" if color else s
+
+    @staticmethod
+    def box(title: str = None, body: List[str] | None = None, width: int = None, color: str = None) -> None:
+        st = UI.style()
+        w = min(T._width, 80) if width is None else width
+        print(f"{color or ''}{st.tl}{st.h * (w-2)}{st.tr}{T.NC}")
+        if title:
+            line = center_text(f"{T.BOLD}{title}{T.NC}", w-2)
+            print(f"{color or ''}{st.v}{T.NC}{line}{color or ''}{st.v}{T.NC}")
+            if body:
+                print(f"{color or ''}{st.tee_l}{st.h * (w-2)}{st.tee_r}{T.NC}")
+        if body:
+            for b in body:
+                txt = center_text(b, w-2)
+                print(f"{color or ''}{st.v}{T.NC}{txt}{color or ''}{st.v}{T.NC}")
+        print(f"{color or ''}{st.bl}{st.h * (w-2)}{st.br}{T.NC}")
+
+
 def clear_screen():
     try:
         os.system("cls" if os.name == "nt" else "clear")
@@ -354,93 +388,36 @@ def enhanced_spinner(message: str, duration: float = 1.0):
     print()
 
 def banner():
-    """Cross-platform banner with ASCII fallbacks."""
-    width = min(T._width, 80)  # Cap width for readability
-    
-    # Border characters
-    if TERM_CAPS['unicode_box']:
-        h_line = "═"
-        corner_tl, corner_tr = "╔", "╗"
-        corner_bl, corner_br = "╚", "╝"
-        v_line = "║"
-    else:
-        h_line = "="
-        corner_tl = corner_tr = corner_bl = corner_br = "+"
-        v_line = "|"
-    
-    print(f"\n{T.CYAN}{h_line * width}{T.NC}")
-    
-    # Main title
+    """Minimalist, consistent banner using UI helpers."""
+    width = min(T._width, 80)
+
+    # Title and subtitle
     if TERM_CAPS['emojis']:
-        title_line1 = f"{T.CYAN}{T.BOLD}{T.SHIP} VICTORIA {T.WAVE} ADTECH DATA NAVIGATION {T.SPARKLES}{T.NC}"
-        title_line2 = f"{T.CYAN_LIGHT}\"Charting the Digital Seas of Programmatic Advertising\"{T.NC}"
+        title = f"{T.CYAN}{T.BOLD}{T.SHIP} VICTORIA {T.WAVE} ADTECH DATA NAVIGATION {T.SPARKLES}{T.NC}"
     else:
-        title_line1 = f"{T.CYAN}{T.BOLD}*** VICTORIA - ADTECH DATA NAVIGATION ***{T.NC}"
-        title_line2 = f"{T.CYAN}\"Charting the Digital Seas of Programmatic Advertising\"{T.NC}"
-    
-    print(center_text(title_line1, width))
-    print(center_text(title_line2, width))
-    print(f"{T.CYAN}{h_line * width}{T.NC}")
-    
-    # ASCII art - simplified for compatibility
-    if TERM_CAPS['unicode_box'] and width >= 60:
-        print(f"{T.CYAN}{T.BOLD}")
-        ascii_art = [
-            "╔══════════════════════════════════════════════════════════════╗",
-            "║  ██╗   ██╗██╗ ██████╗████████╗ ██████╗ ██████╗ ██╗ █████╗   ║",
-            "║  ██║   ██║██║██╔════╝╚══██╔══╝██╔═══██╗██╔══██╗██║██╔══██╗  ║",
-            "║  ██║   ██║██║██║        ██║   ██║   ██║██████╔╝██║███████║  ║",
-            "║  ╚██╗ ██╔╝██║██║        ██║   ██║   ██║██╔══██╗██║██╔══██║  ║",
-            "║   ╚████╔╝ ██║╚██████╗   ██║   ╚██████╔╝██║  ██║██║██║  ██║  ║",
-            "║    ╚═══╝  ╚═╝ ╚═════╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚═╝╚═╝  ╚═╝  ║",
-            "╚══════════════════════════════════════════════════════════════╝"
-        ]
-        for line in ascii_art:
-            print(center_text(line, width))
-    else:
-        # Simple ASCII art for narrow terminals or no Unicode support
-        print(f"{T.CYAN}{T.BOLD}")
-        simple_art = [
-            "+----------------------------------------------------------+",
-            "|  V I C T O R I A   -   D A T A   N A V I G A T O R      |",
-            "|                                                          |",
-            "|      Your AdTech Analytics Command Center                |",
-            "+----------------------------------------------------------+"
-        ]
-        for line in simple_art:
-            print(center_text(line, width))
-    
-    print(f"{T.NC}")
-    
+        title = f"{T.CYAN}{T.BOLD}VICTORIA - ADTECH DATA NAVIGATION{T.NC}"
+    subtitle = f"{T.CYAN_LIGHT}\"Charting the Digital Seas of Programmatic Advertising\"{T.NC}"
+
+    print()
+    UI.box(title=title, body=[subtitle], width=width, color=T.CYAN)
+    print()
+
     # Status indicators
-    print(center_text(f"{T.GREEN}{T.FIRE} SYSTEM STATUS{T.NC}", width))
-    if TERM_CAPS['unicode_box']:
-        print(center_text(f"{T.CYAN}━━━━━━━━━━━━━━━━{T.NC}", width))
-    else:
-        print(center_text(f"{T.CYAN}----------------{T.NC}", width))
-    
-    print(center_text(f"{T.GREEN}{T.LIGHTNING} Engine: {T.WHITE}Online{T.NC}", width))
-    print(center_text(f"{T.BLUE}{T.COMPASS} Navigation: {T.WHITE}Ready{T.NC}", width))
-    print(center_text(f"{T.MAGENTA}{T.GEAR} AI Systems: {T.WHITE}Activated{T.NC}", width))
-    print(f"{T.CYAN}{h_line * width}{T.NC}\n")
+    status_lines = [
+        f"{T.LIGHTNING} Engine: {T.WHITE}Online{T.NC}",
+        f"{T.COMPASS} Navigation: {T.WHITE}Ready{T.NC}",
+        f"{T.GEAR} AI Systems: {T.WHITE}Activated{T.NC}",
+    ]
+    UI.box(title=f"{T.FIRE} SYSTEM STATUS", body=status_lines, width=width, color=T.CYAN)
+    print()
 
 def section_header(title: str, icon: str = None) -> None:
-    """Create section headers with fallbacks."""
+    """Create section headers with fallbacks (minimalist)."""
     width = min(T._width, 80)
-    
     if icon is None:
         icon = T.TARGET
-    
-    title_with_icon = f"{icon} {title.upper()} {icon}"
-    
-    if TERM_CAPS['unicode_box']:
-        print(f"\n{T.YELLOW}┌{'─' * (width-2)}┐{T.NC}")
-        print(f"{T.YELLOW}│{center_text(f'{T.BOLD}{T.WHITE}{title_with_icon}{T.NC}', width-2)}{T.YELLOW}│{T.NC}")
-        print(f"{T.YELLOW}└{'─' * (width-2)}┘{T.NC}")
-    else:
-        print(f"\n{T.YELLOW}+{'-' * (width-2)}+{T.NC}")
-        print(f"{T.YELLOW}|{center_text(f'{T.BOLD}{T.WHITE}{title_with_icon}{T.NC}', width-2)}{T.YELLOW}|{T.NC}")
-        print(f"{T.YELLOW}+{'-' * (width-2)}+{T.NC}")
+    print()
+    UI.box(title=f"{T.WHITE}{T.BOLD}{icon} {title.upper()} {icon}{T.NC}", width=width, color=T.YELLOW)
 
 def success_animation(message: str):
     """Cross-platform success message."""
@@ -565,16 +542,14 @@ def prompt_update_victoria():
     if target.exists():
         info(f"{VICTORIA_FILE} already exists in current directory")
         
-        if TERM_CAPS['unicode_box']:
-            print(f"\n{T.CYAN}┌─ Update Options ─────────────────────────┐{T.NC}")
-            print(f"{T.CYAN}│{T.NC} {T.GREEN}[Y]{T.NC} Update to latest from private repo   {T.CYAN}│{T.NC}")
-            print(f"{T.CYAN}│{T.NC} {T.YELLOW}[N]{T.NC} Use existing local copy (default)  {T.CYAN}│{T.NC}")
-            print(f"{T.CYAN}└──────────────────────────────────────────┘{T.NC}")
-        else:
-            print(f"\n{T.CYAN}+- Update Options ---------------------+{T.NC}")
-            print(f"{T.CYAN}|{T.NC} {T.GREEN}[Y]{T.NC} Update to latest from private repo {T.CYAN}|{T.NC}")
-            print(f"{T.CYAN}|{T.NC} {T.YELLOW}[N]{T.NC} Use existing local copy (default){T.CYAN}|{T.NC}")
-            print(f"{T.CYAN}+-------------------------------------+{T.NC}")
+        UI.box(
+            title=f"{T.CYAN}{T.BOLD}Update Options{T.NC}",
+            body=[
+                f"{T.GREEN}[Y]{T.NC} Update to latest from private repo",
+                f"{T.YELLOW}[N]{T.NC} Use existing local copy (default)",
+            ],
+            color=T.CYAN,
+        )
         
         choice = input(f"\n{T.BOLD}{T.WHITE}Update {VICTORIA_FILE}? [y/N]: {T.NC}").strip().lower()
         if choice in ("y", "yes"):
@@ -584,16 +559,14 @@ def prompt_update_victoria():
     else:
         warn(f"{VICTORIA_FILE} not found in current directory")
         
-        if TERM_CAPS['unicode_box']:
-            print(f"\n{T.CYAN}┌─ Download Options ───────────────────────┐{T.NC}")
-            print(f"{T.CYAN}│{T.NC} {T.GREEN}[Y]{T.NC} Download via SSH (recommended)      {T.CYAN}│{T.NC}")
-            print(f"{T.CYAN}│{T.NC} {T.YELLOW}[N]{T.NC} Skip download and continue        {T.CYAN}│{T.NC}")
-            print(f"{T.CYAN}└──────────────────────────────────────────┘{T.NC}")
-        else:
-            print(f"\n{T.CYAN}+- Download Options -------------------+{T.NC}")
-            print(f"{T.CYAN}|{T.NC} {T.GREEN}[Y]{T.NC} Download via SSH (recommended)    {T.CYAN}|{T.NC}")
-            print(f"{T.CYAN}|{T.NC} {T.YELLOW}[N]{T.NC} Skip download and continue      {T.CYAN}|{T.NC}")
-            print(f"{T.CYAN}+-------------------------------------+{T.NC}")
+        UI.box(
+            title=f"{T.CYAN}{T.BOLD}Download Options{T.NC}",
+            body=[
+                f"{T.GREEN}[Y]{T.NC} Download via SSH (recommended)",
+                f"{T.YELLOW}[N]{T.NC} Skip download and continue",
+            ],
+            color=T.CYAN,
+        )
         
         choice = input(f"\n{T.BOLD}{T.WHITE}Download {VICTORIA_FILE}? [Y/n]: {T.NC}").strip().lower()
         if choice in ("n", "no"):
@@ -699,39 +672,31 @@ def launch_crush():
 
 def course_menu() -> str:
     section_header("NAVIGATION COURSE SELECTION", T.COMPASS)
-    
-    enhanced_spinner("Booting navigation systems", 1.5)
-    
-    print(f"\n{T.BOLD}{T.WHITE}Choose your data exploration voyage:{T.NC}\n")
-    
-    # Use appropriate border characters
-    if TERM_CAPS['unicode_box']:
-        border_chars = ("┌", "─", "┐", "│", "└", "┘", "├", "┤")
-    else:
-        border_chars = ("+", "-", "+", "|", "+", "+", "+", "+")
-    
-    tl, h, tr, v, bl, br, lt, rt = border_chars
-    
-    print(f"{T.CYAN}{tl}{h} EXPEDITION OPTIONS {h * (T._width - 22)}{tr}{T.NC}")
-    print(f"{T.CYAN}{v}{T.NC}")
-    print(f"{T.CYAN}{v}{T.NC} {T.GREEN}{T.BOLD}[1] {T.WAVE} FULL OCEAN EXPEDITION{T.NC}")
-    print(f"{T.CYAN}{v}{T.NC}     {T.CYAN}{T.LIGHTNING} Enterprise Snowflake Database Access{T.NC}")
-    print(f"{T.CYAN}{v}{T.NC}     {T.CYAN}{T.CHART} Local CSV/Excel via MotherDuck{T.NC}")
-    print(f"{T.CYAN}{v}{T.NC}     {T.CYAN}{T.TARGET} Complete programmatic advertising analytics{T.NC}")
-    print(f"{T.CYAN}{v}{T.NC}     {T.CYAN}{T.FIRE} Maximum data exploration capabilities{T.NC}")
-    print(f"{T.CYAN}{v}{T.NC}")
-    print(f"{T.CYAN}{lt}{h * (T._width - 2)}{rt}{T.NC}")
-    print(f"{T.CYAN}{v}{T.NC}")
-    print(f"{T.CYAN}{v}{T.NC} {T.YELLOW}{T.BOLD}[2] {T.ANCHOR} COASTAL NAVIGATION{T.NC}")
-    print(f"{T.CYAN}{v}{T.NC}     {T.YELLOW}{T.FOLDER} Local CSV/Excel file analysis{T.NC}")
-    print(f"{T.CYAN}{v}{T.NC}     {T.YELLOW}{T.LIGHTNING} Fast startup, zero external dependencies{T.NC}")
-    print(f"{T.CYAN}{v}{T.NC}     {T.YELLOW}{T.MAG} Perfect for local data exploration{T.NC}")
-    print(f"{T.CYAN}{v}{T.NC}     {T.YELLOW}{T.SHIELD} Ideal for testing and development{T.NC}")
-    print(f"{T.CYAN}{v}{T.NC}")
-    print(f"{T.CYAN}{bl}{h * (T._width - 2)}{br}{T.NC}")
+
+    enhanced_spinner("Booting navigation systems", 1.2)
+
+    print()
+    UI.box(
+        title=f"{T.CYAN}{T.BOLD}Expedition Options{T.NC}",
+        body=[
+            f"{T.GREEN}{T.BOLD}[1]{T.NC} {T.WAVE} Full Ocean Expedition",
+            f"   {T.CYAN}{T.LIGHTNING} Enterprise Snowflake Database Access{T.NC}",
+            f"   {T.CYAN}{T.CHART} Local CSV/Excel via MotherDuck{T.NC}",
+            f"   {T.CYAN}{T.TARGET} Complete programmatic advertising analytics{T.NC}",
+            f"   {T.CYAN}{T.FIRE} Maximum data exploration capabilities{T.NC}",
+            "",
+            f"{T.YELLOW}{T.BOLD}[2]{T.NC} {T.ANCHOR} Coastal Navigation",
+            f"   {T.YELLOW}{T.FOLDER} Local CSV/Excel file analysis{T.NC}",
+            f"   {T.YELLOW}{T.LIGHTNING} Fast startup, zero external dependencies{T.NC}",
+            f"   {T.YELLOW}{T.MAG} Perfect for local data exploration{T.NC}",
+            f"   {T.YELLOW}{T.SHIELD} Ideal for testing and development{T.NC}",
+        ],
+        color=T.CYAN,
+    )
 
     while True:
-        choice = input(f"\n{T.BOLD}{T.WHITE}{T.TARGET} Select your navigation course [1-2]: {T.NC}").strip()
+        choice = input(f"
+{T.BOLD}{T.WHITE}{T.TARGET} Select your navigation course [1-2]: {T.NC}").strip()
         if choice in ("1", "2"):
             return choice
         warn("Invalid selection. Please choose 1 or 2.")
