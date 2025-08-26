@@ -26,28 +26,7 @@ This is the Windows PowerShell version of the Victoria script, providing a first
 
 ## Installation
 
-### 1. Install Dependencies
-
-#### Install Git for Windows
-Download and install from [git-scm.com](https://git-scm.com/download/win)
-
-#### Install uv (Python package manager)
-```powershell
-# Using PowerShell (recommended)
-irm https://astral.sh/uv/install.ps1 | iex
-
-# Or using pip
-pip install uv
-```
-
-#### Install crush
-```powershell
-# Using Go (if you have Go installed)
-go install github.com/charmbracelet/crush@latest
-
-# Or download binary from GitHub releases
-# https://github.com/charmbracelet/crush/releases
-```
+### 1. Install Dependencies (see links above)
 
 ### 2. Set Environment Variables
 
