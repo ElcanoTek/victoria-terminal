@@ -10,16 +10,21 @@ Victoria is Elcano's AI agent that connects to programmatic advertising reports 
 
 #### Dependencies
 
-* [crush](https://github.com/charmbracelet/crush)
-* [uv](https://docs.astral.sh/uv/getting-started/installation/)
-* OPENROUTER_API_KEY – set this as an environment variable. Supports **OpenRouter**, **Gemini**, and **OpenAI**.
+* `crush` – [GitHub](https://github.com/charmbracelet/crush)
+* `uv` – [Docs](https://docs.astral.sh/uv/getting-started/installation/)
+* `OPENROUTER_API_KEY` – set this as an environment variable. Supports **OpenRouter**, **Gemini**, and **OpenAI**.
+
   * Email [brad@elcanotek.com](mailto:brad@elcanotek.com) for a company key.
+  * Example:
+
+    ```bash
+    # permanent (all sessions)
+    # replace .zshrc with .bashrc if you are using bash on linux
+    echo 'export OPENROUTER_API_KEY="your_api_key_here"' >> ~/.zshrc
+    source ~/.zshrc
+    ```
 * `VICTORIA.md` – keep updated from the [victoria-main repo](https://github.com/ElcanoTek/victoria-main).
-* [ghostty](https://ghostty.org/) *(optional but recommended)*
-
-#### Data Files
-
-Place your `.csv` or Excel files inside the `./data` folder to make them available for analysis.
+* `ghostty` – [ghostty.org](https://ghostty.org/) *(optional but recommended)*
 
 ---
 
@@ -52,6 +57,7 @@ export SNOWFLAKE_ROLE="your_read_only_role"
 #### API Keys
 
 ```powershell
+# Permanent (all sessions)
 [Environment]::SetEnvironmentVariable("OPENROUTER_API_KEY", "your_api_key_here", "User")
 ```
 
@@ -65,19 +71,11 @@ export SNOWFLAKE_ROLE="your_read_only_role"
 [Environment]::SetEnvironmentVariable("SNOWFLAKE_ROLE", "your_role", "User")
 ```
 
-#### Run Options
-
-* **Method 1 (Easy):** Double-click `victoria.bat`
-* **Method 2 (PowerShell):**
-
-  ```powershell
-  cd path\to\victoria-crush
-  .\victoria.ps1
-  ```
-
 ---
 
 ## ▶️ Running Victoria
+
+### Linux / macOS
 
 ```bash
 cd victoria-crush
@@ -85,6 +83,33 @@ cd victoria-crush
 ```
 
 Then just **ask questions** — try different models and explore your data.
+
+---
+
+### Windows
+
+#### Method 1: Double-Click (Easiest)
+
+1. Double-click `victoria.bat` in File Explorer
+2. Follow the interactive prompts
+
+#### Method 2: PowerShell Direct
+
+```powershell
+cd path\to\victoria-crush
+
+# Main Victoria interface
+.\victoria.ps1
+
+# Install dependencies only
+.\victoria.ps1 -InstallDeps
+
+# Setup environment variables only
+.\victoria.ps1 -Setup
+
+# Skip dependency check
+.\victoria.ps1 -SkipDependencyCheck
+```
 
 ---
 
@@ -151,4 +176,4 @@ Try these ready-to-go prompts for adtech analysis:
   Estimate if each campaign is on pace to hit 100% of its budget by end of the month based on daily spend rates
   ```
 
-Do you want me to also **add badges / shields** (e.g., “Built with Crush”, “AdTech AI”, “Snowflake Ready”) at the top of the README so it looks polished for GitHub?
+Do you want me to also **add pretty badges** at the very top (like “Built with Crush” / “Snowflake Ready” / “AdTech AI Agent”) so the GitHub page looks polished?
