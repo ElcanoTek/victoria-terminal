@@ -32,10 +32,18 @@ export SNOWFLAKE_ROLE="your_read_only_role"
 The Snowflake MCP server will be automatically installed via ```uvx``` when first used. No manual installation required.
 
 ## Getting Started
+
+### Linux/macOS
 * ```cd``` to project folder
 * type ```./victoria```
 * ask questions!
 * try different models!
+
+### Windows
+* See **README-Windows.md** for complete Windows setup guide
+* Use ```victoria.ps1``` (PowerShell) or ```victoria.bat``` (double-click)
+* The PowerShell script includes dependency installation and environment setup
+* Run with ```-InstallDeps``` or ```-Setup``` flags for specific functions
 
 ## Models to try
 
