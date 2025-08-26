@@ -40,7 +40,7 @@ The Snowflake MCP server will be automatically installed via ```uvx``` when firs
 * try different models!
 
 ### Windows
-* See **README-Windows.md** for complete Windows setup guide
+* See **[README-Windows.md](./README-Windows.md)** for complete Windows setup guide
 * Use ```victoria.ps1``` (PowerShell) or ```victoria.bat``` (double-click)
 * The PowerShell script includes dependency installation and environment setup
 * Run with ```-InstallDeps``` or ```-Setup``` flags for specific functions
