@@ -9,6 +9,16 @@ import sys
 import time
 import platform
 
+# Fix Windows console encoding for Unicode characters
+if platform.system() == 'Windows':
+    try:
+        import codecs
+        sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
+        sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'strict')
+    except (AttributeError, ImportError):
+        # Fallback for older Python versions or if encoding fix fails
+        pass
+
 def test_victoria_non_interactive():
     """Test victoria.py with automated input to prevent hanging."""
     print("🧪 Testing victoria.py in non-interactive mode...")
