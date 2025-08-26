@@ -14,9 +14,19 @@ from pathlib import Path
 import shutil
 import time
 
+# Fix Windows console encoding for Unicode characters
+if platform.system() == 'Windows':
+    try:
+        import codecs
+        sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
+        sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'strict')
+    except (AttributeError, ImportError):
+        # Fallback for older Python versions or if encoding fix fails
+        pass
+
 def test_imports():
     """Test that all required modules can be imported."""
-    print("🧪 Testing imports...")
+    safe_print("🧪 Testing imports...")
     
     required_modules = [
         'json', 'os', 're', 'shutil', 'subprocess', 'sys', 
@@ -26,12 +36,12 @@ def test_imports():
     for module in required_modules:
         try:
             __import__(module)
-            print(f"  ✓ {module}")
+            safe_print(f"  ✓ {module}")
         except ImportError as e:
-            print(f"  ✗ {module}: {e}")
+            safe_print(f"  ✗ {module}: {e}")
             return False
     
-    print("✅ All imports successful")
+    safe_print("✅ All imports successful")
     return True
 
 def test_victoria_script_syntax():
@@ -193,31 +203,21 @@ def test_script_execution_modes():
         # Test 1: Script with no input (should timeout gracefully)
         print("  Testing script with no input...")
         
-        if platform.system() == 'Windows':
-            # Windows timeout command
-            result = subprocess.run(
-                ['timeout', '3', 'python', 'victoria.py'],
-                input='',
-                text=True,
-                capture_output=True,
-                timeout=10
-            )
-        else:
-            # Unix timeout command
-            result = subprocess.run(
-                ['timeout', '3', 'python3', 'victoria.py'],
-                input='',
-                text=True,
-                capture_output=True,
-                timeout=10
-            )
+        # Use Python's subprocess timeout instead of system timeout command
+        result = subprocess.run(
+            [sys.executable, 'victoria.py'],
+            input='',
+            text=True,
+            capture_output=True,
+            timeout=3  # 3 second timeout
+        )
         
         print(f"    Exit code: {result.returncode}")
         print(f"    Stdout length: {len(result.stdout)} chars")
         print(f"    Stderr length: {len(result.stderr)} chars")
         
-        # The script should either timeout or exit gracefully
-        if result.returncode in [0, 124, 130, 1]:  # 124=timeout, 130=SIGINT, 1=error
+        # The script should exit gracefully
+        if result.returncode in [0, 1, 2]:  # 0=success, 1=error, 2=KeyboardInterrupt
             print("  ✓ Script handled no-input execution")
         else:
             print(f"  ⚠️ Unexpected exit code: {result.returncode}")
@@ -226,7 +226,7 @@ def test_script_execution_modes():
         return True
         
     except subprocess.TimeoutExpired:
-        print("  ✓ Script execution timed out as expected")
+        print("  ⚠️ Script execution timed out (acceptable)")
         return True
     except Exception as e:
         print(f"✗ Script execution test error: {e}")
@@ -316,9 +316,18 @@ def test_json_operations():
         print(f"✗ JSON operations error: {e}")
         return False
 
+def safe_print(text):
+    """Print text with fallback for Windows console encoding issues."""
+    try:
+        print(text)
+    except UnicodeEncodeError:
+        # Fallback to ASCII-safe version
+        ascii_text = text.encode('ascii', 'replace').decode('ascii')
+        print(ascii_text)
+
 def main():
     """Run all tests."""
-    print("🚀 Starting Victoria Script Test Suite")
+    safe_print("🚀 Starting Victoria Script Test Suite")
     print(f"Platform: {platform.system()} {platform.release()}")
     print(f"Python: {sys.version}")
     print(f"Working directory: {os.getcwd()}")
