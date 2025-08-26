@@ -189,12 +189,12 @@ jobs:
         sys.path.insert(0, '.')
         try:
             import victoria
-            print('✓ All imports successful')
+            print('+ All imports successful')
         except ImportError as e:
-            print(f'✗ Import error: {e}')
+            print(f'- Import error: {e}')
             sys.exit(1)
         except Exception as e:
-            print(f'✓ Script loaded (non-import error is expected): {e}')
+            print(f'+ Script loaded (non-import error is expected): {e}')
         "
 
     - name: Test cross-platform file operations
@@ -218,12 +218,12 @@ jobs:
         temp_dir = Path(tempfile.mkdtemp())
         test_file = temp_dir / 'test.json'
         test_file.write_text('{\"test\": true}')
-        print(f'✓ File operations work: {test_file.exists()}')
+        print(f'+ File operations work: {test_file.exists()}')
         
         # Cleanup
         import shutil
         shutil.rmtree(temp_dir)
-        print('✓ Cleanup successful')
+        print('+ Cleanup successful')
         "
 
     - name: Test terminal capability detection
@@ -253,5 +253,5 @@ jobs:
         width = get_terminal_width()
         print(f'Terminal width: {width}')
         
-        print('✓ Terminal capability detection works')
+        print('+ Terminal capability detection works')
         "
