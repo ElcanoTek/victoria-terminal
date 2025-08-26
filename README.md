@@ -49,25 +49,11 @@ The Snowflake MCP server will be automatically installed via ```uvx``` when firs
 
 | Model | Input/Output ($/1M tokens) | Category | Best For |
 |-------|---------------------------|----------|----------|
-| **gpt-oss-20b (free)** | $0 / $0 | 🆓 Free | Learning, testing, minimal usage |
-| **gpt-oss-120b** | $0 / $0.45 | 🆓 Free Input | Free prompts, cheap responses |
-| **GPT-5 Nano** | $0.05 / $0.40 | ⚡ Ultra Fast | Speed + minimal cost |
-| **gpt-oss-20b** | $0.04 / $0.16 | 💰 Ultra Budget | Cheapest paid option |
-| **GLM 4.5** | $0.20 / $0.20 | 💰 Budget | Best balanced budget choice |
-| **Qwen3 30B A3B** | $0.20 / $0.80 | 💰 Budget | Open source, good performance |
-| **GPT-5 Mini** | $0.25 / $2.00 | 🎯 Balanced | Compact GPT-5, great value |
-| **DeepSeek V3** | $0.27 / $1.10 | 🎯 Best Value | Top recommendation for most users |
-| **Codestral** | $0.30 / $0.90 | 🔧 Coding | Specialized for programming |
-| **DeepSeek R1** | $0.55 / $2.19 | 🧠 Reasoning | Advanced reasoning tasks |
-| **GPT-5** | $1.25 / $10.00 | 🏆 Premium | Best overall performance |
+| **gpt-oss-120b** | $0 / $0.45 | 🆓 Free Input | TODO, brad is testing locally |
+| **GPT-5 Nano** | $0.05 / $0.40 | ⚡ Ultra Fast | TODO |
+| **DeepSeek V3** | $0.27 / $1.10 | 🎯 Best Value | We should try this again |
+| **Google Gemini 2.5 Pro** | $1.25 / $10.00 | 🏆 Premium | Current best tested model |
 
-### Quick Picks
-
-- **🎯 Start Here**: DeepSeek V3 ($0.27/$1.10) - Best overall value
-- **💰 Budget**: GLM 4.5 ($0.20/$0.20) - Cheapest balanced option
-- **🆓 Free**: gpt-oss-20b (free) ($0/$0) - Completely free
-- **🏆 Best**: GPT-5 ($1.25/$10) - Top performance
-- **⚡ Fast**: GPT-5 Nano ($0.05/$0.40) - Ultra-fast responses
 
 ### Quick Wins! Questions to ask
 
