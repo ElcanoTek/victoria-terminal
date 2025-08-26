@@ -10,10 +10,11 @@ Victoria is Elcano's AI agent that connects to programmatic advertising reports 
 
 #### Dependencies
 
+* `ghostty` – [ghostty.org](https://ghostty.org/) *(optional but recommended)*
+* `git` - open a terminal and type `git` to install it via Xcode on a mac, if you are on linux it should be preinstalled.
 * `crush` – [GitHub](https://github.com/charmbracelet/crush)
 * `uv` – [Docs](https://docs.astral.sh/uv/getting-started/installation/)
-* `VICTORIA.md` – keep updated from the [victoria-main repo](https://github.com/ElcanoTek/victoria-main)
-* `ghostty` – [ghostty.org](https://ghostty.org/) *(optional but recommended)*
+* `python` - open a terminal and type `python3` to install it via Xcode on a mac, if you are on linux it should be preinstalled. You may also download it from [python.org](https://www.python.org).
 
 #### Environment Variables
 
@@ -86,7 +87,6 @@ Open a terminal, change directory to the 'victoria-crush' folder and run the pyt
 cd /path/to/victoria-crush
 python3 victoria.py
 ```
----
 
 ---
 
