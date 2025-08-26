@@ -18,8 +18,8 @@ def test_victoria_non_interactive():
         # 'n' for not downloading VICTORIA.md, then Ctrl+C to exit
         input_data = "n\n"
         
-        # Use appropriate python command based on platform
-        python_cmd = 'python' if platform.system() == 'Windows' else 'python3'
+        # Use sys.executable to get the current Python interpreter
+        python_cmd = sys.executable
         
         # Run the script with timeout
         process = subprocess.Popen(
@@ -68,7 +68,7 @@ def test_victoria_with_interrupt():
     print("🧪 Testing victoria.py keyboard interrupt handling...")
     
     try:
-        python_cmd = 'python' if platform.system() == 'Windows' else 'python3'
+        python_cmd = sys.executable
         
         # Start the process
         process = subprocess.Popen(
