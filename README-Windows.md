@@ -18,8 +18,7 @@ This is the Windows PowerShell version of the Victoria script, providing a first
 
 ### Optional but Recommended
 - **Windows Terminal** - [Microsoft Store](https://aka.ms/terminal) or [GitHub](https://github.com/microsoft/terminal)
-- **Ghostty** - [ghostty.org](https://ghostty.org/) (when available for Windows)
-
+  
 ### API Keys
 - **`OPENROUTER_API_KEY`** - Required environment variable for Crush
   - GEMINI and OPENAI are also supported
