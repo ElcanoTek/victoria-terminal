@@ -2,7 +2,9 @@
 
 This setup configures Victoria (Elcano's AI agent) to work with Crush CLI for analyzing programmatic advertising data.
 
-## Requirements
+## Linux/MacOS Setup
+
+### Essential Dependencies
 
 * ```crush``` (see [github](https://github.com/charmbracelet/crush))
 * ```ripgrep``` (see [github](https://github.com/BurntSushi/ripgrep))
@@ -31,19 +33,64 @@ export SNOWFLAKE_ROLE="your_read_only_role"
 
 The Snowflake MCP server will be automatically installed via ```uvx``` when first used. No manual installation required.
 
-## Getting Started
-
-### Linux/macOS
+## Running
 * ```cd``` to project folder
 * type ```./victoria```
 * ask questions!
 * try different models!
 
 ### Windows
-* See **[README-Windows.md](./README-Windows.md)** for complete Windows setup guide
-* Use ```victoria.ps1``` (PowerShell) or ```victoria.bat``` (double-click)
-* The PowerShell script includes dependency installation and environment setup
-* Run with ```-InstallDeps``` or ```-Setup``` flags for specific functions
+
+### Essential Dependencies
+- **Windows Terminal** - [Microsoft Store](https://aka.ms/terminal) or [GitHub](https://github.com/microsoft/terminal)
+- **Git for Windows** - [Download here](https://git-scm.com/download/win)
+- **crush** - [Installation guide](https://github.com/charmbracelet/crush)
+- **uv** - [Installation guide](https://docs.astral.sh/uv/getting-started/installation/)
+
+### API Keys
+- **`OPENROUTER_API_KEY`** - Required environment variable for Crush
+  - GEMINI and OPENAI are also supported
+  - Email [brad@elcanotek.com](mailto:brad@elcanotek.com) for a company key
+ 
+```powershell
+# Permanent (all sessions)
+[Environment]::SetEnvironmentVariable("OPENROUTER_API_KEY", "your_api_key_here", "User")
+```
+
+#### Set Snowflake Variables (Optional - for Full Ocean Expedition)
+```powershell
+# Permanent
+[Environment]::SetEnvironmentVariable("SNOWFLAKE_ACCOUNT", "your_account", "User")
+[Environment]::SetEnvironmentVariable("SNOWFLAKE_USER", "your_user", "User")
+[Environment]::SetEnvironmentVariable("SNOWFLAKE_PASSWORD", "your_password", "User")
+[Environment]::SetEnvironmentVariable("SNOWFLAKE_WAREHOUSE", "your_warehouse", "User")
+[Environment]::SetEnvironmentVariable("SNOWFLAKE_ROLE", "your_role", "User")
+```
+
+### Method 1: Double-Click (Easiest)
+1. Double-click `victoria.bat` in File Explorer
+2. Follow the interactive prompts
+
+### Method 2: PowerShell Direct
+1. Open PowerShell or Windows Terminal
+2. Navigate to the project folder:
+   ```powershell
+   cd path\to\victoria-crush
+   ```
+3. Run the script:
+   ```powershell
+   # Main Victoria interface
+   .\victoria.ps1
+   
+   # Install dependencies only
+   .\victoria.ps1 -InstallDeps
+   
+   # Setup environment variables only
+   .\victoria.ps1 -Setup
+   
+   # Skip dependency check (if you know they're installed)
+   .\victoria.ps1 -SkipDependencyCheck
+   ```
 
 ## Models to try
 
