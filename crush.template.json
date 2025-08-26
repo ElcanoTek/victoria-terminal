@@ -2,13 +2,7 @@
   "$schema": "https://charm.land/crush.json",
   "permissions": {
     "allowed_tools": [
-      "view",
-      "ls",
-      "grep",
-      "cat",
-      "head",
-      "rg",
-      "awk"
+      "ls"
     ]
   },
   "options": {
