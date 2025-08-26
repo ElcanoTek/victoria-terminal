@@ -105,15 +105,6 @@ cd path\to\victoria-crush
 
 # Main Victoria interface
 .\victoria.ps1
-
-# Install dependencies only
-.\victoria.ps1 -InstallDeps
-
-# Setup environment variables only
-.\victoria.ps1 -Setup
-
-# Skip dependency check
-.\victoria.ps1 -SkipDependencyCheck
 ```
 
 ---
