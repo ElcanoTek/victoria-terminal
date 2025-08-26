@@ -4,7 +4,7 @@ Victoria is Elcano's AI agent that connects to programmatic advertising reports 
 
 ---
 
-## 🚀 Installation
+## ⚙️ Installation
 
 ### Linux / macOS
 
@@ -12,36 +12,35 @@ Victoria is Elcano's AI agent that connects to programmatic advertising reports 
 
 * `crush` – [GitHub](https://github.com/charmbracelet/crush)
 * `uv` – [Docs](https://docs.astral.sh/uv/getting-started/installation/)
-* `OPENROUTER_API_KEY` – set this as an environment variable. Supports **OpenRouter**, **Gemini**, and **OpenAI**.
+* `VICTORIA.md` – keep updated from the [victoria-main repo](https://github.com/ElcanoTek/victoria-main)
+* `ghostty` – [ghostty.org](https://ghostty.org/) *(optional but recommended)*
+
+#### Environment Variables
+
+* `OPENROUTER_API_KEY` (required)
 
   * Email [brad@elcanotek.com](mailto:brad@elcanotek.com) for a company key.
   * Example:
 
     ```bash
     # permanent (all sessions)
-    # replace .zshrc with .bashrc if you are using bash on linux
+    # replace .zshrc with .bashrc if using bash
     echo 'export OPENROUTER_API_KEY="your_api_key_here"' >> ~/.zshrc
     source ~/.zshrc
     ```
-* `VICTORIA.md` – keep updated from the [victoria-main repo](https://github.com/ElcanoTek/victoria-main).
-* `ghostty` – [ghostty.org](https://ghostty.org/) *(optional but recommended)*
 
----
+* **Snowflake Integration (Optional)**
 
-### Snowflake Integration (Optional)
+  ```bash
+  export SNOWFLAKE_ACCOUNT="your_account_identifier"
+  export SNOWFLAKE_USER="your_username@domain.com"
+  export SNOWFLAKE_PASSWORD="your_password"
+  export SNOWFLAKE_WAREHOUSE="your_warehouse"
+  export SNOWFLAKE_ROLE="your_read_only_role"
+  ```
 
-Set the following environment variables for database connectivity:
-
-```bash
-export SNOWFLAKE_ACCOUNT="your_account_identifier"
-export SNOWFLAKE_USER="your_username@domain.com"
-export SNOWFLAKE_PASSWORD="your_password"
-export SNOWFLAKE_WAREHOUSE="your_warehouse"
-export SNOWFLAKE_ROLE="your_read_only_role"
-```
-
-* **Role must have read-only `SELECT` permissions.**
-* No need to install the Snowflake MCP server — it’s auto-installed on first use.
+  * **Role must have read-only `SELECT` permissions.**
+  * Snowflake MCP server installs automatically on first use.
 
 ---
 
@@ -54,22 +53,27 @@ export SNOWFLAKE_ROLE="your_read_only_role"
 * [crush](https://github.com/charmbracelet/crush)
 * [uv](https://docs.astral.sh/uv/getting-started/installation/)
 
-#### API Keys
+#### Environment Variables
 
-```powershell
-# Permanent (all sessions)
-[Environment]::SetEnvironmentVariable("OPENROUTER_API_KEY", "your_api_key_here", "User")
-```
+* `OPENROUTER_API_KEY` (required)
 
-#### Snowflake Variables (Optional)
+  ```powershell
+  # Permanent (all sessions)
+  [Environment]::SetEnvironmentVariable("OPENROUTER_API_KEY", "your_api_key_here", "User")
+  ```
 
-```powershell
-[Environment]::SetEnvironmentVariable("SNOWFLAKE_ACCOUNT", "your_account", "User")
-[Environment]::SetEnvironmentVariable("SNOWFLAKE_USER", "your_user", "User")
-[Environment]::SetEnvironmentVariable("SNOWFLAKE_PASSWORD", "your_password", "User")
-[Environment]::SetEnvironmentVariable("SNOWFLAKE_WAREHOUSE", "your_warehouse", "User")
-[Environment]::SetEnvironmentVariable("SNOWFLAKE_ROLE", "your_role", "User")
-```
+* **Snowflake Integration (Optional)**
+
+  ```powershell
+  [Environment]::SetEnvironmentVariable("SNOWFLAKE_ACCOUNT", "your_account", "User")
+  [Environment]::SetEnvironmentVariable("SNOWFLAKE_USER", "your_user", "User")
+  [Environment]::SetEnvironmentVariable("SNOWFLAKE_PASSWORD", "your_password", "User")
+  [Environment]::SetEnvironmentVariable("SNOWFLAKE_WAREHOUSE", "your_warehouse", "User")
+  [Environment]::SetEnvironmentVariable("SNOWFLAKE_ROLE", "your_role", "User")
+  ```
+
+  * **Role must have read-only `SELECT` permissions.**
+  * Snowflake MCP server installs automatically on first use.
 
 ---
 
@@ -88,12 +92,12 @@ Then just **ask questions** — try different models and explore your data.
 
 ### Windows
 
-#### Method 1: Double-Click (Easiest)
+**Method 1: Double-Click (Easiest)**
 
 1. Double-click `victoria.bat` in File Explorer
 2. Follow the interactive prompts
 
-#### Method 2: PowerShell Direct
+**Method 2: PowerShell Direct**
 
 ```powershell
 cd path\to\victoria-crush
@@ -175,5 +179,3 @@ Try these ready-to-go prompts for adtech analysis:
   ```sql
   Estimate if each campaign is on pace to hit 100% of its budget by end of the month based on daily spend rates
   ```
-
-Do you want me to also **add pretty badges** at the very top (like “Built with Crush” / “Snowflake Ready” / “AdTech AI Agent”) so the GitHub page looks polished?
