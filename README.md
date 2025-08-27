@@ -96,6 +96,16 @@ python3 victoria.py
 
 This gives you the most control and is the same across macOS, Linux, and Windows (PowerShell).
 
+#### Customizing the launch tool
+
+Victoria uses the `crush` CLI by default. Set the following environment variables to swap in a different tool or config files:
+
+```bash
+export VICTORIA_TOOL="your_cli"
+export VICTORIA_TEMPLATE="your_cli.template.json"
+export VICTORIA_OUTPUT="your_cli.json"
+```
+
 ---
 
 ### 🖱️ Double-Click (Windows)
