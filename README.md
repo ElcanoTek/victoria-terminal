@@ -125,12 +125,12 @@ That’s it — Victoria will start in a terminal window automatically.
 On macOS, you can launch Victoria from Finder:
 
 1. Open the `victoria-crush` folder.
-2. Double-click `Victoria.command`.
+2. Double-click `victoria.command`.
 
 > ⚠️ The first time, you may need to make the file executable:
 >
 > ```bash
-> chmod +x Victoria.command
+> chmod +x victoria.command
 > ```
 
 After that, it’s double-click and go.
