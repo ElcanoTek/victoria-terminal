@@ -1,7 +1,13 @@
 {
   "$schema": "https://charm.land/crush.json",
   "permissions": {
-    "allowed_tools": ["ls"]
+    "allowed_tools": [
+      "view",
+      "ls", 
+      "grep",
+      "edit",
+      "motherduck_query"
+    ]
   },
   "options": {
     "context_paths": ["VICTORIA.md"],
