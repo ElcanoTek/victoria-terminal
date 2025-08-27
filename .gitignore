@@ -4,9 +4,6 @@
 # THIS GETS TEMPLATED vvv
 crush.json
 
-# Data folder
-data/
-
 # VICTORIA.md master is kept in victoria-main
 VICTORIA.md
 

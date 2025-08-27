@@ -37,6 +37,7 @@ OUTPUT_CONFIG   = os.environ.get("VICTORIA_OUTPUT", f"{TOOL_CMD}.json")
 
 APP_HOME = Path.home() / "Victoria"
 APP_HOME.mkdir(exist_ok=True)
+os.environ.setdefault("VICTORIA_HOME", str(APP_HOME))
 
 def resource_path(name: str) -> Path:
     base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
@@ -685,12 +686,28 @@ def remove_local_duckdb():
     except Exception as e:
         warn(f"Could not remove {db_path}: {e}")
 
+def open_victoria_folder():
+    """Open the Victoria data folder in the system file browser."""
+    try:
+        if os.name == "nt":
+            os.startfile(str(APP_HOME))  # type: ignore[attr-defined]
+        elif sys.platform == "darwin":
+            subprocess.run(["open", str(APP_HOME)], check=False)
+        else:
+            subprocess.run(["xdg-open", str(APP_HOME)], check=False)
+    except Exception as e:
+        warn(f"Could not open Victoria folder: {e}")
+
 def main():
     ensure_default_files()
     clear_screen()
     banner()
     remove_local_duckdb()
-    
+
+    print(f"{T.CYAN}{T.FOLDER} Place files to analyze in: {T.WHITE}{APP_HOME}{T.NC}")
+    print(f"{T.DIM}file://{APP_HOME}{T.NC}")
+    open_victoria_folder()
+
     print(f"{T.GREEN}{T.ROCKET} Welcome to Victoria - Your AdTech Data Navigator!{T.NC}")
     
     # Show terminal capabilities for debugging (remove in production)

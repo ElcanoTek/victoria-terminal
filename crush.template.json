@@ -14,7 +14,7 @@
       "args": [
         "mcp-server-motherduck",
         "--db-path",
-        "data/adtech.duckdb"
+        "${VICTORIA_HOME}/adtech.duckdb"
       ]
     }
   }
