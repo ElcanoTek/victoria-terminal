@@ -1,6 +1,6 @@
 # Victoria x `crush` Setup
 
-![Victoria Icon](assets/icon.png)
+<img src="assets/icon.png" alt="Victoria Icon" width="200" />
 
 [![Test Victoria Script](https://github.com/ElcanoTek/victoria-crush/actions/workflows/test-victoria.yml/badge.svg)](https://github.com/ElcanoTek/victoria-crush/actions/workflows/test-victoria.yml)
 
