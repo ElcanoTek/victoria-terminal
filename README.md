@@ -97,6 +97,12 @@ python3 victoria.py
 This gives you the most control and is the same across macOS, Linux, and Windows (PowerShell).
 All modes store configuration and data in `~/Victoria` (or `%USERPROFILE%\Victoria` on Windows).
 
+To refresh the bundled `VICTORIA.md` knowledge base during development, run:
+
+```bash
+python3 victoria.py --dev
+```
+
 #### Customizing the launch tool
 
 Victoria uses the `crush` CLI by default. Set the following environment variables to swap in a different tool or config files:
@@ -140,9 +146,11 @@ After that, it’s double-click and go.
 
 ## 📦 Packaging for macOS and Windows
 
-You can build standalone packages so Victoria can be launched without a terminal.
+You can build standalone packages so Victoria can be launched from Finder. The macOS app opens a terminal window for interaction.
 
 ### macOS `.app`
+
+Before packaging, fetch `VICTORIA.md` from its private repository and place it in the project root. It is ignored by git.
 
 1. Run:
 
@@ -150,7 +158,7 @@ You can build standalone packages so Victoria can be launched without a terminal
    ./package_mac.sh
    ```
 
-   The script uses `uvx pyinstaller`, so no `pip install` is required. The bundle will be created at `dist/Victoria.app`.
+   The script uses `uvx pyinstaller`, so no `pip install` is required. The bundle will be created at `dist/Victoria.app`. It bundles `CRUSH.md`, `VICTORIA.md`, `crush.template.json`, `snowflake.mcp.json`, and `.crushignore` for runtime reference.
 
 2. Share the app internally by either wrapping it in a DMG or zipping the bundle:
 
@@ -170,6 +178,8 @@ You can build standalone packages so Victoria can be launched without a terminal
 
 ### Windows `.exe` and Installer
 
+Before packaging, fetch `VICTORIA.md` from its private repository and place it in the project root. It is ignored by git.
+
 1. Install [Inno Setup](https://jrsoftware.org/isinfo.php) (make sure `iscc` is on your PATH). PyInstaller is invoked via `uvx`, so you don't need to install it.
 2. To change the installer version, edit `installer_win.iss` and update `MyAppVersion` on line 2.
 3. Run `package_win.bat` from Command Prompt or PowerShell:
@@ -178,7 +188,7 @@ You can build standalone packages so Victoria can be launched without a terminal
    .\package_win.bat
    ```
 
-   This produces both a standalone executable (`dist/Victoria.exe`) and an installer (`dist/VictoriaSetup.exe`).
+   This produces both a standalone executable (`dist/Victoria.exe`) and an installer (`dist/VictoriaSetup.exe`). The build bundles `CRUSH.md` and `VICTORIA.md` alongside the configuration templates for runtime reference.
 
 To upgrade Victoria on Windows, build a new installer with an updated version number and run it; Inno Setup will replace the previous installation automatically while preserving the same AppId.
 Both packaged versions automatically use the `~/Victoria` folder (or `%USERPROFILE%\Victoria` on Windows) for configuration and data.
