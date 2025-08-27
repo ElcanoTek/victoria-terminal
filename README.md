@@ -125,17 +125,9 @@ Before packaging, fetch `VICTORIA.md` from its private repository and place it i
    ./package_mac.sh
    ```
 
-   The script uses `uvx pyinstaller`, so no `pip install` is required. The bundle will be created at `dist/Victoria.app`. It bundles `CRUSH.md`, `VICTORIA.md`, `crush.template.json`, `snowflake.mcp.json`, and `.crushignore` for runtime reference.
+   The script uses `uvx pyinstaller`, so no `pip install` is required. The bundle will be created at `dist/Victoria.app`. It bundles `CRUSH.md`, `VICTORIA.md`, `crush.template.json`, `snowflake.mcp.json`, and `.crushignore` for runtime reference. The script automatically codesigns the bundle using your Developer ID certificate if it is installed.
 
-2. Sign the bundle with your Developer ID certificate so macOS will load the bundled Python framework:
-
-   ```bash
-   codesign --force --deep --options runtime --sign "Developer ID Application: Your Name (TEAMID)" dist/Victoria.app
-   ```
-
-   A Developer ID certificate is issued through the paid [Apple Developer Program](https://developer.apple.com/programs/). After enrolling, create a "Developer ID Application" certificate in the developer portal and use it in the command above. Without a valid signature, launching the app may fail with a "different Team IDs" error or trigger Gatekeeper warnings.
-
-3. Share the signed app by wrapping it in a DMG or zipping the bundle, then notarize the archive for distribution:
+2. Share the signed app by wrapping it in a DMG or zipping the bundle, then notarize the archive for distribution:
 
    * **DMG (polished drag-and-drop):**
      ```bash
