@@ -26,16 +26,17 @@ The GitHub Actions workflow (`.github/workflows/test-victoria.yml`) automaticall
 
 ### Running Tests Locally
 
-To run the test suite locally:
+All test scripts now reside in the `tests/` directory. To run the full test suite:
 
 ```bash
-python test_victoria.py
+pytest tests/test_victoria.py tests/test_non_interactive.py
 ```
 
-Or with Python 3 explicitly:
+Or run the scripts directly:
 
 ```bash
-python3 test_victoria.py
+python tests/test_victoria.py
+python tests/test_non_interactive.py
 ```
 
 ### Test Script Features

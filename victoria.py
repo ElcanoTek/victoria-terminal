@@ -657,9 +657,22 @@ def course_menu() -> str:
         warn("Invalid selection. Please choose 1 or 2.")
 
 # ------------------ Main ------------------
+def remove_local_duckdb():
+    """Remove local DuckDB file to ensure a clean start."""
+    db_path = Path("data") / "adtech.duckdb"
+    try:
+        if db_path.exists():
+            db_path.unlink()
+            info(f"Removed local database: {db_path}")
+        else:
+            info(f"No local database found at {db_path}")
+    except Exception as e:
+        warn(f"Could not remove {db_path}: {e}")
+
 def main():
     clear_screen()
     banner()
+    remove_local_duckdb()
     
     print(f"{T.GREEN}{T.ROCKET} Welcome to Victoria - Your AdTech Data Navigator!{T.NC}")
     
