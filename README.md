@@ -131,7 +131,15 @@ Before packaging, fetch `VICTORIA.md` from its private repository and place it i
 
    The script uses `uvx pyinstaller`, so no `pip install` is required. The bundle will be created at `dist/Victoria.app`. It bundles `CRUSH.md`, `VICTORIA.md`, `crush.template.json`, `snowflake.mcp.json`, and `.crushignore` for runtime reference.
 
-2. Share the app internally by either wrapping it in a DMG or zipping the bundle:
+2. Sign the bundle so macOS will load the bundled Python framework:
+
+   ```bash
+   codesign --force --deep --sign - dist/Victoria.app
+   ```
+
+   Replace `-` with your Developer ID certificate when distributing outside your machine. Without this step, launching the app may fail with a "different Team IDs" error.
+
+3. Share the app internally by either wrapping it in a DMG or zipping the bundle:
 
    * **DMG (polished drag-and-drop):** NOTE: replace "-" with your Developer ID if available
      ```bash
