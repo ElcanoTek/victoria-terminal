@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Victoria - AdTech Data Navigation (Cross-platform Python launcher, ✨ pretty version)
+Victoria - AdTech Data Navigation (Cross-platform Python launcher, pretty version)
 
 - Auto-detects Snowflake env; falls back to local if incomplete
 - Fetches VICTORIA.md via SSH clone (private repo)
@@ -189,6 +189,9 @@ class T:
         SHIELD    = "🛡️"
         WRENCH    = "🔧"
         PACKAGE   = "📦"
+        HOME      = "🏠"
+        PIRATE    = "🏴‍☠️"
+        CYCLONE   = "🌀"
     else:
         # ASCII fallbacks
         SHIP      = "[SHIP]"
@@ -216,6 +219,9 @@ class T:
         SHIELD    = "[#]"
         WRENCH    = "[+]"
         PACKAGE   = "[PKG]"
+        HOME      = "[HOME]"
+        PIRATE    = "[PIRATE]"
+        CYCLONE   = "[~]"
 
 def clear_screen():
     try:
@@ -258,12 +264,12 @@ def ship_loading_animation(message: str, duration: float = 3.0):
     
     if TERM_CAPS['emojis']:
         phases = [
-            ("🏠 Preparing to set sail...", 0.3),
-            ("⚓ Raising anchor...", 0.4),
-            ("🌊 Entering open waters...", 0.5),
-            ("🧭 Navigating the data seas...", 0.8),
-            ("🏴‍☠️ Discovering treasure...", 0.6),
-            ("🚢 Approaching destination...", 0.4),
+            (f"{T.HOME} Preparing to set sail...", 0.3),
+            (f"{T.ANCHOR} Raising anchor...", 0.4),
+            (f"{T.WAVE} Entering open waters...", 0.5),
+            (f"{T.COMPASS} Navigating the data seas...", 0.8),
+            (f"{T.PIRATE} Discovering treasure...", 0.6),
+            (f"{T.SHIP} Approaching destination...", 0.4),
         ]
     else:
         phases = [
@@ -287,7 +293,7 @@ def ship_loading_animation(message: str, duration: float = 3.0):
             
             # Simple wave animation
             if TERM_CAPS['emojis']:
-                wave_chars = ["🌊", "~", "~", "~"]
+                wave_chars = [T.WAVE, "~", "~", "~"]
                 wave_offset = int((time.time() * 2) % len(wave_chars))
                 waves = wave_chars[wave_offset] * 3
             else:
@@ -327,7 +333,7 @@ def enhanced_spinner(message: str, duration: float = 1.0):
         return
     
     if TERM_CAPS['emojis']:
-        frames = ["🌊", "🌀", "⚓", "🧭", "⭐", "🚢"]
+        frames = [T.WAVE, T.CYCLONE, T.ANCHOR, T.COMPASS, T.STAR, T.SHIP]
     else:
         frames = ["|", "/", "-", "\\", "*", "+"]
     
@@ -731,6 +737,6 @@ if __name__ == "__main__":
         print(f"{T.DIM}Fair winds and following seas! {T.WAVE}{T.NC}")
         sys.exit(130)
     except Exception as e:
-        print(f"\n{T.RED}💥 Unexpected navigation error: {e}{T.NC}")
+        print(f"\n{T.RED}{T.ERROR} Unexpected navigation error: {e}{T.NC}")
         print(f"{T.DIM}Check your charts and try again, Captain!{T.NC}")
         sys.exit(1)
