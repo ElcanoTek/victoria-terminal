@@ -35,6 +35,20 @@ CONFIG_TEMPLATE = os.environ.get("VICTORIA_TEMPLATE", "crush.template.json")
 SNOWFLAKE_FRAG  = "snowflake.mcp.json"
 OUTPUT_CONFIG   = os.environ.get("VICTORIA_OUTPUT", f"{TOOL_CMD}.json")
 
+APP_HOME = Path.home() / "Victoria"
+APP_HOME.mkdir(exist_ok=True)
+
+def resource_path(name: str) -> Path:
+    base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
+    return base / name
+
+def ensure_default_files():
+    for fname in [CONFIG_TEMPLATE, SNOWFLAKE_FRAG, ".crushignore"]:
+        src = resource_path(fname)
+        dst = APP_HOME / fname
+        if src.exists() and not dst.exists():
+            shutil.copy(src, dst)
+
 SNOWFLAKE_ENV_VARS = [
     "SNOWFLAKE_ACCOUNT",
     "SNOWFLAKE_USER",
@@ -538,15 +552,15 @@ def snowflake_env_missing() -> List[str]:
     return [v for v in SNOWFLAKE_ENV_VARS if not os.environ.get(v)]
 
 def load_base_template() -> Dict[str, Any]:
-    path = Path(CONFIG_TEMPLATE)
+    path = APP_HOME / CONFIG_TEMPLATE
     if not path.exists():
-        raise FileNotFoundError(f"Missing {CONFIG_TEMPLATE}")
+        raise FileNotFoundError(f"Missing {CONFIG_TEMPLATE} in {APP_HOME}")
     return read_json(path)
 
 def load_snowflake_fragment() -> Dict[str, Any]:
-    path = Path(SNOWFLAKE_FRAG)
+    path = APP_HOME / SNOWFLAKE_FRAG
     if not path.exists():
-        raise FileNotFoundError(f"Missing {SNOWFLAKE_FRAG}")
+        raise FileNotFoundError(f"Missing {SNOWFLAKE_FRAG} in {APP_HOME}")
     return read_json(path)
 
 def build_config(include_snowflake: bool, strict_env: bool) -> Dict[str, Any]:
@@ -564,8 +578,9 @@ def generate_config(include_snowflake: bool) -> bool:
     try:
         ship_loading_animation("Generating navigation configuration", 2.0)
         cfg = build_config(include_snowflake, strict_env=include_snowflake)
-        write_json(Path(OUTPUT_CONFIG), cfg)
-        success_animation(f"Configuration written to {OUTPUT_CONFIG}")
+        out_path = APP_HOME / OUTPUT_CONFIG
+        write_json(out_path, cfg)
+        success_animation(f"Configuration written to {out_path}")
         return True
     except Exception as ex:
         err(f"Configuration generation failed: {ex}")
@@ -612,13 +627,14 @@ def launch_tool():
     print(f"\n{T.GREEN}{T.TARGET} Launching Victoria Data Navigator{T.NC}")
 
     try:
+        cmd = [TOOL_CMD, "-y", "-c", str(APP_HOME)]
         if os.name == "nt":
-            proc = subprocess.run([TOOL_CMD])
+            proc = subprocess.run(cmd)
             if proc.returncode != 0:
                 err(f"{TOOL_CMD} exited with error code {proc.returncode}")
                 sys.exit(proc.returncode)
         else:
-            os.execvp(TOOL_CMD, [TOOL_CMD])
+            os.execvp(TOOL_CMD, cmd)
     except FileNotFoundError:
         err(f"'{TOOL_CMD}' command not found in PATH")
         sys.exit(1)
@@ -659,7 +675,7 @@ def course_menu() -> str:
 # ------------------ Main ------------------
 def remove_local_duckdb():
     """Remove local DuckDB file to ensure a clean start."""
-    db_path = Path("data") / "adtech.duckdb"
+    db_path = APP_HOME / "adtech.duckdb"
     try:
         if db_path.exists():
             db_path.unlink()
@@ -670,6 +686,7 @@ def remove_local_duckdb():
         warn(f"Could not remove {db_path}: {e}")
 
 def main():
+    ensure_default_files()
     clear_screen()
     banner()
     remove_local_duckdb()
