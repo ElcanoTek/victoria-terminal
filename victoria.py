@@ -16,7 +16,6 @@ import json
 import os
 import re
 import shutil
-import shlex
 import subprocess
 import sys
 import tempfile
@@ -58,47 +57,6 @@ SNOWFLAKE_ENV_VARS = [
     "SNOWFLAKE_WAREHOUSE",
     "SNOWFLAKE_ROLE",
 ]
-
-
-def relaunch_in_terminal() -> bool:
-    """Relaunch this script in a terminal window.
-
-    Prefers Ghostty when available on macOS or Linux. Falls back to the
-    default system terminal when Ghostty isn't installed. Returns True if a
-    new terminal was spawned and the caller should exit."""
-
-    if os.environ.get("VICTORIA_IN_TERMINAL"):
-        return False
-
-    cmd: List[str] = [sys.executable, str(Path(__file__).resolve())] + sys.argv[1:]
-    env = os.environ.copy()
-    env["VICTORIA_IN_TERMINAL"] = "1"
-
-    ghostty = shutil.which("ghostty")
-    if ghostty and sys.platform != "win32":
-        try:
-            subprocess.Popen([ghostty, "-e", *cmd], env=env)
-            return True
-        except Exception:
-            pass
-
-    if sys.platform == "darwin":
-        try:
-            osa_cmd = f'tell application "Terminal" to do script "{shlex.join(cmd)}"'
-            subprocess.Popen(["osascript", "-e", osa_cmd], env=env)
-            return True
-        except Exception:
-            pass
-    elif sys.platform.startswith("linux"):
-        term = shutil.which("x-terminal-emulator")
-        if term:
-            try:
-                subprocess.Popen([term, "-e", *cmd], env=env)
-                return True
-            except Exception:
-                pass
-
-    return False
 
 # ------------------ Terminal Capability Detection ------------------
 def _enable_windows_ansi():
@@ -819,8 +777,6 @@ def main():
         launch_tool()
 
 if __name__ == "__main__":
-    if relaunch_in_terminal():
-        sys.exit(0)
     try:
         main()
     except KeyboardInterrupt:
