@@ -1,4 +1,4 @@
-# Victoria x `crush` Setup
+# Victoria x `crush`
 
 <img src="assets/icon.png" alt="Victoria Icon" width="200" />
 
