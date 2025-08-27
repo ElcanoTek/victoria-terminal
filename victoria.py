@@ -44,7 +44,7 @@ def resource_path(name: str) -> Path:
     return base / name
 
 def ensure_default_files():
-    for fname in [CONFIG_TEMPLATE, SNOWFLAKE_FRAG, ".crushignore"]:
+    for fname in [".crushignore", "CRUSH.md"]:
         src = resource_path(fname)
         dst = APP_HOME / fname
         if src.exists() and not dst.exists():
@@ -467,8 +467,7 @@ def substitute_env(obj: Any, strict: bool = False) -> Any:
 
 # ------------------ VICTORIA.md via SSH ------------------
 def ensure_victoria_md() -> bool:
-    root = Path.cwd()
-    target = root / VICTORIA_FILE
+    target = APP_HOME / VICTORIA_FILE
     if target.exists():
         return True
 
@@ -499,10 +498,10 @@ def ensure_victoria_md() -> bool:
 
         shutil.copy2(src, target)
         size = target.stat().st_size
-        
+
         success_animation(f"{VICTORIA_FILE} successfully acquired!")
         print(f"{T.CYAN}{T.CHART} File size: {T.WHITE}{size:,} bytes{T.NC}")
-        print(f"{T.CYAN}{T.MAP} Location: {T.WHITE}./{VICTORIA_FILE}{T.NC}")
+        print(f"{T.CYAN}{T.MAP} Location: {T.WHITE}{target}{T.NC}")
         
         # Preview
         print(f"\n{T.MAGENTA}{T.BOOK} DOCUMENT PREVIEW{T.NC}")
@@ -525,10 +524,10 @@ def ensure_victoria_md() -> bool:
 
 def prompt_update_victoria():
     section_header("KNOWLEDGE BASE STATUS", T.BOOK)
-    
-    target = Path(VICTORIA_FILE)
+
+    target = APP_HOME / VICTORIA_FILE
     if target.exists():
-        info(f"{VICTORIA_FILE} already exists in current directory")
+        info(f"{VICTORIA_FILE} already exists in {APP_HOME}")
         print("\nUpdate options:")
         print(f"  {T.GREEN}[Y]{T.NC} Update to latest from private repo")
         print(f"  {T.YELLOW}[N]{T.NC} Use existing local copy (default)")
@@ -538,7 +537,7 @@ def prompt_update_victoria():
         else:
             good(f"Using existing {VICTORIA_FILE}")
     else:
-        warn(f"{VICTORIA_FILE} not found in current directory")
+        warn(f"{VICTORIA_FILE} not found in {APP_HOME}")
         print("\nDownload options:")
         print(f"  {T.GREEN}[Y]{T.NC} Download via SSH (recommended)")
         print(f"  {T.YELLOW}[N]{T.NC} Skip download and continue")
@@ -553,15 +552,17 @@ def snowflake_env_missing() -> List[str]:
     return [v for v in SNOWFLAKE_ENV_VARS if not os.environ.get(v)]
 
 def load_base_template() -> Dict[str, Any]:
-    path = APP_HOME / CONFIG_TEMPLATE
+    path_home = APP_HOME / CONFIG_TEMPLATE
+    path = path_home if path_home.exists() else resource_path(CONFIG_TEMPLATE)
     if not path.exists():
-        raise FileNotFoundError(f"Missing {CONFIG_TEMPLATE} in {APP_HOME}")
+        raise FileNotFoundError(f"Missing {CONFIG_TEMPLATE}")
     return read_json(path)
 
 def load_snowflake_fragment() -> Dict[str, Any]:
-    path = APP_HOME / SNOWFLAKE_FRAG
+    path_home = APP_HOME / SNOWFLAKE_FRAG
+    path = path_home if path_home.exists() else resource_path(SNOWFLAKE_FRAG)
     if not path.exists():
-        raise FileNotFoundError(f"Missing {SNOWFLAKE_FRAG} in {APP_HOME}")
+        raise FileNotFoundError(f"Missing {SNOWFLAKE_FRAG}")
     return read_json(path)
 
 def build_config(include_snowflake: bool, strict_env: bool) -> Dict[str, Any]:
