@@ -83,25 +83,19 @@ Victoria is Elcano's AI agent that connects to programmatic advertising reports 
 
 ## 🚀 Launching Victoria
 
-Open your terminal, change into the `victoria-crush` folder, and run:
+Open your terminal, change into the `victoria-crush` folder, and run in developer mode:
 
 ```bash
 cd /path/to/victoria-crush
-python3 victoria.py
+python3 victoria.py --dev
 ```
 
 This gives you the most control and is the same across macOS, Linux, and Windows (PowerShell).
 All modes store configuration and data in `~/Victoria` (or `%USERPROFILE%\Victoria` on Windows).
 
-To refresh the bundled `VICTORIA.md` knowledge base during development, run:
-
-```bash
-python3 victoria.py --dev
-```
-
-You can also enable developer mode by setting `VICTORIA_DEV=1` in your
-environment. Packaged builds ignore this variable to avoid shipping in
-developer mode; use the `--dev` flag explicitly if needed.
+We recommend always using the `--dev` flag when running from the command line to keep your
+`VICTORIA.md` knowledge base up to date. Packaged builds run without developer prompts unless
+you pass `--dev` explicitly.
 
 #### Customizing the launch tool
 

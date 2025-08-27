@@ -190,7 +190,7 @@ def test_environment_variables():
         
         print("✅ Environment variable tests passed")
         return True
-        
+
     except Exception as e:
         print(f"✗ Environment variable error: {e}")
         return False
