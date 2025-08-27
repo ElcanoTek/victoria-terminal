@@ -133,9 +133,8 @@ Before packaging, fetch `VICTORIA.md` from its private repository and place it i
 
 2. Share the app internally by either wrapping it in a DMG or zipping the bundle:
 
-   * **DMG (polished drag-and-drop):**
+   * **DMG (polished drag-and-drop):** NOTE: replace "-" with your Developer ID if available
      ```bash
-     # ad-hoc sign to reduce Gatekeeper prompts; replace "-" with your Developer ID if available
      codesign --deep --force --options runtime --sign "-" dist/Victoria.app
      hdiutil create -volname "Victoria" -srcfolder dist/Victoria.app -ov -format UDZO dist/Victoria.dmg
      ```
