@@ -99,6 +99,10 @@ To refresh the bundled `VICTORIA.md` knowledge base during development, run:
 python3 victoria.py --dev
 ```
 
+You can also enable developer mode by setting `VICTORIA_DEV=1` in your
+environment. Packaged builds ignore this variable to avoid shipping in
+developer mode; use the `--dev` flag explicitly if needed.
+
 #### Customizing the launch tool
 
 Victoria uses the `crush` CLI by default. Set the following environment variables to swap in a different tool or config files:
@@ -111,7 +115,8 @@ export VICTORIA_OUTPUT="your_cli.json"
 
 ## 📦 Packaging for macOS and Windows
 
-You can build standalone packages so Victoria can be launched from Finder. The macOS app opens a terminal window for interaction.
+You can build standalone packages so Victoria can be launched from Finder. The macOS app now uses AppleScript to reuse the first
+Terminal window for interaction, preventing runaway Terminal instances.
 
 ### macOS `.app`
 

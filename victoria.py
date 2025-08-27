@@ -712,7 +712,9 @@ def open_victoria_folder():
 
 def main():
     args = parse_args()
-    dev_mode = args.dev or os.environ.get("VICTORIA_DEV") == "1"
+    dev_mode = args.dev or (
+        os.environ.get("VICTORIA_DEV") == "1" and not getattr(sys, "frozen", False)
+    )
 
     ensure_default_files()
     clear_screen()
