@@ -14,7 +14,6 @@ Victoria is Elcano's AI agent that connects to programmatic advertising reports 
 
 You may either install these manually or via a script. See the [dependencies](./dependencies) folder for more info.
 
-* `git` - open a terminal and type `git` to install it via Xcode on a Mac, if you are on Linux it should be preinstalled.
 * `crush` – [GitHub](https://github.com/charmbracelet/crush)
 * `uv` – [Docs](https://docs.astral.sh/uv/getting-started/installation/)
 * `python` - open a terminal and type `python3` to install it via Xcode on a Mac, if you are on Linux it should be preinstalled. You may also download it from [python.org](https://www.python.org).
@@ -54,8 +53,6 @@ You may either install these manually or via a script. See the [dependencies](./
 
 You may either install these manually or via a script. See the [dependencies](./dependencies) folder for more info.
 
-* [Windows Terminal](https://aka.ms/terminal)
-* [Git for Windows](https://git-scm.com/download/win)
 * [crush](https://github.com/charmbracelet/crush)
 * [uv](https://docs.astral.sh/uv/getting-started/installation/)
 * `python` - just open the windows terminal and type `python` to install or download the latest at [python.org](https://www.python.org/downloads/windows/)
