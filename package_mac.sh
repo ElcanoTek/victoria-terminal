@@ -27,6 +27,10 @@ chmod +x "$MACOS/launch.command"
 cat > "$MACOS/Victoria" <<'EOF'
 #!/bin/bash
 DIR="$(cd "$(dirname "$0")" && pwd)"
-open -a Terminal "$DIR/launch.command"
+if [ -n "$TERM_PROGRAM" ]; then
+  "$DIR/launch.command"
+else
+  open -a Terminal "$DIR/launch.command"
+fi
 EOF
 chmod +x "$MACOS/Victoria"
