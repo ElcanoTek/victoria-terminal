@@ -15,22 +15,25 @@ MACOS="$APP/Contents/MacOS"
 # Rename the compiled binary so we can wrap it with a launcher
 mv "$MACOS/Victoria" "$MACOS/victoria-bin"
 
-# Script that actually executes the binary inside a Terminal session
-cat > "$MACOS/launch.command" <<'EOF'
-#!/bin/bash
-DIR="$(cd "$(dirname "$0")" && pwd)"
-"$DIR/victoria-bin"
-EOF
-chmod +x "$MACOS/launch.command"
-
-# Wrapper executable that Finder launches. It opens Terminal and runs the command script.
+# Wrapper executable that Finder launches. It opens Terminal and runs the binary.
 cat > "$MACOS/Victoria" <<'EOF'
 #!/bin/bash
 DIR="$(cd "$(dirname "$0")" && pwd)"
+BIN="$DIR/victoria-bin"
 if [ -n "$TERM_PROGRAM" ]; then
-  "$DIR/launch.command"
+  exec "$BIN"
 else
-  open -a Terminal "$DIR/launch.command"
+  osascript <<END
+tell application "Terminal"
+  if not (exists window 1) then
+    do script "$BIN"
+  else
+    do script "$BIN" in window 1
+    activate
+  end if
+end tell
+END
+
 fi
 EOF
 chmod +x "$MACOS/Victoria"

@@ -118,6 +118,7 @@ export VICTORIA_OUTPUT="your_cli.json"
 You can build standalone packages so Victoria can be launched from Finder. The macOS app opens a terminal window for interaction
 and detects existing sessions to avoid spawning extra Terminal windows.
 
+
 ### macOS `.app`
 
 Before packaging, fetch `VICTORIA.md` from its private repository and place it in the project root. It is ignored by git.
