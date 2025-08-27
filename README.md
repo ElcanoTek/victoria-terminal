@@ -115,8 +115,9 @@ export VICTORIA_OUTPUT="your_cli.json"
 
 ## 📦 Packaging for macOS and Windows
 
-You can build standalone packages so Victoria can be launched from Finder. The macOS app now uses AppleScript to reuse the first
-Terminal window for interaction, preventing runaway Terminal instances.
+You can build standalone packages so Victoria can be launched from Finder. The macOS app opens a terminal window for interaction
+and detects existing sessions to avoid spawning extra Terminal windows.
+
 
 ### macOS `.app`
 

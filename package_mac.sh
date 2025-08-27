@@ -33,6 +33,7 @@ tell application "Terminal"
   end if
 end tell
 END
+
 fi
 EOF
 chmod +x "$MACOS/Victoria"
