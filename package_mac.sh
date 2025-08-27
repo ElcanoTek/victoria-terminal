@@ -3,8 +3,13 @@ set -e
 # Build a macOS .app bundle; use --windowed so PyInstaller creates the
 # application structure we expect. The wrapper below will launch the binary in
 # Terminal, so we do not need the console flag here.
+# Bundle identifier and Developer ID for codesigning
+BUNDLE_ID=${BUNDLE_ID:-com.elcanotek.victoria}
+DEVELOPER_ID=${DEVELOPER_ID:-"Developer ID Application: Brad Flaugher (W6RVUQUBJ8)"}
+
 uvx pyinstaller --noconfirm --windowed --name Victoria \
   --icon assets/icon.icns \
+  --osx-bundle-identifier "$BUNDLE_ID" \
   --add-data "crush.template.json:." \
   --add-data "snowflake.mcp.json:." \
   --add-data ".crushignore:." \
@@ -26,12 +31,13 @@ BIN="$DIR/victoria-bin"
 if [ -n "$TERM_PROGRAM" ]; then
   exec "$BIN"
 else
+  BIN_ESCAPED=$(printf '%q' "$BIN")
   osascript <<END
 tell application "Terminal"
   if not (exists window 1) then
-    do script "$BIN"
+    do script "$BIN_ESCAPED"
   else
-    do script "$BIN" in window 1
+    do script "$BIN_ESCAPED" in window 1
     activate
   end if
 end tell
@@ -40,3 +46,6 @@ END
 fi
 EOF
 chmod +x "$MACOS/Victoria"
+
+# Codesign with Developer ID (can be overridden via env vars)
+codesign --force --deep --sign "$DEVELOPER_ID" "$APP" || true
