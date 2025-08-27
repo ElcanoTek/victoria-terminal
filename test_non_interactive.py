@@ -8,6 +8,7 @@ import subprocess
 import sys
 import time
 import platform
+import signal
 
 # Fix Windows console encoding for Unicode characters
 if platform.system() == 'Windows':
@@ -92,21 +93,26 @@ def test_victoria_with_interrupt():
         # Let it run for a moment
         time.sleep(1)
         
-        # Send interrupt signal
-        process.terminate()
+        # Send interrupt signal (Ctrl+C)
+        process.send_signal(signal.SIGINT)
         
         try:
             stdout, stderr = process.communicate(timeout=5)
             exit_code = process.returncode
             
             print(f"  Exit code after interrupt: {exit_code}")
-            
-            # Check for graceful interrupt handling
+
+            # Check for expected exit code and graceful interrupt handling
+            if exit_code == 130:
+                print("  ✓ Correct exit code (130) for SIGINT")
+            else:
+                print(f"  ⚠️ Unexpected exit code: {exit_code}")
+
             if "cancelled" in stdout.lower() or "interrupted" in stdout.lower():
                 print("  ✓ Script handled interrupt gracefully")
             else:
                 print("  ⚠️ No interrupt message found")
-            
+
             return True
             
         except subprocess.TimeoutExpired:
