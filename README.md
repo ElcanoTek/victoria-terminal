@@ -13,10 +13,10 @@ Victoria is Elcano's AI agent that connects to programmatic advertising reports 
 #### Dependencies
 
 * `ghostty` – [ghostty.org](https://ghostty.org/) *(optional but recommended)*
-* `git` - open a terminal and type `git` to install it via Xcode on a mac, if you are on linux it should be preinstalled.
+* `git` - open a terminal and type `git` to install it via Xcode on a Mac, if you are on Linux it should be preinstalled.
 * `crush` – [GitHub](https://github.com/charmbracelet/crush)
 * `uv` – [Docs](https://docs.astral.sh/uv/getting-started/installation/)
-* `python` - open a terminal and type `python3` to install it via Xcode on a mac, if you are on linux it should be preinstalled. You may also download it from [python.org](https://www.python.org).
+* `python` - open a terminal and type `python3` to install it via Xcode on a Mac, if you are on Linux it should be preinstalled. You may also download it from [python.org](https://www.python.org).
 
 #### Environment Variables
 
