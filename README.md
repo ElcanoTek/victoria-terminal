@@ -131,23 +131,15 @@ Before packaging, fetch `VICTORIA.md` from its private repository and place it i
 
    The script uses `uvx pyinstaller`, so no `pip install` is required. The bundle will be created at `dist/Victoria.app`. It bundles `CRUSH.md`, `VICTORIA.md`, `crush.template.json`, `snowflake.mcp.json`, and `.crushignore` for runtime reference. The script automatically codesigns the bundle using your Developer ID certificate if it is installed.
 
-2. Share the signed app by wrapping it in a DMG or zipping the bundle, then notarize the archive for distribution:
+2. Share the signed app by wrapping it in a DMG, then notarize for distribution **IMPORTANT NOTE: ONLY BRAD CAN SIGN THE DMG AT THIS TIME!** The signing is tied to Brad Flaugher's Apple developer account.:
 
    * **DMG (polished drag-and-drop):**
      ```bash
      hdiutil create -volname "Victoria" -srcfolder dist/Victoria.app -ov -format UDZO dist/Victoria.dmg
-     xcrun notarytool submit dist/Victoria.dmg --wait
+     xcrun notarytool submit dist/Victoria.dmg --keychain-profile "notary_password" --wait
      xcrun stapler staple dist/Victoria.dmg
      ```
-
-   * **ZIP (quick share):**
-     ```bash
-     (cd dist && zip -r Victoria.zip Victoria.app)
-     xcrun notarytool submit dist/Victoria.zip --wait
-     xcrun stapler staple dist/Victoria.app
-     ```
-     Users must unzip the archive and move `Victoria.app` to their Applications folder manually.
-
+  
 ### Windows `.exe` and Installer
 
 Before packaging, fetch `VICTORIA.md` from its private repository and place it in the project root. It is ignored by git.
