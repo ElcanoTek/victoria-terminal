@@ -721,8 +721,6 @@ def main():
 
     print(f"{T.CYAN}{T.FOLDER} Place files to analyze in: {T.WHITE}{APP_HOME}{T.NC}")
     print(f"{T.DIM}file://{APP_HOME}{T.NC}")
-    open_victoria_folder()
-
     print(f"{T.GREEN}{T.ROCKET} Welcome to Victoria - Your AdTech Data Navigator!{T.NC}")
     
     # Show terminal capabilities for debugging (remove in production)
@@ -774,6 +772,7 @@ def main():
 
         print(f"\n{T.GREEN}{T.WAVE} FULL OCEAN EXPEDITION READY{T.NC}")
         print(f"{T.CYAN}Launching Victoria with complete data access...{T.NC}")
+        open_victoria_folder()
         launch_tool()
 
     else:  # choice == "2"
@@ -791,6 +790,7 @@ def main():
 
         print(f"\n{T.CYAN}{T.ANCHOR} COASTAL NAVIGATION READY{T.NC}")
         print(f"{T.CYAN}Launching Victoria with local data access...{T.NC}")
+        open_victoria_folder()
         launch_tool()
 
 if __name__ == "__main__":
