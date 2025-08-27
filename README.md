@@ -152,6 +152,22 @@ You can build standalone packages so Victoria can be launched without a terminal
 
    The script uses `uvx pyinstaller`, so no `pip install` is required. The bundle will be created at `dist/Victoria.app`.
 
+2. Share the app internally by either wrapping it in a DMG or zipping the bundle:
+
+   * **DMG (polished drag-and-drop):**
+     ```bash
+     # ad-hoc sign to reduce Gatekeeper prompts; replace "-" with your Developer ID if available
+     codesign --deep --force --options runtime --sign "-" dist/Victoria.app
+     hdiutil create -volname "Victoria" -srcfolder dist/Victoria.app -ov -format UDZO dist/Victoria.dmg
+     ```
+     Notarization can be skipped for internal distribution.
+
+   * **ZIP (quick share):**
+     ```bash
+     (cd dist && zip -r Victoria.zip Victoria.app)
+     ```
+     Users must unzip the archive and move `Victoria.app` to their Applications folder manually.
+
 ### Windows `.exe` and Installer
 
 1. Install [Inno Setup](https://jrsoftware.org/isinfo.php) (make sure `iscc` is on your PATH). PyInstaller is invoked via `uvx`, so you don't need to install it.
