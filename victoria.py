@@ -12,6 +12,7 @@ Victoria - AdTech Data Navigation (Cross-platform Python launcher, pretty versio
 - Cross-platform terminal compatibility with graceful degradation
 """
 
+import argparse
 import json
 import os
 import re
@@ -44,11 +45,21 @@ def resource_path(name: str) -> Path:
     return base / name
 
 def ensure_default_files():
-    for fname in [".crushignore", "CRUSH.md"]:
+    for fname in [".crushignore", "CRUSH.md", VICTORIA_FILE]:
         src = resource_path(fname)
         dst = APP_HOME / fname
         if src.exists() and not dst.exists():
             shutil.copy(src, dst)
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Victoria launcher")
+    parser.add_argument(
+        "--dev",
+        action="store_true",
+        help="Enable developer mode to refresh VICTORIA.md",
+    )
+    return parser.parse_args()
 
 SNOWFLAKE_ENV_VARS = [
     "SNOWFLAKE_ACCOUNT",
@@ -700,6 +711,9 @@ def open_victoria_folder():
         warn(f"Could not open Victoria folder: {e}")
 
 def main():
+    args = parse_args()
+    dev_mode = args.dev or os.environ.get("VICTORIA_DEV") == "1"
+
     ensure_default_files()
     clear_screen()
     banner()
@@ -716,8 +730,10 @@ def main():
         print(f"{T.DIM}Debug: Terminal caps: {TERM_CAPS}{T.NC}")
     
     time.sleep(1)
-    
-    prompt_update_victoria()
+
+    if dev_mode:
+        prompt_update_victoria()
+
     preflight()
 
     choice = course_menu()
