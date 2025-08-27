@@ -95,6 +95,7 @@ python3 victoria.py
 ```
 
 This gives you the most control and is the same across macOS, Linux, and Windows (PowerShell).
+All modes store configuration and data in `~/Victoria` (or `%USERPROFILE%\Victoria` on Windows).
 
 #### Customizing the launch tool
 
@@ -134,6 +135,39 @@ On macOS, you can launch Victoria from Finder:
 > ```
 
 After that, it’s double-click and go.
+
+---
+
+## 📦 Packaging for macOS and Windows
+
+You can build standalone packages so Victoria can be launched without a terminal.
+
+### macOS `.app`
+
+1. Install [PyInstaller](https://pyinstaller.org) (`pip install pyinstaller`).
+2. Replace `assets/icon.icns` with your desired app icon (ICNS format).
+3. Run:
+
+   ```bash
+   ./package_mac.sh
+   ```
+
+   The bundle will be created at `dist/Victoria.app`.
+
+### Windows `.exe` and Installer
+
+1. Install PyInstaller (`pip install pyinstaller`) and [Inno Setup](https://jrsoftware.org/isinfo.php) (make sure `iscc` is on your PATH).
+2. Replace `assets\icon.ico` with your desired app icon (ICO format).
+3. Run `package_win.bat` from Command Prompt or PowerShell:
+
+   ```powershell
+   .\package_win.bat
+   ```
+
+   This produces both a standalone executable (`dist/Victoria.exe`) and an installer (`dist/VictoriaSetup.exe`).
+
+To upgrade Victoria on Windows, build a new installer with an updated version number and run it; Inno Setup will replace the previous installation automatically while preserving the same AppId.
+Both packaged versions automatically use the `~/Victoria` folder (or `%USERPROFILE%\Victoria` on Windows) for configuration and data.
 
 ---
 
