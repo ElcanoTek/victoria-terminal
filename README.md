@@ -131,18 +131,28 @@ Before packaging, fetch `VICTORIA.md` from its private repository and place it i
 
    The script uses `uvx pyinstaller`, so no `pip install` is required. The bundle will be created at `dist/Victoria.app`. It bundles `CRUSH.md`, `VICTORIA.md`, `crush.template.json`, `snowflake.mcp.json`, and `.crushignore` for runtime reference.
 
-2. Share the app internally by either wrapping it in a DMG or zipping the bundle:
+2. Sign the bundle with your Developer ID certificate so macOS will load the bundled Python framework:
 
-   * **DMG (polished drag-and-drop):** NOTE: replace "-" with your Developer ID if available
+   ```bash
+   codesign --force --deep --options runtime --sign "Developer ID Application: Your Name (TEAMID)" dist/Victoria.app
+   ```
+
+   A Developer ID certificate is issued through the paid [Apple Developer Program](https://developer.apple.com/programs/). After enrolling, create a "Developer ID Application" certificate in the developer portal and use it in the command above. Without a valid signature, launching the app may fail with a "different Team IDs" error or trigger Gatekeeper warnings.
+
+3. Share the signed app by wrapping it in a DMG or zipping the bundle, then notarize the archive for distribution:
+
+   * **DMG (polished drag-and-drop):**
      ```bash
-     codesign --deep --force --options runtime --sign "-" dist/Victoria.app
      hdiutil create -volname "Victoria" -srcfolder dist/Victoria.app -ov -format UDZO dist/Victoria.dmg
+     xcrun notarytool submit dist/Victoria.dmg --wait
+     xcrun stapler staple dist/Victoria.dmg
      ```
-     Notarization can be skipped for internal distribution.
 
    * **ZIP (quick share):**
      ```bash
      (cd dist && zip -r Victoria.zip Victoria.app)
+     xcrun notarytool submit dist/Victoria.zip --wait
+     xcrun stapler staple dist/Victoria.app
      ```
      Users must unzip the archive and move `Victoria.app` to their Applications folder manually.
 
