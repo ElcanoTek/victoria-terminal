@@ -14,6 +14,8 @@ Victoria is Elcano's AI agent that connects to programmatic advertising reports 
 
 #### Dependencies
 
+You may either install these manually or via a script. See the [dependencies](./dependencies) folder for more info.
+
 * `ghostty` – [ghostty.org](https://ghostty.org/) *(optional but recommended)*
 * `git` - open a terminal and type `git` to install it via Xcode on a Mac, if you are on Linux it should be preinstalled.
 * `crush` – [GitHub](https://github.com/charmbracelet/crush)
@@ -52,6 +54,8 @@ Victoria is Elcano's AI agent that connects to programmatic advertising reports 
 ### Windows
 
 #### Dependencies
+
+You may either install these manually or via a script. See the [dependencies](./dependencies) folder for more info.
 
 * [Windows Terminal](https://aka.ms/terminal)
 * [Git for Windows](https://git-scm.com/download/win)
