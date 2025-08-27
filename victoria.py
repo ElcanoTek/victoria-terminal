@@ -6,7 +6,7 @@ Victoria - AdTech Data Navigation (Cross-platform Python launcher, ✨ pretty ve
 
 - Auto-detects Snowflake env; falls back to local if incomplete
 - Fetches VICTORIA.md via SSH clone (private repo)
-- Merges `crush.template.json` + `snowflake.mcp.json`
+- Merges a JSON template (default `crush.template.json`) with `snowflake.mcp.json`
 - Replaces ${ENV_VAR} tokens from the environment (cross-platform)
 - Writes UTF-8 without BOM
 - Cross-platform terminal compatibility with graceful degradation
@@ -29,9 +29,11 @@ VICTORIA_REPO_SSH = "git@github.com:ElcanoTek/victoria-main.git"
 VICTORIA_BRANCH   = "main"
 VICTORIA_FILE     = "VICTORIA.md"
 
-CRUSH_TEMPLATE    = "crush.template.json"
-SNOWFLAKE_FRAG    = "snowflake.mcp.json"
-OUTPUT_CONFIG     = "crush.json"
+# Launch command is configurable to allow swapping out crush later
+TOOL_CMD = os.environ.get("VICTORIA_TOOL", "crush")
+CONFIG_TEMPLATE = os.environ.get("VICTORIA_TEMPLATE", "crush.template.json")
+SNOWFLAKE_FRAG  = "snowflake.mcp.json"
+OUTPUT_CONFIG   = os.environ.get("VICTORIA_OUTPUT", f"{TOOL_CMD}.json")
 
 SNOWFLAKE_ENV_VARS = [
     "SNOWFLAKE_ACCOUNT",
@@ -224,14 +226,6 @@ def clear_screen():
 def which(cmd: str) -> Optional[str]:
     return shutil.which(cmd)
 
-def center_text(text: str, width: int = None) -> str:
-    if width is None:
-        width = T._width
-    # Remove ANSI codes for length calculation
-    clean_text = re.sub(r'\033\[[0-9;]*m', '', text)
-    padding = max(0, (width - len(clean_text)) // 2)
-    return " " * padding + text
-
 def info(msg: str):  print(f"{T.CYAN}[i] {msg}{T.NC}")
 def good(msg: str):  print(f"{T.GREEN}{T.CHECK} {msg}{T.NC}")
 def warn(msg: str):  print(f"{T.YELLOW}{T.WARN} {msg}{T.NC}")
@@ -354,93 +348,43 @@ def enhanced_spinner(message: str, duration: float = 1.0):
     print()
 
 def banner():
-    """Cross-platform banner with ASCII fallbacks."""
-    width = min(T._width, 80)  # Cap width for readability
-    
-    # Border characters
-    if TERM_CAPS['unicode_box']:
-        h_line = "═"
-        corner_tl, corner_tr = "╔", "╗"
-        corner_bl, corner_br = "╚", "╝"
-        v_line = "║"
-    else:
-        h_line = "="
-        corner_tl = corner_tr = corner_bl = corner_br = "+"
-        v_line = "|"
-    
-    print(f"\n{T.CYAN}{h_line * width}{T.NC}")
-    
-    # Main title
+    """Minimal banner without borders or centering."""
     if TERM_CAPS['emojis']:
-        title_line1 = f"{T.CYAN}{T.BOLD}{T.SHIP} VICTORIA {T.WAVE} ADTECH DATA NAVIGATION {T.SPARKLES}{T.NC}"
-        title_line2 = f"{T.CYAN_LIGHT}\"Charting the Digital Seas of Programmatic Advertising\"{T.NC}"
+        print(f"{T.CYAN}{T.BOLD}{T.SHIP} VICTORIA {T.WAVE} ADTECH DATA NAVIGATION {T.SPARKLES}{T.NC}")
+        print(f"{T.CYAN_LIGHT}\"Charting the Digital Seas of Programmatic Advertising\"{T.NC}")
     else:
-        title_line1 = f"{T.CYAN}{T.BOLD}*** VICTORIA - ADTECH DATA NAVIGATION ***{T.NC}"
-        title_line2 = f"{T.CYAN}\"Charting the Digital Seas of Programmatic Advertising\"{T.NC}"
-    
-    print(center_text(title_line1, width))
-    print(center_text(title_line2, width))
-    print(f"{T.CYAN}{h_line * width}{T.NC}")
-    
-    # ASCII art - simplified for compatibility
-    if TERM_CAPS['unicode_box'] and width >= 60:
-        print(f"{T.CYAN}{T.BOLD}")
-        ascii_art = [
-            "╔══════════════════════════════════════════════════════════════╗",
-            "║  ██╗   ██╗██╗ ██████╗████████╗ ██████╗ ██████╗ ██╗ █████╗   ║",
-            "║  ██║   ██║██║██╔════╝╚══██╔══╝██╔═══██╗██╔══██╗██║██╔══██╗  ║",
-            "║  ██║   ██║██║██║        ██║   ██║   ██║██████╔╝██║███████║  ║",
-            "║  ╚██╗ ██╔╝██║██║        ██║   ██║   ██║██╔══██╗██║██╔══██║  ║",
-            "║   ╚████╔╝ ██║╚██████╗   ██║   ╚██████╔╝██║  ██║██║██║  ██║  ║",
-            "║    ╚═══╝  ╚═╝ ╚═════╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚═╝╚═╝  ╚═╝  ║",
-            "╚══════════════════════════════════════════════════════════════╝"
-        ]
-        for line in ascii_art:
-            print(center_text(line, width))
-    else:
-        # Simple ASCII art for narrow terminals or no Unicode support
-        print(f"{T.CYAN}{T.BOLD}")
-        simple_art = [
-            "+----------------------------------------------------------+",
-            "|  V I C T O R I A   -   D A T A   N A V I G A T O R      |",
-            "|                                                          |",
-            "|      Your AdTech Analytics Command Center                |",
-            "+----------------------------------------------------------+"
-        ]
-        for line in simple_art:
-            print(center_text(line, width))
-    
-    print(f"{T.NC}")
-    
-    # Status indicators
-    print(center_text(f"{T.GREEN}{T.FIRE} SYSTEM STATUS{T.NC}", width))
+        print(f"{T.CYAN}{T.BOLD}VICTORIA - ADTECH DATA NAVIGATION{T.NC}")
+        print(f"{T.CYAN}\"Charting the Digital Seas of Programmatic Advertising\"{T.NC}")
+
     if TERM_CAPS['unicode_box']:
-        print(center_text(f"{T.CYAN}━━━━━━━━━━━━━━━━{T.NC}", width))
+        ascii_art = [
+            "██╗   ██╗██╗ ██████╗████████╗ ██████╗ ██████╗ ██╗ █████╗",
+            "██║   ██║██║██╔════╝╚══██╔══╝██╔═══██╗██╔══██╗██║██╔══██╗",
+            "██║   ██║██║██║        ██║   ██║   ██║██████╔╝██║███████║",
+            "╚██╗ ██╔╝██║██║        ██║   ██║   ██║██╔══██╗██║██╔══██║",
+            " ╚████╔╝ ██║╚██████╗   ██║   ╚██████╔╝██║  ██║██║██║  ██║",
+            "  ╚═══╝  ╚═╝ ╚═════╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚═╝╚═╝  ╚═╝",
+        ]
     else:
-        print(center_text(f"{T.CYAN}----------------{T.NC}", width))
-    
-    print(center_text(f"{T.GREEN}{T.LIGHTNING} Engine: {T.WHITE}Online{T.NC}", width))
-    print(center_text(f"{T.BLUE}{T.COMPASS} Navigation: {T.WHITE}Ready{T.NC}", width))
-    print(center_text(f"{T.MAGENTA}{T.GEAR} AI Systems: {T.WHITE}Activated{T.NC}", width))
-    print(f"{T.CYAN}{h_line * width}{T.NC}\n")
+        ascii_art = [
+            "V I C T O R I A - D A T A - N A V I G A T O R",
+            "Your AdTech Analytics Command Center",
+        ]
+    for line in ascii_art:
+        print(f"{T.CYAN}{line}{T.NC}")
+    print()
+
+    print(f"{T.GREEN}{T.FIRE} System Status{T.NC}")
+    print(f"{T.GREEN}{T.LIGHTNING} Engine: {T.WHITE}Online{T.NC}")
+    print(f"{T.BLUE}{T.COMPASS} Navigation: {T.WHITE}Ready{T.NC}")
+    print(f"{T.MAGENTA}{T.GEAR} AI Systems: {T.WHITE}Activated{T.NC}")
+    print()
 
 def section_header(title: str, icon: str = None) -> None:
-    """Create section headers with fallbacks."""
-    width = min(T._width, 80)
-    
-    if icon is None:
-        icon = T.TARGET
-    
-    title_with_icon = f"{icon} {title.upper()} {icon}"
-    
-    if TERM_CAPS['unicode_box']:
-        print(f"\n{T.YELLOW}┌{'─' * (width-2)}┐{T.NC}")
-        print(f"{T.YELLOW}│{center_text(f'{T.BOLD}{T.WHITE}{title_with_icon}{T.NC}', width-2)}{T.YELLOW}│{T.NC}")
-        print(f"{T.YELLOW}└{'─' * (width-2)}┘{T.NC}")
-    else:
-        print(f"\n{T.YELLOW}+{'-' * (width-2)}+{T.NC}")
-        print(f"{T.YELLOW}|{center_text(f'{T.BOLD}{T.WHITE}{title_with_icon}{T.NC}', width-2)}{T.YELLOW}|{T.NC}")
-        print(f"{T.YELLOW}+{'-' * (width-2)}+{T.NC}")
+    """Simple section header without borders."""
+    icon = icon or T.TARGET
+    print(f"\n{T.YELLOW}{icon} {title.upper()}{T.NC}")
+    print(f"{T.YELLOW}{'-' * len(title)}{T.NC}")
 
 def success_animation(message: str):
     """Cross-platform success message."""
@@ -564,18 +508,9 @@ def prompt_update_victoria():
     target = Path(VICTORIA_FILE)
     if target.exists():
         info(f"{VICTORIA_FILE} already exists in current directory")
-        
-        if TERM_CAPS['unicode_box']:
-            print(f"\n{T.CYAN}┌─ Update Options ─────────────────────────┐{T.NC}")
-            print(f"{T.CYAN}│{T.NC} {T.GREEN}[Y]{T.NC} Update to latest from private repo   {T.CYAN}│{T.NC}")
-            print(f"{T.CYAN}│{T.NC} {T.YELLOW}[N]{T.NC} Use existing local copy (default)  {T.CYAN}│{T.NC}")
-            print(f"{T.CYAN}└──────────────────────────────────────────┘{T.NC}")
-        else:
-            print(f"\n{T.CYAN}+- Update Options ---------------------+{T.NC}")
-            print(f"{T.CYAN}|{T.NC} {T.GREEN}[Y]{T.NC} Update to latest from private repo {T.CYAN}|{T.NC}")
-            print(f"{T.CYAN}|{T.NC} {T.YELLOW}[N]{T.NC} Use existing local copy (default){T.CYAN}|{T.NC}")
-            print(f"{T.CYAN}+-------------------------------------+{T.NC}")
-        
+        print("\nUpdate options:")
+        print(f"  {T.GREEN}[Y]{T.NC} Update to latest from private repo")
+        print(f"  {T.YELLOW}[N]{T.NC} Use existing local copy (default)")
         choice = input(f"\n{T.BOLD}{T.WHITE}Update {VICTORIA_FILE}? [y/N]: {T.NC}").strip().lower()
         if choice in ("y", "yes"):
             ensure_victoria_md()
@@ -583,18 +518,9 @@ def prompt_update_victoria():
             good(f"Using existing {VICTORIA_FILE}")
     else:
         warn(f"{VICTORIA_FILE} not found in current directory")
-        
-        if TERM_CAPS['unicode_box']:
-            print(f"\n{T.CYAN}┌─ Download Options ───────────────────────┐{T.NC}")
-            print(f"{T.CYAN}│{T.NC} {T.GREEN}[Y]{T.NC} Download via SSH (recommended)      {T.CYAN}│{T.NC}")
-            print(f"{T.CYAN}│{T.NC} {T.YELLOW}[N]{T.NC} Skip download and continue        {T.CYAN}│{T.NC}")
-            print(f"{T.CYAN}└──────────────────────────────────────────┘{T.NC}")
-        else:
-            print(f"\n{T.CYAN}+- Download Options -------------------+{T.NC}")
-            print(f"{T.CYAN}|{T.NC} {T.GREEN}[Y]{T.NC} Download via SSH (recommended)    {T.CYAN}|{T.NC}")
-            print(f"{T.CYAN}|{T.NC} {T.YELLOW}[N]{T.NC} Skip download and continue      {T.CYAN}|{T.NC}")
-            print(f"{T.CYAN}+-------------------------------------+{T.NC}")
-        
+        print("\nDownload options:")
+        print(f"  {T.GREEN}[Y]{T.NC} Download via SSH (recommended)")
+        print(f"  {T.YELLOW}[N]{T.NC} Skip download and continue")
         choice = input(f"\n{T.BOLD}{T.WHITE}Download {VICTORIA_FILE}? [Y/n]: {T.NC}").strip().lower()
         if choice in ("n", "no"):
             warn(f"Skipping {VICTORIA_FILE} download")
@@ -606,9 +532,9 @@ def snowflake_env_missing() -> List[str]:
     return [v for v in SNOWFLAKE_ENV_VARS if not os.environ.get(v)]
 
 def load_base_template() -> Dict[str, Any]:
-    path = Path(CRUSH_TEMPLATE)
+    path = Path(CONFIG_TEMPLATE)
     if not path.exists():
-        raise FileNotFoundError(f"Missing {CRUSH_TEMPLATE}")
+        raise FileNotFoundError(f"Missing {CONFIG_TEMPLATE}")
     return read_json(path)
 
 def load_snowflake_fragment() -> Dict[str, Any]:
@@ -628,7 +554,7 @@ def build_config(include_snowflake: bool, strict_env: bool) -> Dict[str, Any]:
             deep_merge(base["mcp"], frag)
     return substitute_env(base, strict=strict_env)
 
-def generate_crush_config(include_snowflake: bool) -> bool:
+def generate_config(include_snowflake: bool) -> bool:
     try:
         ship_loading_animation("Generating navigation configuration", 2.0)
         cfg = build_config(include_snowflake, strict_env=include_snowflake)
@@ -639,99 +565,87 @@ def generate_crush_config(include_snowflake: bool) -> bool:
         err(f"Configuration generation failed: {ex}")
         return False
 
+
+def generate_crush_config(include_snowflake: bool) -> bool:
+    """Backwards compatibility wrapper."""
+    return generate_config(include_snowflake)
+
 # ------------------ Preflight & Launch ------------------
 def preflight():
     section_header("SYSTEM PREFLIGHT CHECK", T.WRENCH)
-    
+
     enhanced_spinner("Initializing navigation systems", 1.2)
-    
-    # Check crush
-    if which("crush") is None:
-        err("Missing 'crush' command-line tool")
-        print(f"\n{T.CYAN}{T.PACKAGE} INSTALLATION REQUIRED{T.NC}")
-        print(f"{T.WHITE}Install crush from: https://github.com/charmbracelet/crush{T.NC}")
+
+    # Check tool availability
+    if which(TOOL_CMD) is None:
+        err(f"Missing '{TOOL_CMD}' command-line tool")
+        print(f"\n{T.CYAN}{T.PACKAGE} Installation required{T.NC}")
         sys.exit(1)
     else:
-        good("Crush CLI tool detected")
-    
+        good(f"{TOOL_CMD} CLI tool detected")
+
     # Check API key
     if not os.environ.get("OPENROUTER_API_KEY"):
         err("OPENROUTER_API_KEY not configured")
-        print(f"\n{T.YELLOW}{T.KEY} API CONFIGURATION REQUIRED{T.NC}")
-        print(f"{T.CYAN}{'-' * 60}{T.NC}")
+        print(f"\n{T.YELLOW}{T.KEY} Set OPENROUTER_API_KEY in your environment{T.NC}")
         if os.name == "nt":
-            print(f"{T.WHITE}PowerShell (Persistent):{T.NC}")
             print(f'{T.GREEN}[Environment]::SetEnvironmentVariable("OPENROUTER_API_KEY","your_key","User"){T.NC}')
         else:
-            print(f"{T.WHITE}Shell Export:{T.NC}")
             print(f'{T.GREEN}export OPENROUTER_API_KEY="your_api_key_here"{T.NC}')
-        print(f"{T.CYAN}{'-' * 60}{T.NC}")
         sys.exit(1)
     else:
         good("OpenRouter API key configured")
-    
+
     success_animation("All systems ready for launch!")
 
-def launch_crush():
+def launch_tool():
     section_header("MISSION LAUNCH", T.ROCKET)
-    
-    ship_loading_animation("Preparing crush launch sequence", 2.0)
-    
-    print(f"\n{T.GREEN}{T.TARGET} LAUNCHING VICTORIA DATA NAVIGATOR{T.NC}")
-    
-    border_char = "=" if not TERM_CAPS['unicode_box'] else "═"
-    print(f"{T.CYAN}{border_char * 50}{T.NC}")
-    
+
+    ship_loading_animation(f"Preparing {TOOL_CMD} launch sequence", 2.0)
+
+    print(f"\n{T.GREEN}{T.TARGET} Launching Victoria Data Navigator{T.NC}")
+
     try:
         if os.name == "nt":
-            proc = subprocess.run(["crush"])
+            proc = subprocess.run([TOOL_CMD])
             if proc.returncode != 0:
-                err(f"Crush exited with error code {proc.returncode}")
+                err(f"{TOOL_CMD} exited with error code {proc.returncode}")
                 sys.exit(proc.returncode)
         else:
-            os.execvp("crush", ["crush"])
+            os.execvp(TOOL_CMD, [TOOL_CMD])
     except FileNotFoundError:
-        err("'crush' command not found in PATH")
+        err(f"'{TOOL_CMD}' command not found in PATH")
         sys.exit(1)
     except Exception as e:
-        err(f"Failed to launch crush: {e}")
+        err(f"Failed to launch {TOOL_CMD}: {e}")
         sys.exit(1)
+
+
+def launch_crush():
+    """Backwards compatibility wrapper."""
+    return launch_tool()
 
 def course_menu() -> str:
     section_header("NAVIGATION COURSE SELECTION", T.COMPASS)
-    
+
     enhanced_spinner("Booting navigation systems", 1.5)
-    
+
     print(f"\n{T.BOLD}{T.WHITE}Choose your data exploration voyage:{T.NC}\n")
-    
-    # Use appropriate border characters
-    if TERM_CAPS['unicode_box']:
-        border_chars = ("┌", "─", "┐", "│", "└", "┘", "├", "┤")
-    else:
-        border_chars = ("+", "-", "+", "|", "+", "+", "+", "+")
-    
-    tl, h, tr, v, bl, br, lt, rt = border_chars
-    
-    print(f"{T.CYAN}{tl}{h} EXPEDITION OPTIONS {h * (T._width - 22)}{tr}{T.NC}")
-    print(f"{T.CYAN}{v}{T.NC}")
-    print(f"{T.CYAN}{v}{T.NC} {T.GREEN}{T.BOLD}[1] {T.WAVE} FULL OCEAN EXPEDITION{T.NC}")
-    print(f"{T.CYAN}{v}{T.NC}     {T.CYAN}{T.LIGHTNING} Enterprise Snowflake Database Access{T.NC}")
-    print(f"{T.CYAN}{v}{T.NC}     {T.CYAN}{T.CHART} Local CSV/Excel via MotherDuck{T.NC}")
-    print(f"{T.CYAN}{v}{T.NC}     {T.CYAN}{T.TARGET} Complete programmatic advertising analytics{T.NC}")
-    print(f"{T.CYAN}{v}{T.NC}     {T.CYAN}{T.FIRE} Maximum data exploration capabilities{T.NC}")
-    print(f"{T.CYAN}{v}{T.NC}")
-    print(f"{T.CYAN}{lt}{h * (T._width - 2)}{rt}{T.NC}")
-    print(f"{T.CYAN}{v}{T.NC}")
-    print(f"{T.CYAN}{v}{T.NC} {T.YELLOW}{T.BOLD}[2] {T.ANCHOR} COASTAL NAVIGATION{T.NC}")
-    print(f"{T.CYAN}{v}{T.NC}     {T.YELLOW}{T.FOLDER} Local CSV/Excel file analysis{T.NC}")
-    print(f"{T.CYAN}{v}{T.NC}     {T.YELLOW}{T.LIGHTNING} Fast startup, zero external dependencies{T.NC}")
-    print(f"{T.CYAN}{v}{T.NC}     {T.YELLOW}{T.MAG} Perfect for local data exploration{T.NC}")
-    print(f"{T.CYAN}{v}{T.NC}     {T.YELLOW}{T.SHIELD} Ideal for testing and development{T.NC}")
-    print(f"{T.CYAN}{v}{T.NC}")
-    print(f"{T.CYAN}{bl}{h * (T._width - 2)}{br}{T.NC}")
+
+    print(f"{T.GREEN}{T.BOLD}[1]{T.NC} {T.WAVE} FULL OCEAN EXPEDITION")
+    print(f"    {T.CYAN}{T.LIGHTNING} Enterprise Snowflake Database Access{T.NC}")
+    print(f"    {T.CYAN}{T.CHART} Local CSV/Excel via MotherDuck{T.NC}")
+    print(f"    {T.CYAN}{T.TARGET} Complete programmatic advertising analytics{T.NC}")
+    print(f"    {T.CYAN}{T.FIRE} Maximum data exploration capabilities{T.NC}\n")
+
+    print(f"{T.YELLOW}{T.BOLD}[2]{T.NC} {T.ANCHOR} COASTAL NAVIGATION")
+    print(f"    {T.YELLOW}{T.FOLDER} Local CSV/Excel file analysis{T.NC}")
+    print(f"    {T.YELLOW}{T.LIGHTNING} Fast startup, zero external dependencies{T.NC}")
+    print(f"    {T.YELLOW}{T.MAG} Perfect for local data exploration{T.NC}")
+    print(f"    {T.YELLOW}{T.SHIELD} Ideal for testing and development{T.NC}\n")
 
     while True:
-        choice = input(f"\n{T.BOLD}{T.WHITE}{T.TARGET} Select your navigation course [1-2]: {T.NC}").strip()
+        choice = input(f"{T.BOLD}{T.WHITE}{T.TARGET} Select your navigation course [1-2]: {T.NC}").strip()
         if choice in ("1", "2"):
             return choice
         warn("Invalid selection. Please choose 1 or 2.")
@@ -762,15 +676,11 @@ def main():
         missing = snowflake_env_missing()
         if missing:
             print(f"\n{T.RED}{T.WARN} NAVIGATION HAZARD DETECTED{T.NC}")
-            
-            border_char = "=" if not TERM_CAPS['unicode_box'] else "═"
-            print(f"{T.YELLOW}{border_char * 60}{T.NC}")
             warn("Missing required Snowflake environment variables:")
             for v in missing:
                 print(f"   {T.RED}{T.ERROR} {v}{T.NC}")
-            
+
             print(f"\n{T.CYAN}{T.WRENCH} REQUIRED CONFIGURATION:{T.NC}")
-            print(f"{T.CYAN}{'-' * 60}{T.NC}")
             env_vars = [
                 'export SNOWFLAKE_ACCOUNT="your_account"',
                 'export SNOWFLAKE_USER="your_username"',
@@ -783,19 +693,18 @@ def main():
                     typewriter_effect(f"  {T.GREEN}{var}{T.NC}", 0.02)
                 else:
                     print(f"  {var}")
-            
+
             print(f"\n{T.MAGENTA}{T.BOOK} See SNOWFLAKE_INSTALL.md for detailed setup instructions{T.NC}")
-            print(f"{T.YELLOW}{border_char * 60}{T.NC}")
             sys.exit(1)
 
         success_animation("Snowflake credentials validated!")
         
-        if not generate_crush_config(include_snowflake=True):
+        if not generate_config(include_snowflake=True):
             sys.exit(1)
-            
+
         print(f"\n{T.GREEN}{T.WAVE} FULL OCEAN EXPEDITION READY{T.NC}")
         print(f"{T.CYAN}Launching Victoria with complete data access...{T.NC}")
-        launch_crush()
+        launch_tool()
 
     else:  # choice == "2"
         section_header("COASTAL NAVIGATION PREP", T.ANCHOR)
@@ -805,14 +714,14 @@ def main():
         
         enhanced_spinner("Configuring local data access", 1.5)
         
-        if not generate_crush_config(include_snowflake=False):
+        if not generate_config(include_snowflake=False):
             sys.exit(1)
-            
+
         success_animation("Local data configuration ready!")
-        
+
         print(f"\n{T.CYAN}{T.ANCHOR} COASTAL NAVIGATION READY{T.NC}")
         print(f"{T.CYAN}Launching Victoria with local data access...{T.NC}")
-        launch_crush()
+        launch_tool()
 
 if __name__ == "__main__":
     try:
