@@ -629,7 +629,7 @@ def launch_tool():
     print(f"\n{T.GREEN}{T.TARGET} Launching Victoria Data Navigator{T.NC}")
 
     try:
-        cmd = [TOOL_CMD, "-y", "-c", str(APP_HOME)]
+        cmd = [TOOL_CMD, "-c", str(APP_HOME)]
         if os.name == "nt":
             proc = subprocess.run(cmd)
             if proc.returncode != 0:
