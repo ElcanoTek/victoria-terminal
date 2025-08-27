@@ -2,8 +2,6 @@
 
 <img src="assets/icon.png" alt="Victoria Icon" width="200" />
 
-[![Test Victoria Script](https://github.com/ElcanoTek/victoria-crush/actions/workflows/test-victoria.yml/badge.svg)](https://github.com/ElcanoTek/victoria-crush/actions/workflows/test-victoria.yml)
-
 Victoria is Elcano's AI agent that connects to programmatic advertising reports via **MCP**. Paired with [`crush`](https://github.com/charmbracelet/crush), traders can ask powerful questions of CSVs, Excel files, and Snowflake datasets — making it easier to surface insights, spot trends, and optimize campaigns.
 
 ---
