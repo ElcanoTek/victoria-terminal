@@ -81,20 +81,29 @@ def test_victoria_with_interrupt():
     try:
         python_cmd = sys.executable
         
+        # On Windows we need a process group to send CTRL_BREAK_EVENT
+        creationflags = 0
+        if platform.system() == 'Windows':
+            creationflags = subprocess.CREATE_NEW_PROCESS_GROUP
+
         # Start the process
         process = subprocess.Popen(
             [python_cmd, 'victoria.py'],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            text=True
+            text=True,
+            creationflags=creationflags
         )
-        
+
         # Let it run for a moment
         time.sleep(1)
-        
+
         # Send interrupt signal (Ctrl+C)
-        process.send_signal(signal.SIGINT)
+        if platform.system() == 'Windows':
+            process.send_signal(signal.CTRL_BREAK_EVENT)
+        else:
+            process.send_signal(signal.SIGINT)
         
         try:
             stdout, stderr = process.communicate(timeout=5)
