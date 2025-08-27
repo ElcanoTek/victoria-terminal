@@ -144,21 +144,21 @@ You can build standalone packages so Victoria can be launched without a terminal
 
 ### macOS `.app`
 
-1. Install [PyInstaller](https://pyinstaller.org) (`pip install pyinstaller`).
-2. Replace `assets/icon.icns` with your desired app icon (ICNS format).
-3. Run:
+1. Replace `assets/icon.icns` with your desired app icon (ICNS format).
+2. Run:
 
    ```bash
    ./package_mac.sh
    ```
 
-   The bundle will be created at `dist/Victoria.app`.
+   The script uses `uvx pyinstaller`, so no `pip install` is required. The bundle will be created at `dist/Victoria.app`.
 
 ### Windows `.exe` and Installer
 
-1. Install PyInstaller (`pip install pyinstaller`) and [Inno Setup](https://jrsoftware.org/isinfo.php) (make sure `iscc` is on your PATH).
+1. Install [Inno Setup](https://jrsoftware.org/isinfo.php) (make sure `iscc` is on your PATH). PyInstaller is invoked via `uvx`, so you don't need to install it.
 2. Replace `assets\icon.ico` with your desired app icon (ICO format).
-3. Run `package_win.bat` from Command Prompt or PowerShell:
+3. To change the installer version, edit `installer_win.iss` and update `MyAppVersion` on line 2.
+4. Run `package_win.bat` from Command Prompt or PowerShell:
 
    ```powershell
    .\package_win.bat
