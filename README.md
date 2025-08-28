@@ -19,7 +19,13 @@ You may install prerequisites manually or run the platform script in the [depend
 ### Python Packages (developers only)
 
 The bundled application includes its own Python libraries. When running
-`victoria.py` directly, install the UI helpers manually:
+`victoria.py` directly, install the UI helpers manually, on first run make sure you setup a venv:
+
+```bash
+uv venv
+```
+
+then install the requirements
 
 ```bash
 uv pip install colorama rich
@@ -29,6 +35,12 @@ Verify the installation:
 
 ```bash
 python3 -c "import colorama, rich; print(colorama.__version__, rich.__version__)"
+```
+
+***IMPORTANT*** in future you'll want to activate your venv before running the victoria.py script
+
+```
+source .venv/bin/activate
 ```
 
 ### Environment Variables
@@ -50,6 +62,7 @@ Open your terminal, change into the `victoria-app` folder, and run:
 
 ```bash
 cd /path/to/victoria-app
+source .venv/bin/activate
 python3 victoria.py
 ```
 
