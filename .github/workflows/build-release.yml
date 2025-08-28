@@ -88,7 +88,7 @@ jobs:
           path: release
       - name: Read build version
         run: |
-          VERSION=$(cat release/VERSION)
+          VERSION=$(tr -d '\r\n' < release/VERSION)
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           rm release/VERSION
       - name: Download Windows artifact
