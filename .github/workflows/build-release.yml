@@ -50,6 +50,13 @@ jobs:
         run: |
           scripts\package_win.bat
           copy dist\Victoria.exe Victoria.exe
+      - name: Upload build version
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-version
+          path: VERSION
+          if-no-files-found: error
       - name: Build macOS app
         if: matrix.os == 'macos-latest'
         run: |
@@ -60,18 +67,30 @@ jobs:
         with:
           name: victoria-windows
           path: Victoria.exe
+          if-no-files-found: error
       - name: Upload macOS artifact
         if: matrix.os == 'macos-latest'
         uses: actions/upload-artifact@v4
         with:
           name: victoria-macos
           path: Victoria.app.zip
+          if-no-files-found: error
 
   release:
     needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Download build version
+        uses: actions/download-artifact@v4
+        with:
+          name: build-version
+          path: release
+      - name: Read build version
+        run: |
+          VERSION=$(cat release/VERSION)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          rm release/VERSION
       - name: Download Windows artifact
         uses: actions/download-artifact@v4
         with:
@@ -85,10 +104,14 @@ jobs:
       - name: Include dependencies
         run: |
           cp dependencies/install_prerequisites_* release/
+      - name: Rename artifacts with version
+        run: |
+          mv release/Victoria.exe "release/Victoria-${VERSION}.exe"
+          mv release/Victoria.app.zip "release/Victoria-${VERSION}.app.zip"
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v${{ github.run_number }}
-          name: Victoria v${{ github.run_number }}
+          tag_name: v${{ env.VERSION }}
+          name: Victoria v${{ env.VERSION }}
           generate_release_notes: true
           files: release/*
