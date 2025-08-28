@@ -18,7 +18,7 @@ You may install prerequisites manually or run the platform script in the [depend
 
 ### Environment Variables
 
-Victoria uses the following variables:
+Set your environment variables manually or use `set_env_macos_linux.sh` or `set_env_windows.ps1` in the [dependencies](./dependencies) folder to configure these values.
 
 * `OPENROUTER_API_KEY` (required)
 * `SNOWFLAKE_ACCOUNT` (optional)
@@ -27,7 +27,6 @@ Victoria uses the following variables:
 * `SNOWFLAKE_WAREHOUSE` (optional)
 * `SNOWFLAKE_ROLE` (optional)
 
-Use `set_env_macos_linux.sh` or `set_env_windows.ps1` in the [dependencies](./dependencies) folder to configure these values.
 ---
 
 ## 🚀 Launching Victoria
