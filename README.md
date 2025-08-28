@@ -34,13 +34,13 @@ source .venv/bin/activate
 Then install the requirements:
 
 ```bash
-uv pip install colorama rich
+uv pip install -r requirements.txt
 ```
 
 Verify the installation:
 
 ```bash
-python3 -c "import colorama, rich; print(colorama.__version__, rich.__version__)"
+python3 -c "import colorama, importlib.metadata as im; print(colorama.__version__, im.version('rich'))"
 ```
 
 ### Environment Variables
