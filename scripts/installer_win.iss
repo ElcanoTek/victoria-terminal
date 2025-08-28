@@ -9,14 +9,14 @@ AppVersion={#MyAppVersion}
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 UninstallDisplayIcon={app}\{#MyAppExeName}
-OutputDir=dist
+OutputDir=..\dist
 OutputBaseFilename=VictoriaSetup
 Compression=lzma
 SolidCompression=yes
-SetupIconFile=assets\icon.ico
+SetupIconFile=..\assets\icon.ico
 
 [Files]
-Source: "dist\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\dist\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
