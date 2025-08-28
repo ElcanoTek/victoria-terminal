@@ -107,40 +107,50 @@ export VICTORIA_TEMPLATE="your_cli.template.json"
 export VICTORIA_OUTPUT="your_cli.json"
 ```
 
+## 🔄 On-Demand GitHub Actions
+
+Two workflows in [`.github/workflows`](.github/workflows) can be run manually from the **Actions** tab or via the GitHub CLI.
+
+* **Manual Tests** ([`manual-tests.yml`](.github/workflows/manual-tests.yml)) — runs `tests/test_victoria.py` and `tests/test_non_interactive.py` on Linux, macOS, and Windows:
+
+  ```bash
+  gh workflow run manual-tests.yml
+  ```
+
+* **Build and Release** ([`build-release.yml`](.github/workflows/build-release.yml)) — executes the test suite and then calls [`scripts/package_mac.sh`](scripts/package_mac.sh) and [`scripts/package_win.bat`](scripts/package_win.bat) to produce `Victoria.app.zip` and `Victoria.exe`. The workflow bundles everything in `dependencies/` except the README and publishes a GitHub release:
+
+  ```bash
+  gh workflow run build-release.yml
+  ```
+
+These packaging scripts can also be run locally if you need to build outside of GitHub.
+
 ## 📦 Packaging for macOS and Windows
 
-You can build standalone packages so Victoria can be launched from Finder. The macOS app opens a terminal window for interaction
-and detects existing sessions to avoid spawning extra Terminal windows.
-
+You can build standalone packages so Victoria can be launched from Finder. These steps mirror what the **Build and Release** workflow runs automatically. The macOS app opens a terminal window for interaction and detects existing sessions to avoid spawning extra Terminal windows.
 
 ### macOS `.app`
 
 Before packaging, fetch `VICTORIA.md` from its private repository and place it in the project root. It is ignored by git.
 
-1. Run:
+Run:
 
-   ```bash
-   ./package_mac.sh
-   ```
+```bash
+./scripts/package_mac.sh
+```
 
-   The script uses `uvx pyinstaller`, so no `pip install` is required. The bundle will be created at `dist/Victoria.app`. It bundles `CRUSH.md`, `VICTORIA.md`, `crush.template.json`, `snowflake.mcp.json`, and `.crushignore` for runtime reference. The script automatically codesigns the bundle using your Developer ID certificate if it is installed.
-
-2. zip the .app and share it:
-
-    ```bash
-    (cd dist && zip -r Victoria.zip Victoria.app)  
-    ````
+The script uses `uvx pyinstaller`, so no `pip install` is required. It creates `dist/Victoria.app` and a zipped archive `Victoria.app.zip` in the project root. The build bundles `CRUSH.md`, `VICTORIA.md`, `crush.template.json`, `snowflake.mcp.json`, and `.crushignore` for runtime reference.
 
 ### Windows `.exe` and Installer
 
 Before packaging, fetch `VICTORIA.md` from its private repository and place it in the project root. It is ignored by git.
 
 1. Install [Inno Setup](https://jrsoftware.org/isinfo.php) (make sure `iscc` is on your PATH). PyInstaller is invoked via `uvx`, so you don't need to install it.
-2. To change the installer version, edit `installer_win.iss` and update `MyAppVersion` on line 2.
-3. Run `package_win.bat` from Command Prompt or PowerShell:
+2. To change the installer version, edit `scripts/installer_win.iss` and update `MyAppVersion` on line 2.
+3. Run `scripts/package_win.bat` from Command Prompt or PowerShell:
 
    ```powershell
-   .\package_win.bat
+   .\scripts\package_win.bat
    ```
 
    This produces both a standalone executable (`dist/Victoria.exe`) and an installer (`dist/VictoriaSetup.exe`). The build bundles `CRUSH.md` and `VICTORIA.md` alongside the configuration templates for runtime reference.

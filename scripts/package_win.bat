@@ -8,4 +8,4 @@ uvx pyinstaller --noconfirm --onefile --name Victoria ^
   --add-data "VICTORIA.md;." ^
   victoria.py
 REM Build installer with Inno Setup (iscc must be on PATH)
-iscc installer_win.iss
+iscc %~dp0installer_win.iss

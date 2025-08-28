@@ -3,9 +3,8 @@ set -e
 # Build a macOS .app bundle; use --windowed so PyInstaller creates the
 # application structure we expect. The wrapper below will launch the binary in
 # Terminal, so we do not need the console flag here.
-# Bundle identifier and Developer ID for codesigning
+# Bundle identifier for the app
 BUNDLE_ID=${BUNDLE_ID:-com.elcanotek.victoria}
-DEVELOPER_ID=${DEVELOPER_ID:-"Developer ID Application: Brad Flaugher (W6RVUQUBJ8)"}
 
 uvx pyinstaller --noconfirm --windowed --name Victoria \
   --icon assets/icon.icns \
@@ -47,5 +46,5 @@ fi
 EOF
 chmod +x "$MACOS/Victoria"
 
-# Codesign with Developer ID (can be overridden via env vars)
-codesign --force --deep --sign "$DEVELOPER_ID" "$APP" || true
+# Zip the app for distribution
+(cd dist && zip -r ../Victoria.app.zip Victoria.app)
