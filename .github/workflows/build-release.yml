@@ -47,10 +47,7 @@ jobs:
       - name: Build Windows executable
         if: matrix.os == 'windows-latest'
         shell: cmd
-        run: |
-          scripts\package_win.bat
-          copy dist\Victoria.exe Victoria.exe
-          copy dist\VictoriaSetup.exe VictoriaSetup.exe
+        run: scripts\package_win.bat
       - name: Upload build version
         if: matrix.os == 'windows-latest'
         uses: actions/upload-artifact@v4
@@ -68,8 +65,8 @@ jobs:
         with:
           name: victoria-windows
           path: |
-            Victoria.exe
-            VictoriaSetup.exe
+            dist/Victoria.exe
+            dist/VictoriaSetup.exe
           if-no-files-found: error
       - name: Upload macOS artifact
         if: matrix.os == 'macos-latest'
