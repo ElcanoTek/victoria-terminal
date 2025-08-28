@@ -8,56 +8,26 @@ Victoria is Elcano's AI agent that connects to programmatic advertising reports 
 
 ## ⚙️ Installation
 
-###Dependencies (All Platforms)
+### Dependencies
 
-You may either install these manually or via a script. See the [dependencies](./dependencies) folder for more info.
+You may install prerequisites manually or run the platform script in the [dependencies](./dependencies) folder.
 
 * `crush` – [GitHub](https://github.com/charmbracelet/crush)
 * `uv` – [Docs](https://docs.astral.sh/uv/getting-started/installation/)
-* `python` - open a terminal and type `python3` to install it via Xcode on a Mac, if you are on Linux it should be preinstalled. You may also download it from [python.org](https://www.python.org).
+* `python` – download from [python.org](https://www.python.org) or use your platform's package manager.
 
-### Environment Variables (Linux / macOS)
+### Environment Variables
 
-* `OPENROUTER_API_KEY` (required)
-
-  * Email [brad@elcanotek.com](mailto:brad@elcanotek.com) for a company key.
-  * Example:
-
-    ```bash
-    # permanent (all sessions)
-    # replace .zshrc with .bashrc if using bash
-    echo 'export OPENROUTER_API_KEY="your_api_key_here"' >> ~/.zshrc
-    source ~/.zshrc
-    ```
-
-* **Snowflake Integration (Optional)**
-
-  ```bash
-  export SNOWFLAKE_ACCOUNT="your_account_identifier"
-  export SNOWFLAKE_USER="your_username@domain.com"
-  export SNOWFLAKE_PASSWORD="your_password"
-  export SNOWFLAKE_WAREHOUSE="your_warehouse"
-  export SNOWFLAKE_ROLE="your_read_only_role"
-  ```
-
-### Environment Variables (Windows)
+Victoria uses the following variables:
 
 * `OPENROUTER_API_KEY` (required)
+* `SNOWFLAKE_ACCOUNT` (optional)
+* `SNOWFLAKE_USER` (optional)
+* `SNOWFLAKE_PASSWORD` (optional)
+* `SNOWFLAKE_WAREHOUSE` (optional)
+* `SNOWFLAKE_ROLE` (optional)
 
-  ```powershell
-  # Permanent (all sessions)
-  [Environment]::SetEnvironmentVariable("OPENROUTER_API_KEY", "your_api_key_here", "User")
-  ```
-
-* **Snowflake Integration (Optional)**
-
-  ```powershell
-  [Environment]::SetEnvironmentVariable("SNOWFLAKE_ACCOUNT", "your_account", "User")
-  [Environment]::SetEnvironmentVariable("SNOWFLAKE_USER", "your_user", "User")
-  [Environment]::SetEnvironmentVariable("SNOWFLAKE_PASSWORD", "your_password", "User")
-  [Environment]::SetEnvironmentVariable("SNOWFLAKE_WAREHOUSE", "your_warehouse", "User")
-  [Environment]::SetEnvironmentVariable("SNOWFLAKE_ROLE", "your_role", "User")
-  ```
+Use `set_env_macos_linux.sh` or `set_env_windows.ps1` in the [dependencies](./dependencies) folder to configure these values.
 ---
 
 ## 🚀 Launching Victoria

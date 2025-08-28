@@ -1,18 +1,20 @@
-# Prerequisite Installer Scripts
+# Setup Scripts
 
-Scripts in this directory install the tools needed for the project:
+Scripts in this directory help install prerequisites and configure environment variables for Victoria.
+
+## Prerequisite Installers
+
+Install the required tools:
 
 - **Python 3**
 - **uv** – fast Python package and project manager
 - **crush** – AI coding agent
 
-## Scripts
+Run the script that matches your platform:
 
 - `install_prerequisites_macos.sh`
 - `install_prerequisites_linux.sh`
-- `install_prerequisites_windows.ps1` (with wrapper `install_prerequisites_windows.bat`)
-
-Run the script that matches your platform:
+- `install_prerequisites_windows.ps1` (wrapper `install_prerequisites_windows.bat`)
 
 ```bash
 # macOS
@@ -32,5 +34,24 @@ python3 --version  # or python --version on Windows
 uv --version
 crush --version
 ```
+
+## Environment Variable Setup
+
+Scripts that prompt for required environment variables and append them to your shell profile (or user environment on Windows):
+
+- `set_env_macos_linux.sh`
+- `set_env_windows.ps1` (wrapper `set_env_windows.bat`)
+
+Run the script for your platform:
+
+```bash
+# macOS or Linux
+./set_env_macos_linux.sh
+
+# Windows (PowerShell)
+powershell -ExecutionPolicy RemoteSigned -File set_env_windows.ps1
+```
+
+These scripts configure `OPENROUTER_API_KEY` and optional Snowflake variables. Restart your terminal after running.
 
 You can re-run the scripts safely if needed.

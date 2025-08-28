@@ -104,6 +104,7 @@ jobs:
       - name: Include dependencies
         run: |
           cp dependencies/install_prerequisites_* release/
+          cp dependencies/set_env_* release/
       - name: Rename artifacts with version
         run: |
           mv release/Victoria.exe "release/Victoria-${VERSION}.exe"
