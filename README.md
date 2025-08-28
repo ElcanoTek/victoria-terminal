@@ -10,7 +10,7 @@ Victoria is Elcano's AI agent that connects to programmatic advertising reports 
 
 ### Dependencies
 
-You may install prerequisites manually or run the platform script in the [dependencies](./dependencies) folder.
+You may install prerequisites manually or run the platform script in the [dependencies](./dependencies) folder, note that these installations are managed separately and must be updated separately.
 
 * `crush` – [GitHub](https://github.com/charmbracelet/crush)
 * `uv` – [Docs](https://docs.astral.sh/uv/getting-started/installation/)
@@ -25,6 +25,12 @@ The bundled application includes its own Python libraries. When running
 uv venv
 ```
 
+Next activate your venv ***IMPORTANT*** in future you'll want to activate your venv before running the victoria.py script
+
+```
+source .venv/bin/activate
+```
+
 Then install the requirements:
 
 ```bash
@@ -35,12 +41,6 @@ Verify the installation:
 
 ```bash
 python3 -c "import colorama, rich; print(colorama.__version__, rich.__version__)"
-```
-
-***IMPORTANT*** in future you'll want to activate your venv before running the victoria.py script
-
-```
-source .venv/bin/activate
 ```
 
 ### Environment Variables
