@@ -1,4 +1,4 @@
-# Victoria x `crush`
+# Victoria
 
 <img src="assets/icon.png" alt="Victoria Icon" width="200" />
 
