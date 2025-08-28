@@ -1,5 +1,5 @@
 #define MyAppName "Victoria"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "1.0"
 #define MyAppExeName "Victoria.exe"
 
 [Setup]
