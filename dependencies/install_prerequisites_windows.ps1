@@ -2,11 +2,6 @@
 # This script installs the required dependencies for the project
 # Run this script in PowerShell as Administrator for best results
 
-param(
-    [switch]$NoGhostty,
-    [switch]$Force
-)
-
 # Set execution policy for current session
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
 
@@ -125,61 +120,6 @@ function Install-WindowsTerminal {
     }
     else {
         Write-Success "Windows Terminal is already installed"
-    }
-}
-
-function Install-Git {
-    if (-not (Test-CommandExists "git")) {
-        Write-Status "Installing Git..."
-        
-        $installed = $false
-        
-        # Try WinGet first
-        if (Test-CommandExists "winget") {
-            try {
-                winget install --id=Git.Git -e --accept-source-agreements --accept-package-agreements
-                $installed = $true
-                Write-Success "Git installed via WinGet"
-            }
-            catch {
-                Write-Warning "WinGet installation failed"
-            }
-        }
-        
-        # Try Chocolatey
-        if (-not $installed -and (Test-CommandExists "choco")) {
-            try {
-                choco install git -y
-                $installed = $true
-                Write-Success "Git installed via Chocolatey"
-            }
-            catch {
-                Write-Warning "Chocolatey installation failed"
-            }
-        }
-        
-        # Try Scoop
-        if (-not $installed -and (Test-CommandExists "scoop")) {
-            try {
-                scoop install git
-                $installed = $true
-                Write-Success "Git installed via Scoop"
-            }
-            catch {
-                Write-Warning "Scoop installation failed"
-            }
-        }
-        
-        # Manual fallback
-        if (-not $installed) {
-            Write-Status "Please download and install Git manually:"
-            Write-Status "https://git-scm.com/download/win"
-            Start-Process "https://git-scm.com/download/win"
-            Read-Host "Press Enter after installing Git"
-        }
-    }
-    else {
-        Write-Success "Git is already installed ($(git --version))"
     }
 }
 
@@ -353,27 +293,6 @@ function Install-Crush {
     }
 }
 
-function Install-Ghostty {
-    if (-not $NoGhostty -and -not (Test-CommandExists "ghostty")) {
-        Write-Status "Installing ghostty terminal (optional but recommended)..."
-        
-        $response = Read-Host "Do you want to install ghostty terminal? (y/N)"
-        if ($response -match "^[Yy]") {
-            Write-Status "Please download and install ghostty manually:"
-            Write-Status "https://github.com/ghostty-org/ghostty/releases"
-            Write-Status "Download the Windows installer and run it"
-            Start-Process "https://github.com/ghostty-org/ghostty/releases"
-            Read-Host "Press Enter after installing ghostty"
-        }
-        else {
-            Write-Warning "Skipping ghostty installation"
-        }
-    }
-    elseif (Test-CommandExists "ghostty") {
-        Write-Success "ghostty is already installed"
-    }
-}
-
 function Main {
     Write-Host "==================================================" -ForegroundColor Blue
     Write-Host "    Prerequisites Installer for Windows" -ForegroundColor Blue
@@ -407,9 +326,6 @@ function Main {
     Write-Host ""
     
     # Install core dependencies
-    Install-Git
-    Write-Host ""
-    
     Install-Python
     Write-Host ""
     
@@ -419,22 +335,14 @@ function Main {
     Install-Crush
     Write-Host ""
     
-    # Install optional dependencies
-    Install-Ghostty
-    Write-Host ""
-    
     Write-Success "All prerequisites have been installed successfully!"
     Write-Host ""
     Write-Status "You may need to restart your terminal or PowerShell session."
     Write-Host ""
     Write-Status "To verify installations, run:"
-    Write-Status "git --version"
     Write-Status "python --version"
     Write-Status "uv --version"
     Write-Status "crush --version"
-    if (Test-CommandExists "ghostty") {
-        Write-Status "ghostty --version"
-    }
     Write-Host ""
     Write-Status "Installation complete! Press any key to exit..."
     $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
