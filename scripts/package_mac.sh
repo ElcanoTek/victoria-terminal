@@ -6,7 +6,10 @@ set -e
 # Bundle identifier for the app
 BUNDLE_ID=${BUNDLE_ID:-com.elcanotek.victoria}
 
-uvx pyinstaller --noconfirm --windowed --name Victoria \
+# Ensure required Python packages are installed
+uv pip install --system colorama rich >/dev/null
+
+uvx pyinstaller --noconfirm --hidden-import colorama --hidden-import rich --windowed --name Victoria \
   --icon assets/icon.icns \
   --osx-bundle-identifier "$BUNDLE_ID" \
   --add-data "crush.template.json:." \

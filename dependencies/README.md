@@ -35,6 +35,21 @@ uv --version
 crush --version
 ```
 
+## Developer Python Packages
+
+The bundled application includes its own Python libraries. When running
+`victoria.py` directly, install the UI helpers manually:
+
+```bash
+uv pip install colorama rich
+```
+
+Verify the installation:
+
+```bash
+python3 -c "import colorama, rich; print(colorama.__version__, rich.__version__)"
+```
+
 ## Environment Variable Setup
 
 Scripts that prompt for required environment variables and append them to your shell profile (or user environment on Windows):

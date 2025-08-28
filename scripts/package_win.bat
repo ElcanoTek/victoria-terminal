@@ -11,8 +11,10 @@ echo Building Victoria version %VERSION%
 
 rem Update installer script with the version
 powershell -NoProfile -Command "(Get-Content '%~dp0installer_win.iss') -replace 'MyAppVersion ^"[0-9\.]*^"', 'MyAppVersion ^"%VERSION%^"' ^| Set-Content '%~dp0installer_win.iss'"
+# Ensure required Python packages are installed
+uv pip install --system colorama rich >nul
 
-uvx pyinstaller --noconfirm --onefile --name Victoria ^
+uvx pyinstaller --noconfirm --hidden-import colorama --hidden-import rich --onefile --name Victoria ^
   --icon assets\icon.ico ^
   --add-data "crush.template.json;." ^
   --add-data "snowflake.mcp.json;." ^
