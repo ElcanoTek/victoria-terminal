@@ -16,6 +16,21 @@ You may install prerequisites manually or run the platform script in the [depend
 * `uv` – [Docs](https://docs.astral.sh/uv/getting-started/installation/)
 * `python` – download from [python.org](https://www.python.org) or use your platform's package manager.
 
+## Python Packages (developers only)
+
+The bundled application includes its own Python libraries. When running
+`victoria.py` directly, install the UI helpers manually:
+
+```bash
+uv pip install colorama rich
+```
+
+Verify the installation:
+
+```bash
+python3 -c "import colorama, rich; print(colorama.__version__, rich.__version__)"
+```
+
 ### Environment Variables
 
 Set your environment variables manually or use `set_env_macos_linux.sh` or `set_env_windows.ps1` in the [dependencies](./dependencies) folder to configure these values.
