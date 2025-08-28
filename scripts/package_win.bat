@@ -24,7 +24,7 @@ echo %NEW_VERSION% > %VERSION_FILE%
 echo Building Victoria version %NEW_VERSION%
 
 rem Update installer script with the new version
-powershell -NoProfile -Command "(Get-Content '%~dp0installer_win.iss') -replace 'MyAppVersion ^"[0-9\.]*^"', 'MyAppVersion ^"%NEW_VERSION%^"' | Set-Content '%~dp0installer_win.iss'"
+powershell -NoProfile -Command "(Get-Content '%~dp0installer_win.iss') -replace 'MyAppVersion ^"[0-9\.]*^"', 'MyAppVersion ^"%NEW_VERSION%^"' ^| Set-Content '%~dp0installer_win.iss'"
 
 rem Create a matching git tag for this release
 git tag v%NEW_VERSION%
