@@ -132,9 +132,17 @@ def detect_terminal_capabilities():
     return caps
 
 def get_terminal_width():
+    """Return a sensible terminal width.
+
+    Some CI environments define the COLUMNS environment variable as 0 which
+    causes ``os.get_terminal_size`` to return ``0``.  That value propagates to
+    tests expecting a positive width and triggers failures.  We treat any width
+    less than or equal to zero as missing and fall back to a default.
+    """
     try:
-        return os.get_terminal_size().columns
-    except:
+        width = shutil.get_terminal_size(fallback=(80, 24)).columns
+        return width if width > 0 else 80
+    except Exception:
         return 80
 
 # Initialize terminal capabilities
