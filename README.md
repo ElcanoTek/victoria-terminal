@@ -31,10 +31,10 @@ Set your environment variables manually or use `set_env_macos_linux.sh` or `set_
 
 ## 🚀 Launching Victoria
 
-Open your terminal, change into the `victoria-crush` folder, and run:
+Open your terminal, change into the `victoria-app` folder, and run:
 
 ```bash
-cd /path/to/victoria-crush
+cd /path/to/victoria-app
 python3 victoria.py
 ```
 
