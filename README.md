@@ -25,7 +25,7 @@ The bundled application includes its own Python libraries. When running
 uv venv
 ```
 
-then install the requirements
+Then install the requirements:
 
 ```bash
 uv pip install colorama rich
