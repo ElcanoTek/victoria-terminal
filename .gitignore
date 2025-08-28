@@ -1,10 +1,8 @@
 # crush-specific stuff
 .crush/
-VICTORIA.md
 
 # THIS GETS TEMPLATED vvv
 crush.json
-
 
 # mac BS
 .DS_Store

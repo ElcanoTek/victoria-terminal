@@ -1,0 +1,55 @@
+sequenceDiagram
+    participant User as 👤 User/Analyst
+    participant Agent as 🤖 AI Agent<br/>(Crush/Claude/Gemini)
+    participant Victoria as 🧠 Victoria Core
+    participant MCP as 🔌 MCP Server
+    participant Data as 💾 Data Source<br/>(Snowflake/CSV)
+    
+    Note over User,Data: Victoria Analytics Workflow
+    
+    User->>Agent: "Which campaigns have the best ROI?"
+    Agent->>Victoria: Process natural language query
+    Victoria->>Victoria: Parse intent & context
+    Victoria->>MCP: Generate SQL query
+    MCP->>Data: Execute data retrieval
+    Data-->>MCP: Return campaign data
+    MCP-->>Victoria: Structured results
+    
+    Victoria->>Victoria: Analyze performance metrics<br/>Calculate ROI, trends
+    Victoria->>Victoria: Generate insights &<br/>recommendations
+    Victoria->>Victoria: Create visualizations<br/>(charts, tables)
+    
+    Victoria-->>Agent: Comprehensive analysis
+    Agent-->>User: 📊 "Top 5 campaigns by ROI:<br/>Campaign A: 4.2x ROAS<br/>Campaign B: 3.8x ROAS<br/>+ Optimization recommendations"
+    
+    Note over User,Data: Fraud Detection Workflow
+    
+    loop Continuous Monitoring
+        Victoria->>MCP: Monitor traffic patterns
+        MCP->>Data: Analyze bid requests
+        Data-->>MCP: Traffic data
+        MCP-->>Victoria: Pattern analysis
+        
+        alt Anomaly Detected
+            Victoria->>Victoria: 🚨 Flag suspicious activity
+            Victoria->>Agent: Alert with analysis
+            Agent->>User: "⚠️ Potential fraud detected<br/>in Campaign X - 15% invalid traffic"
+        end
+    end
+    
+    Note over User,Data: Optimization Workflow
+    
+    User->>Agent: "How can I improve mobile performance?"
+    Agent->>Victoria: Optimization request
+    Victoria->>MCP: Analyze mobile metrics
+    MCP->>Data: Query mobile campaign data
+    Data-->>MCP: Performance breakdown
+    MCP-->>Victoria: Mobile insights
+    
+    Victoria->>Victoria: 🎯 Identify optimization<br/>opportunities
+    Victoria->>Victoria: 📊 Quantify potential<br/>impact
+    Victoria->>Victoria: 🤝 Human-in-the-loop<br/>validation
+    
+    Victoria-->>Agent: Strategic recommendations
+    Agent-->>User: "📈 Mobile Optimization Plan:<br/>1. Adjust bid strategy (+12% CTR)<br/>2. Refine audience targeting (+8% Conv)<br/>3. Creative optimization (+15% Engagement)"
+
