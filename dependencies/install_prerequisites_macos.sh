@@ -55,23 +55,6 @@ install_homebrew() {
     fi
 }
 
-# Function to install Git
-install_git() {
-    if ! command_exists git; then
-        print_status "Installing Git..."
-        if command_exists brew; then
-            brew install git
-        else
-            print_status "Please install Xcode Command Line Tools to get Git:"
-            print_status "Run: xcode-select --install"
-            read -p "Press Enter after installing Xcode Command Line Tools..."
-        fi
-        print_success "Git installation completed"
-    else
-        print_success "Git is already installed ($(git --version))"
-    fi
-}
-
 # Function to install Python
 install_python() {
     if ! command_exists python3; then
@@ -136,32 +119,6 @@ install_crush() {
     fi
 }
 
-# Function to install ghostty (optional)
-install_ghostty() {
-    if ! command_exists ghostty; then
-        print_status "Installing ghostty terminal (optional but recommended)..."
-        
-        # Ask user if they want to install ghostty
-        read -p "Do you want to install ghostty terminal? (y/N): " -n 1 -r
-        echo
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
-            if command_exists brew; then
-                brew install --cask ghostty
-                print_success "ghostty installed successfully via Homebrew"
-            else
-                print_status "Downloading ghostty from GitHub releases..."
-                print_status "Please visit: https://github.com/ghostty-org/ghostty/releases"
-                print_status "Download the .dmg file and install manually"
-                open "https://github.com/ghostty-org/ghostty/releases"
-            fi
-        else
-            print_warning "Skipping ghostty installation"
-        fi
-    else
-        print_success "ghostty is already installed"
-    fi
-}
-
 # Main installation function
 main() {
     echo "=================================================="
@@ -177,9 +134,6 @@ main() {
     echo
     
     # Install core dependencies
-    install_git
-    echo
-    
     install_python
     echo
     
@@ -189,23 +143,15 @@ main() {
     install_crush
     echo
     
-    # Install optional dependencies
-    install_ghostty
-    echo
-    
     print_success "All prerequisites have been installed successfully!"
     echo
     print_status "You may need to restart your terminal or run:"
     print_status "source ~/.zprofile"
     echo
     print_status "To verify installations, run:"
-    print_status "git --version"
     print_status "python3 --version"
     print_status "uv --version"
     print_status "crush --version"
-    if command_exists ghostty; then
-        print_status "ghostty --version"
-    fi
 }
 
 # Run main function

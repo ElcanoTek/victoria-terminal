@@ -84,45 +84,6 @@ update_package_manager() {
     esac
 }
 
-# Function to install Git
-install_git() {
-    if ! command_exists git; then
-        print_status "Installing Git..."
-        case $DISTRO in
-            ubuntu|debian)
-                sudo apt install -y git
-                ;;
-            fedora)
-                sudo dnf install -y git
-                ;;
-            rhel|centos|rocky|almalinux)
-                if command_exists dnf; then
-                    sudo dnf install -y git
-                else
-                    sudo yum install -y git
-                fi
-                ;;
-            arch|manjaro)
-                sudo pacman -S --noconfirm git
-                ;;
-            opensuse*|sles)
-                sudo zypper install -y git
-                ;;
-            alpine)
-                sudo apk add git
-                ;;
-            *)
-                print_error "Unsupported distribution for automatic Git installation"
-                print_status "Please install Git manually using your package manager"
-                return 1
-                ;;
-        esac
-        print_success "Git installed successfully"
-    else
-        print_success "Git is already installed ($(git --version))"
-    fi
-}
-
 # Function to install Python
 install_python() {
     if ! command_exists python3; then
@@ -270,72 +231,6 @@ gpgkey=https://repo.charm.sh/yum/gpg.key' | sudo tee /etc/yum.repos.d/charm.repo
     fi
 }
 
-# Function to install ghostty (optional)
-install_ghostty() {
-    if ! command_exists ghostty; then
-        print_status "Installing ghostty terminal (optional but recommended)..."
-        
-        # Ask user if they want to install ghostty
-        read -p "Do you want to install ghostty terminal? (y/N): " -n 1 -r
-        echo
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
-            case $DISTRO in
-                arch|manjaro)
-                    sudo pacman -S --noconfirm ghostty
-                    print_success "ghostty installed via official repository"
-                    return 0
-                    ;;
-                alpine)
-                    # Enable testing repository
-                    echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" | sudo tee -a /etc/apk/repositories
-                    sudo apk update
-                    sudo apk add ghostty
-                    print_success "ghostty installed via Alpine testing repository"
-                    return 0
-                    ;;
-                opensuse*|sles)
-                    sudo zypper install -y ghostty
-                    print_success "ghostty installed via openSUSE repository"
-                    return 0
-                    ;;
-                ubuntu|debian)
-                    print_status "Installing ghostty via community package..."
-                    print_status "Downloading from ghostty-ubuntu repository..."
-                    LATEST_URL=$(curl -s https://api.github.com/repos/ghostty-org/ghostty-ubuntu/releases/latest | grep "browser_download_url.*\.deb" | cut -d '"' -f 4 | head -1)
-                    if [ -n "$LATEST_URL" ]; then
-                        wget -O /tmp/ghostty.deb "$LATEST_URL"
-                        sudo apt install -y /tmp/ghostty.deb
-                        rm /tmp/ghostty.deb
-                        print_success "ghostty installed via community package"
-                    else
-                        print_error "Could not find ghostty package for Ubuntu/Debian"
-                    fi
-                    ;;
-                fedora|rhel|centos|rocky|almalinux)
-                    print_status "Installing ghostty via COPR..."
-                    if command_exists dnf; then
-                        sudo dnf copr enable -y scottames/ghostty
-                        sudo dnf install -y ghostty
-                    else
-                        print_warning "COPR not easily available on this system"
-                        print_status "Please visit: https://copr.fedorainfracloud.org/coprs/scottames/ghostty/"
-                    fi
-                    print_success "ghostty installed via COPR"
-                    ;;
-                *)
-                    print_warning "No automatic installation available for your distribution"
-                    print_status "Please visit: https://ghostty.org/docs/install/binary"
-                    print_status "Or try the universal AppImage from: https://github.com/ghostty-org/ghostty-appimage"
-                    ;;
-            esac
-        else
-            print_warning "Skipping ghostty installation"
-        fi
-    else
-        print_success "ghostty is already installed"
-    fi
-}
-
 # Function to install Go (if needed for crush)
 install_go() {
     if ! command_exists go && ! command_exists crush; then
@@ -396,12 +291,9 @@ main() {
     echo
     
     # Install core dependencies
-    install_git
-    echo
-    
     install_python
     echo
-    
+
     install_uv
     echo
     
@@ -412,23 +304,15 @@ main() {
     install_crush
     echo
     
-    # Install optional dependencies
-    install_ghostty
-    echo
-    
     print_success "All prerequisites have been installed successfully!"
     echo
     print_status "You may need to restart your terminal or run:"
     print_status "source ~/.bashrc  # or ~/.zshrc if using zsh"
     echo
     print_status "To verify installations, run:"
-    print_status "git --version"
     print_status "python3 --version"
     print_status "uv --version"
     print_status "crush --version"
-    if command_exists ghostty; then
-        print_status "ghostty --version"
-    fi
 }
 
 # Check if running as root
