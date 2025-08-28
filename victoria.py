@@ -16,7 +16,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, Callable
 
 from colorama import init as colorama_init
 from rich.console import Console
@@ -30,9 +30,8 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 
 VICTORIA_FILE = "VICTORIA.md"
 TOOL_CMD = os.environ.get("VICTORIA_TOOL", "crush")
-CONFIG_TEMPLATE = os.environ.get("VICTORIA_TEMPLATE", "crush.template.json")
-SNOWFLAKE_FRAG = "snowflake.mcp.json"
 OUTPUT_CONFIG = os.environ.get("VICTORIA_OUTPUT", f"{TOOL_CMD}.json")
+CONFIGS_DIR = Path("configs")
 
 APP_HOME = Path.home() / "Victoria"
 APP_HOME.mkdir(exist_ok=True)
@@ -45,7 +44,7 @@ console = Console()
 # Helpers
 # ---------------------------------------------------------------------------
 
-def resource_path(name: str) -> Path:
+def resource_path(name: str | Path) -> Path:
     base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
     return base / name
 
@@ -94,6 +93,23 @@ def banner() -> None:
     console.print(Panel.fit(
         "[bold cyan]VICTORIA[/bold cyan]\n[cyan]AdTech Data Navigation[/cyan]",
         border_style="cyan"))
+
+# ---------------------------------------------------------------------------
+# Terminal helpers (minimal implementation for tests)
+# ---------------------------------------------------------------------------
+
+def detect_terminal_capabilities() -> Dict[str, Any]:
+    return {
+        "colors": True,
+        "emojis": True,
+        "unicode_box": True,
+        "colors_256": True,
+        "is_tty": sys.stdout.isatty(),
+    }
+
+
+def get_terminal_width() -> int:
+    return shutil.get_terminal_size(fallback=(80, 24)).columns
 
 # ---------------------------------------------------------------------------
 # JSON handling
@@ -152,27 +168,34 @@ SNOWFLAKE_ENV_VARS = [
 def snowflake_env_missing() -> list[str]:
     return [v for v in SNOWFLAKE_ENV_VARS if not os.environ.get(v)]
 
-def load_base_template() -> Dict[str, Any]:
-    path_home = APP_HOME / CONFIG_TEMPLATE
-    path = path_home if path_home.exists() else resource_path(CONFIG_TEMPLATE)
+def load_tool_config(tool: str, name: str) -> Dict[str, Any]:
+    path_home = APP_HOME / CONFIGS_DIR / tool / name
+    path_res = resource_path(CONFIGS_DIR / tool / name)
+    path = path_home if path_home.exists() else path_res
     if not path.exists():
-        raise FileNotFoundError(f"Missing {CONFIG_TEMPLATE}")
+        raise FileNotFoundError(f"Missing {name} for {tool}")
     return read_json(path)
 
-def load_snowflake_fragment() -> Dict[str, Any]:
-    path_home = APP_HOME / SNOWFLAKE_FRAG
-    path = path_home if path_home.exists() else resource_path(SNOWFLAKE_FRAG)
-    if not path.exists():
-        raise FileNotFoundError(f"Missing {SNOWFLAKE_FRAG}")
-    return read_json(path)
 
-def build_config(include_snowflake: bool, strict_env: bool) -> Dict[str, Any]:
-    base = load_base_template()
+def build_crush_config(include_snowflake: bool, strict_env: bool) -> Dict[str, Any]:
+    base = load_tool_config("crush", "crush.template.json")
     if include_snowflake:
-        frag = load_snowflake_fragment()
+        frag = load_tool_config("crush", "snowflake.mcp.json")
         base.setdefault("mcp", {})
         deep_merge(base["mcp"], frag.get("mcp", frag))
     return substitute_env(base, strict=strict_env)
+
+
+CONFIG_BUILDERS: Dict[str, Callable[[bool, bool], Dict[str, Any]]] = {
+    "crush": build_crush_config,
+}
+
+
+def build_config(tool: str, include_snowflake: bool, strict_env: bool) -> Dict[str, Any]:
+    builder = CONFIG_BUILDERS.get(tool)
+    if not builder:
+        raise ValueError(f"Unsupported tool: {tool}")
+    return builder(include_snowflake, strict_env)
 
 def generate_config(include_snowflake: bool) -> bool:
     try:
@@ -182,7 +205,7 @@ def generate_config(include_snowflake: bool) -> bool:
             transient=True,
         ) as progress:
             progress.add_task("Building configuration", total=None)
-            cfg = build_config(include_snowflake, strict_env=include_snowflake)
+            cfg = build_config(TOOL_CMD, include_snowflake, strict_env=include_snowflake)
             out_path = APP_HOME / OUTPUT_CONFIG
             write_json(out_path, cfg)
         good(f"Configuration written to {out_path}")
