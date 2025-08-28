@@ -58,13 +58,19 @@ All modes store configuration and data in `~/Victoria` (or `%USERPROFILE%\Victor
 
 ### Customizing the launch tool
 
-Victoria uses the `crush` CLI by default. Set the following environment variables to swap in a different tool or config files:
+Victoria uses the `crush` CLI by default. Set the following environment variables to swap in a different tool or output file:
 
 ```bash
 export VICTORIA_TOOL="your_cli"
-export VICTORIA_TEMPLATE="your_cli.template.json"
 export VICTORIA_OUTPUT="your_cli.json"
 ```
+
+#### Adding a new tool configuration
+
+1. Create a folder under [`configs/`](configs) named after your tool.
+2. Place your template file inside that folder (e.g. `your_cli.template.json`).
+3. Add a `build_<tool>_config` function and register it in `CONFIG_BUILDERS` within [`victoria.py`](victoria.py).
+4. Run Victoria with `VICTORIA_TOOL="<tool>"` and optionally set `VICTORIA_OUTPUT`.
 
 ## 🔄 On-Demand GitHub Actions
 

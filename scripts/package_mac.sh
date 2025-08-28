@@ -12,8 +12,7 @@ uv pip install --system colorama rich >/dev/null
 uvx pyinstaller --noconfirm --hidden-import colorama --hidden-import rich --windowed --name Victoria \
   --icon assets/icon.icns \
   --osx-bundle-identifier "$BUNDLE_ID" \
-  --add-data "crush.template.json:." \
-  --add-data "snowflake.mcp.json:." \
+  --add-data "configs:configs" \
   --add-data ".crushignore:." \
   --add-data "CRUSH.md:." \
   --add-data "VICTORIA.md:." \
