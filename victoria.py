@@ -237,22 +237,22 @@ def preflight() -> None:
 
 def launch_tool() -> None:
     section("Mission launch")
-    with console.status(f"Launching {TOOL_CMD}..."):
-        cmd = [TOOL_CMD, "-c", str(APP_HOME)]
-        try:
-            if os.name == "nt":
-                proc = subprocess.run(cmd)
-                if proc.returncode != 0:
-                    err(f"{TOOL_CMD} exited with {proc.returncode}")
-                    sys.exit(proc.returncode)
-            else:
-                os.execvp(TOOL_CMD, cmd)
-        except FileNotFoundError:
-            err(f"'{TOOL_CMD}' command not found in PATH")
-            sys.exit(1)
-        except Exception as exc:  # pragma: no cover - runtime errors
-            err(f"Failed to launch {TOOL_CMD}: {exc}")
-            sys.exit(1)
+    info(f"Launching {TOOL_CMD}...")
+    cmd = [TOOL_CMD, "-c", str(APP_HOME)]
+    try:
+        if os.name == "nt":
+            proc = subprocess.run(cmd)
+            if proc.returncode != 0:
+                err(f"{TOOL_CMD} exited with {proc.returncode}")
+                sys.exit(proc.returncode)
+        else:
+            os.execvp(TOOL_CMD, cmd)
+    except FileNotFoundError:
+        err(f"'{TOOL_CMD}' command not found in PATH")
+        sys.exit(1)
+    except Exception as exc:  # pragma: no cover - runtime errors
+        err(f"Failed to launch {TOOL_CMD}: {exc}")
+        sys.exit(1)
 
 # ---------------------------------------------------------------------------
 # Main workflow
