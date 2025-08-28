@@ -8,9 +8,7 @@ Victoria is Elcano's AI agent that connects to programmatic advertising reports 
 
 ## ⚙️ Installation
 
-### Linux / macOS
-
-#### Dependencies
+###Dependencies (All Platforms)
 
 You may either install these manually or via a script. See the [dependencies](./dependencies) folder for more info.
 
@@ -18,7 +16,7 @@ You may either install these manually or via a script. See the [dependencies](./
 * `uv` – [Docs](https://docs.astral.sh/uv/getting-started/installation/)
 * `python` - open a terminal and type `python3` to install it via Xcode on a Mac, if you are on Linux it should be preinstalled. You may also download it from [python.org](https://www.python.org).
 
-#### Environment Variables
+### Environment Variables (Linux / macOS)
 
 * `OPENROUTER_API_KEY` (required)
 
@@ -42,22 +40,7 @@ You may either install these manually or via a script. See the [dependencies](./
   export SNOWFLAKE_ROLE="your_read_only_role"
   ```
 
-  * **Role must have read-only `SELECT` permissions.**
-  * Snowflake MCP server installs automatically on first use.
-
----
-
-### Windows
-
-#### Dependencies
-
-You may either install these manually or via a script. See the [dependencies](./dependencies) folder for more info.
-
-* [crush](https://github.com/charmbracelet/crush)
-* [uv](https://docs.astral.sh/uv/getting-started/installation/)
-* `python` - just open the windows terminal and type `python` to install or download the latest at [python.org](https://www.python.org/downloads/windows/)
-
-#### Environment Variables
+### Environment Variables (Windows)
 
 * `OPENROUTER_API_KEY` (required)
 
@@ -75,10 +58,6 @@ You may either install these manually or via a script. See the [dependencies](./
   [Environment]::SetEnvironmentVariable("SNOWFLAKE_WAREHOUSE", "your_warehouse", "User")
   [Environment]::SetEnvironmentVariable("SNOWFLAKE_ROLE", "your_role", "User")
   ```
-
-  * **Role must have read-only `SELECT` permissions.**
-  * Snowflake MCP server installs automatically on first use.
-
 ---
 
 ## 🚀 Launching Victoria
@@ -93,7 +72,7 @@ python3 victoria.py
 This gives you the most control and is the same across macOS, Linux, and Windows (PowerShell).
 All modes store configuration and data in `~/Victoria` (or `%USERPROFILE%\Victoria` on Windows).
 
-#### Customizing the launch tool
+### Customizing the launch tool
 
 Victoria uses the `crush` CLI by default. Set the following environment variables to swap in a different tool or config files:
 
@@ -121,96 +100,8 @@ Two workflows in [`.github/workflows`](.github/workflows) can be run manually fr
 
 These packaging scripts can also be run locally if you need to build outside of GitHub.
 
-## 📦 Packaging for macOS and Windows
-
-You can build standalone packages so Victoria can be launched from Finder. These steps mirror what the **Build and Release** workflow runs automatically. The macOS app opens a terminal window for interaction and detects existing sessions to avoid spawning extra Terminal windows.
-
-### macOS `.app`
-
-Run:
-
-```bash
-./scripts/package_mac.sh
-```
-
-The script uses `uvx pyinstaller`, so no `pip install` is required. It creates `dist/Victoria.app` and a zipped archive `Victoria.app.zip` in the project root. The build bundles `CRUSH.md`, `VICTORIA.md`, `crush.template.json`, `snowflake.mcp.json`, and `.crushignore` for runtime reference.
-
-### Windows `.exe` and Installer
-
-1. Install [Inno Setup](https://jrsoftware.org/isinfo.php) (make sure `iscc` is on your PATH). PyInstaller is invoked via `uvx`, so you don't need to install it.
-2. To change the installer version, edit `scripts/installer_win.iss` and update `MyAppVersion` on line 2.
-3. Run `scripts/package_win.bat` from Command Prompt or PowerShell:
-
-   ```powershell
-   .\scripts\package_win.bat
-   ```
-
-   This produces both a standalone executable (`dist/Victoria.exe`) and an installer (`dist/VictoriaSetup.exe`). The build bundles `CRUSH.md` and `VICTORIA.md` alongside the configuration templates for runtime reference.
-
-To upgrade Victoria on Windows, build a new installer with an updated version number and run it; Inno Setup will replace the previous installation automatically while preserving the same AppId.
-Both packaged versions automatically use the `~/Victoria` folder (or `%USERPROFILE%\Victoria` on Windows) for configuration and data.
-
----
-
-## 🧠 Models to Try
+## 🧠 Model Notes
 
 | Model                     | Price (\$/1M tokens) | Category      | Best For              |
 | ------------------------- | -------------------- | ------------- | --------------------- |
-| **gpt-oss-120b**          | \$0 / \$0.45         | 🆓 Free Input | Local experimentation |
-| **GPT-5 Nano**            | \$0.05 / \$0.40      | ⚡ Ultra Fast  | Fast iteration        |
-| **DeepSeek V3**           | \$0.27 / \$1.10      | 🎯 Best Value | Balanced performance  |
 | **Google Gemini 2.5 Pro** | \$1.25 / \$10.00     | 🏆 Premium    | Best tested model     |
-
----
-
-## ⚡ Quick Wins: Questions to Ask
-
-Try these ready-to-go prompts for adtech analysis:
-
-* **Performance Leaders**
-
-  ```sql
-  Provide the top 5 performing sites with over 5,000 impressions and the highest CTR, aggregated across the entire site rather than by individual day
-  ```
-
-* **Wasted Spend**
-
-  ```sql
-  Which placements had > 10,000 impressions but CTR below 0.05% and should be excluded from the buy?
-  ```
-
-* **Creative Insights**
-
-  ```sql
-  Compare CTR by creative size (300x250 vs 728x90 vs 160x600) across all campaigns last week
-  ```
-
-* **Publisher Quality**
-
-  ```sql
-  Show me the top 10 domains by spend that had a viewability score below 50%
-  ```
-
-* **Time-of-Day Analysis**
-
-  ```sql
-  Identify the best performing hours of the day (by CTR and CVR) across all campaigns
-  ```
-
-* **Conversion Optimization**
-
-  ```sql
-  Rank all campaigns by cost per conversion and highlight which campaigns are above the average CPA
-  ```
-
-* **Fraud & Anomalies**
-
-  ```sql
-  Flag any sites where impressions spiked 5x compared to the previous day but conversions did not increase
-  ```
-
-* **Budget Pacing**
-
-  ```sql
-  Estimate if each campaign is on pace to hit 100% of its budget by end of the month based on daily spend rates
-  ```
