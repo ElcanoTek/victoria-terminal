@@ -5,7 +5,6 @@
 Victoria - AdTech Data Navigation (Cross-platform Python launcher, pretty version)
 
 - Auto-detects Snowflake env; falls back to local if incomplete
-- Fetches VICTORIA.md via SSH clone (private repo)
 - Merges a JSON template (default `crush.template.json`) with `snowflake.mcp.json`
 - Replaces ${ENV_VAR} tokens from the environment (cross-platform)
 - Writes UTF-8 without BOM
@@ -19,15 +18,12 @@ import re
 import shutil
 import subprocess
 import sys
-import tempfile
 import time
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 import platform
 
 # ------------------ Config ------------------
-VICTORIA_REPO_SSH = "git@github.com:ElcanoTek/victoria-main.git"
-VICTORIA_BRANCH   = "main"
 VICTORIA_FILE     = "VICTORIA.md"
 
 # Launch command is configurable to allow swapping out crush later
@@ -54,11 +50,6 @@ def ensure_default_files():
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Victoria launcher")
-    parser.add_argument(
-        "--dev",
-        action="store_true",
-        help="Enable developer mode to refresh VICTORIA.md",
-    )
     return parser.parse_args()
 
 SNOWFLAKE_ENV_VARS = [
@@ -476,88 +467,6 @@ def substitute_env(obj: Any, strict: bool = False) -> Any:
         return _env_token.sub(repl, obj)
     return obj
 
-# ------------------ VICTORIA.md via SSH ------------------
-def ensure_victoria_md() -> bool:
-    target = APP_HOME / VICTORIA_FILE
-    if target.exists():
-        return True
-
-    if which("git") is None:
-        warn("Git not found. Skipping VICTORIA.md fetch.")
-        return False
-
-    section_header("TREASURE ACQUISITION", T.BOOK)
-    info(f"Downloading {VICTORIA_FILE} from private repository...")
-    
-    temp_dir = Path(tempfile.mkdtemp(prefix="victoria_clone_"))
-    try:
-        ship_loading_animation("Cloning victoria-main repository via SSH", 2.5)
-        
-        res = subprocess.run(
-            ["git", "clone", "--depth", "1", "--branch", VICTORIA_BRANCH, VICTORIA_REPO_SSH, str(temp_dir)],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
-        )
-        if res.returncode != 0:
-            err("Git clone failed. Ensure your SSH key can access GitHub.")
-            dim("Hint: Test with 'ssh -T git@github.com'")
-            return False
-
-        src = temp_dir / VICTORIA_FILE
-        if not src.exists():
-            err(f"{VICTORIA_FILE} not found in repository.")
-            return False
-
-        shutil.copy2(src, target)
-        size = target.stat().st_size
-
-        success_animation(f"{VICTORIA_FILE} successfully acquired!")
-        print(f"{T.CYAN}{T.CHART} File size: {T.WHITE}{size:,} bytes{T.NC}")
-        print(f"{T.CYAN}{T.MAP} Location: {T.WHITE}{target}{T.NC}")
-        
-        # Preview
-        print(f"\n{T.MAGENTA}{T.BOOK} DOCUMENT PREVIEW{T.NC}")
-        print(f"{T.CYAN}{'-' * 50}{T.NC}")
-        try:
-            with target.open("r", encoding="utf-8", errors="ignore") as f:
-                for i, line in enumerate(f):
-                    if i >= 3: break
-                    if TERM_CAPS['colors']:
-                        typewriter_effect(f"   {line.rstrip()}", 0.01)
-                    else:
-                        print(f"   {line.rstrip()}")
-        except Exception:
-            pass
-        print(f"{T.CYAN}{'-' * 50}{T.NC}")
-        
-        return True
-    finally:
-        shutil.rmtree(temp_dir, ignore_errors=True)
-
-def prompt_update_victoria():
-    section_header("KNOWLEDGE BASE STATUS", T.BOOK)
-
-    target = APP_HOME / VICTORIA_FILE
-    if target.exists():
-        info(f"{VICTORIA_FILE} already exists in {APP_HOME}")
-        print("\nUpdate options:")
-        print(f"  {T.GREEN}[Y]{T.NC} Update to latest from private repo")
-        print(f"  {T.YELLOW}[N]{T.NC} Use existing local copy (default)")
-        choice = input(f"\n{T.BOLD}{T.WHITE}Update {VICTORIA_FILE}? [y/N]: {T.NC}").strip().lower()
-        if choice in ("y", "yes"):
-            ensure_victoria_md()
-        else:
-            good(f"Using existing {VICTORIA_FILE}")
-    else:
-        warn(f"{VICTORIA_FILE} not found in {APP_HOME}")
-        print("\nDownload options:")
-        print(f"  {T.GREEN}[Y]{T.NC} Download via SSH (recommended)")
-        print(f"  {T.YELLOW}[N]{T.NC} Skip download and continue")
-        choice = input(f"\n{T.BOLD}{T.WHITE}Download {VICTORIA_FILE}? [Y/n]: {T.NC}").strip().lower()
-        if choice in ("n", "no"):
-            warn(f"Skipping {VICTORIA_FILE} download")
-        else:
-            ensure_victoria_md()
-
 # ------------------ Config generation ------------------
 def snowflake_env_missing() -> List[str]:
     return [v for v in SNOWFLAKE_ENV_VARS if not os.environ.get(v)]
@@ -711,8 +620,7 @@ def open_victoria_folder():
         warn(f"Could not open Victoria folder: {e}")
 
 def main():
-    args = parse_args()
-    dev_mode = args.dev
+    parse_args()
 
     ensure_default_files()
     clear_screen()
@@ -728,9 +636,6 @@ def main():
         print(f"{T.DIM}Debug: Terminal caps: {TERM_CAPS}{T.NC}")
     
     time.sleep(1)
-
-    if dev_mode:
-        prompt_update_victoria()
 
     preflight()
 

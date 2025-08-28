@@ -83,19 +83,15 @@ You may either install these manually or via a script. See the [dependencies](./
 
 ## 🚀 Launching Victoria
 
-Open your terminal, change into the `victoria-crush` folder, and run in developer mode:
+Open your terminal, change into the `victoria-crush` folder, and run:
 
 ```bash
 cd /path/to/victoria-crush
-python3 victoria.py --dev
+python3 victoria.py
 ```
 
 This gives you the most control and is the same across macOS, Linux, and Windows (PowerShell).
 All modes store configuration and data in `~/Victoria` (or `%USERPROFILE%\Victoria` on Windows).
-
-We recommend always using the `--dev` flag when running from the command line to keep your
-`VICTORIA.md` knowledge base up to date. Packaged builds run without developer prompts unless
-you pass `--dev` explicitly.
 
 #### Customizing the launch tool
 
@@ -131,8 +127,6 @@ You can build standalone packages so Victoria can be launched from Finder. These
 
 ### macOS `.app`
 
-Before packaging, fetch `VICTORIA.md` from its private repository and place it in the project root. It is ignored by git.
-
 Run:
 
 ```bash
@@ -142,8 +136,6 @@ Run:
 The script uses `uvx pyinstaller`, so no `pip install` is required. It creates `dist/Victoria.app` and a zipped archive `Victoria.app.zip` in the project root. The build bundles `CRUSH.md`, `VICTORIA.md`, `crush.template.json`, `snowflake.mcp.json`, and `.crushignore` for runtime reference.
 
 ### Windows `.exe` and Installer
-
-Before packaging, fetch `VICTORIA.md` from its private repository and place it in the project root. It is ignored by git.
 
 1. Install [Inno Setup](https://jrsoftware.org/isinfo.php) (make sure `iscc` is on your PATH). PyInstaller is invoked via `uvx`, so you don't need to install it.
 2. To change the installer version, edit `scripts/installer_win.iss` and update `MyAppVersion` on line 2.
