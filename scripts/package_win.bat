@@ -1,11 +1,8 @@
 @echo off
 setlocal
 
-rem Path to the version file
-set VERSION_FILE=%~dp0..\VERSION
-
-rem Read version string
-set /p VERSION=<%VERSION_FILE%
+rem Determine version string from the current date in YYYY.MM.DD format.
+for /f %%i in ('powershell -NoProfile -Command "Get-Date -Format yyyy.MM.dd"') do set VERSION=%%i
 
 echo Building Victoria version %VERSION%
 
