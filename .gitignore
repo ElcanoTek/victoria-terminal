@@ -1,6 +1,49 @@
-# agent specific stuff
+# AI agent specific stuff
 .crush/
+.crush.json
+crush.json
+CRUSH.md
 .openhands/
+.claude.json
+CLAUDE.md
+.gemini/
+.gemini.json
+GEMINI.md
+
+# Cursor IDE
+.cursorrules
+.cursor/
+
+# Aider
+.aider*
+
+# Continue.dev
+.continue/
+
+# Codeium
+.codeium/
+
+# GitHub Copilot
+.copilot/
+
+# DeepSeek Coder
+.deepseek/
+
+# Replit Agent
+.replit
+replit.nix
+
+# AutoGPT
+.autogpt/
+auto_gpt_workspace/
+
+# SWE-Agent
+.swe-agent/
+
+# Environment and API keys (often used by agents)
+.env
+.env.local
+.env.*.local
 
 # mac BS
 .DS_Store
