@@ -1,8 +1,6 @@
-# crush-specific stuff
+# agent specific stuff
 .crush/
-
-# THIS GETS TEMPLATED vvv
-crush.json
+.openhands/
 
 # mac BS
 .DS_Store
