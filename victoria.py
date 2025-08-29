@@ -36,6 +36,7 @@ CONFIGS_DIR = Path("configs")
 APP_HOME = Path.home() / "Victoria"
 APP_HOME.mkdir(exist_ok=True)
 os.environ.setdefault("VICTORIA_HOME", str(APP_HOME))
+SETUP_SENTINEL = APP_HOME / ".first_run_complete"
 
 colorama_init()  # Enable ANSI colors on Windows
 console = Console()
@@ -93,6 +94,63 @@ def banner() -> None:
     console.print(Panel.fit(
         "[bold cyan]VICTORIA[/bold cyan]\n[cyan]AdTech Data Navigation[/cyan]",
         border_style="cyan"))
+
+# ---------------------------------------------------------------------------
+# First-time setup
+# ---------------------------------------------------------------------------
+
+def run_setup_scripts() -> None:
+    deps = resource_path("dependencies")
+    if os.name == "nt":
+        scripts = ["install_prerequisites_windows.ps1", "set_env_windows.ps1"]
+        for s in scripts:
+            script = deps / s
+            cmd = [
+                "powershell",
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-Command",
+                (
+                    f"Unblock-File -Path '{script}' -ErrorAction SilentlyContinue; "
+                    f"& '{script}'"
+                ),
+            ]
+            try:
+                subprocess.run(cmd, check=True)
+            except Exception as exc:
+                err(f"Setup script failed: {exc}")
+                break
+    elif sys.platform == "darwin":
+        scripts = ["install_prerequisites_macos.sh", "set_env_macos_linux.sh"]
+        for s in scripts:
+            try:
+                subprocess.run(["bash", str(deps / s)], check=True)
+            except Exception as exc:
+                err(f"Setup script failed: {exc}")
+                break
+    elif sys.platform.startswith("linux"):
+        scripts = ["install_prerequisites_linux.sh", "set_env_macos_linux.sh"]
+        for s in scripts:
+            try:
+                subprocess.run(["bash", str(deps / s)], check=True)
+            except Exception as exc:
+                err(f"Setup script failed: {exc}")
+                break
+    else:
+        warn("Unsupported platform; run setup scripts manually from the dependencies folder.")
+        return
+
+def first_run_check() -> None:
+    if SETUP_SENTINEL.exists():
+        return
+    section("First-time setup")
+    if Prompt.ask("Run first-time setup?", choices=["y", "n"], default="y") == "y":
+        run_setup_scripts()
+        try:
+            SETUP_SENTINEL.write_text("done")
+        except Exception:
+            pass
 
 # ---------------------------------------------------------------------------
 # Terminal helpers (minimal implementation for tests)
@@ -289,6 +347,7 @@ def main() -> None:
     ensure_default_files()
     console.clear()
     banner()
+    first_run_check()
     remove_local_duckdb()
     console.print(f"[cyan]{ICONS['folder']} Place files to analyze in: [white]{APP_HOME}")
     preflight()
