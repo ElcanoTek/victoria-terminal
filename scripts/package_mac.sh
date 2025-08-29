@@ -15,6 +15,8 @@ uvx --with-requirements "$REQ_FILE" pyinstaller --noconfirm --hidden-import colo
   --add-data ".crushignore:." \
   --add-data "CRUSH.md:." \
   --add-data "VICTORIA.md:." \
+  --add-data "dependencies/install_prerequisites_macos.sh:dependencies" \
+  --add-data "dependencies/set_env_macos_linux.sh:dependencies" \
   victoria.py
 
 APP="dist/Victoria.app"
@@ -28,6 +30,10 @@ cat > "$MACOS/Victoria" <<'EOF'
 #!/bin/bash
 DIR="$(cd "$(dirname "$0")" && pwd)"
 BIN="$DIR/victoria-bin"
+DEPS="$DIR/../Resources/dependencies"
+if ! command -v python3 >/dev/null 2>&1; then
+  "$DEPS/install_prerequisites_macos.sh"
+fi
 if [ -n "$TERM_PROGRAM" ]; then
   exec "$BIN"
 else
