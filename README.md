@@ -10,7 +10,9 @@ Victoria is Elcano's AI agent that connects to programmatic advertising reports 
 
 ### Dependencies
 
-You may install prerequisites manually or run the platform script in the [dependencies](./dependencies) folder, note that these installations are managed separately and must be updated separately.
+You may install prerequisites manually or run the platform script in the [dependencies](./dependencies) folder. Packaged releases
+already include these scripts; on first launch `victoria.py` prompts to run the ones for your platform. These installations
+are managed separately and must be updated separately.
 
 * `crush` – [GitHub](https://github.com/charmbracelet/crush)
 * `uv` – [Docs](https://docs.astral.sh/uv/getting-started/installation/)
@@ -45,7 +47,7 @@ python3 -c "import colorama, importlib.metadata as im; print(colorama.__version_
 
 ### Environment Variables
 
-Set your environment variables manually or use `set_env_macos_linux.sh` or `set_env_windows.ps1` in the [dependencies](./dependencies) folder to configure these values.
+Set your environment variables manually or use `set_env_macos_linux.sh` or `set_env_windows.ps1` in the [dependencies](./dependencies) folder (triggered automatically on first run) to configure these values.
 
 * `OPENROUTER_API_KEY` (required)
 * `SNOWFLAKE_ACCOUNT` (optional)
@@ -68,6 +70,21 @@ python3 victoria.py
 
 This gives you the most control and is the same across macOS, Linux, and Windows (PowerShell).
 All modes store configuration and data in `~/Victoria` (or `%USERPROFILE%\Victoria` on Windows).
+On Windows, PowerShell may block script execution. `victoria.py` runs setup scripts
+with `-NoProfile` and a temporary `-ExecutionPolicy Bypass` and unblocks them so most
+users won't need to tweak any settings. The bundled application unblocks the
+scripts before invoking them so the "downloaded from the internet" mark is removed.
+If you launch scripts manually and see policy errors, start a session with a bypass:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass
+```
+
+To permanently allow locally created scripts, run:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+```
 
 ### Customizing the launch tool
 
