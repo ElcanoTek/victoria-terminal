@@ -76,7 +76,6 @@ terminal after running the script; you can safely rerun it if needed.
 Open your terminal, change into the `victoria-app` folder, and run:
 
 ```bash
-cd /path/to/victoria-app
 source .venv/bin/activate
 python3 victoria.py
 ```
