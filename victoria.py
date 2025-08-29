@@ -50,8 +50,14 @@ def resource_path(name: str | Path) -> Path:
     return base / name
 
 def ensure_default_files() -> None:
-    for fname in [".crushignore", "CRUSH.md", VICTORIA_FILE]:
-        src = resource_path(fname)
+    crush_dir = CONFIGS_DIR / "crush"
+    files = [
+        (crush_dir / ".crushignore", ".crushignore"),
+        (crush_dir / "CRUSH.md", "CRUSH.md"),
+        (Path(VICTORIA_FILE), VICTORIA_FILE),
+    ]
+    for rel_path, fname in files:
+        src = resource_path(rel_path)
         dst = APP_HOME / fname
         if src.exists() and not dst.exists():
             shutil.copy(src, dst)

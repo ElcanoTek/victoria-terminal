@@ -14,8 +14,6 @@ set REQ_FILE=%~dp0..\requirements.txt
 uvx --with-requirements "%REQ_FILE%" pyinstaller --noconfirm --hidden-import colorama --hidden-import rich --onefile --name Victoria ^
   --icon assets\icon.ico ^
   --add-data "configs;configs" ^
-  --add-data ".crushignore;." ^
-  --add-data "CRUSH.md;." ^
   --add-data "VICTORIA.md;." ^
   --add-data "dependencies\install_prerequisites_windows.ps1;dependencies" ^
   --add-data "dependencies\set_env_windows.ps1;dependencies" ^

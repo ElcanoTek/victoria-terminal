@@ -12,8 +12,6 @@ uvx --with-requirements "$REQ_FILE" pyinstaller --noconfirm --hidden-import colo
   --icon assets/icon.icns \
   --osx-bundle-identifier "$BUNDLE_ID" \
   --add-data "configs:configs" \
-  --add-data ".crushignore:." \
-  --add-data "CRUSH.md:." \
   --add-data "VICTORIA.md:." \
   --add-data "dependencies/install_prerequisites_macos.sh:dependencies" \
   --add-data "dependencies/set_env_macos_linux.sh:dependencies" \
