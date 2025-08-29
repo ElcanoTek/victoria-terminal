@@ -13,13 +13,19 @@ This guide explains how to sign and notarize the Victoria desktop builds on macO
 1. Purchase an Authenticode code-signing certificate from a trusted CA (EV certificates build reputation fastest).
 2. Export the certificate as a password-protected `.pfx` file.
 
-Store these certificates securely. For GitHub Actions, convert the certificates to Base64 so they can be stored as secrets.
+Store these certificates securely. For GitHub Actions, convert the certificates to Base64 so they can be stored as secrets. For example:
+
+```bash
+base64 -w0 cert.p12 > cert.p12.b64   # macOS
+base64 -w0 cert.pfx > cert.pfx.b64   # Windows
+```
+The resulting one-line strings are consumed by the packaging scripts via environment variables.
 
 ## 2. Local Build Overview
 
 The repository ships helper scripts to create release artifacts:
-- `scripts/package_mac.sh` builds a `.app` bundle and zips it for distribution【F:scripts/package_mac.sh†L1-L51】
-- `scripts/package_win.bat` creates a one-file EXE and an installer via Inno Setup【F:scripts/package_win.bat†L1-L21】
+- `scripts/package_mac.sh` builds a `.app` bundle and zips it for distribution. It automatically signs the app when `APPLE_CERT_P12` and `APPLE_CERT_PASSWORD` are set; otherwise it emits a warning and produces an unsigned build.【F:scripts/package_mac.sh†L49-L64】
+- `scripts/package_win.bat` creates a one-file EXE and an installer via Inno Setup. If `WIN_CERT_PFX` and `WIN_CERT_PASSWORD` are present, both binaries are signed; otherwise a warning is printed and the output remains unsigned.【F:scripts/package_win.bat†L23-L38】
 
 ## 3. macOS: Sign and Notarize Locally
 
@@ -28,7 +34,7 @@ The repository ships helper scripts to create release artifacts:
    bash scripts/package_mac.sh
    ```
    This produces `dist/Victoria.app` and `Victoria.app.zip`.
-2. **Sign every code object** (the app bundle and any bundled tools such as `crush`).
+2. **Sign** – When `APPLE_CERT_P12` and `APPLE_CERT_PASSWORD` are set, `package_mac.sh` imports the certificate and signs `dist/Victoria.app` automatically. Otherwise run:
    ```bash
    codesign --deep --force --options runtime \
      --sign "Developer ID Application: YOUR NAME (TEAMID)" dist/Victoria.app
@@ -62,7 +68,7 @@ The repository ships helper scripts to create release artifacts:
    scripts\package_win.bat
    ```
    This creates `dist\Victoria.exe` and `dist\VictoriaSetup.exe`.
-2. **Sign each binary and the installer**
+2. **Sign** – If `WIN_CERT_PFX` and `WIN_CERT_PASSWORD` are set, `package_win.bat` decodes the certificate and signs both `dist\Victoria.exe` and `dist\VictoriaSetup.exe`. Otherwise sign manually:
    ```powershell
    signtool sign /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 \
        /f path\to\cert.pfx /p YOUR_PFX_PASSWORD dist\Victoria.exe
@@ -87,40 +93,29 @@ The repository ships helper scripts to create release artifacts:
    - `APPLE_ID`, `APPLE_TEAM_ID`, `APPLE_NOTARY_PASSWORD`
    - `WIN_CERT_PFX` – Base64-encoded `.pfx` certificate
    - `WIN_CERT_PASSWORD`
-2. **macOS job** (add after the build step):
+2. **macOS job**
    ```yaml
-   - name: Import signing certificate
-     run: |
-       echo "$APPLE_CERT_P12" | base64 --decode > $HOME/cert.p12
-       security create-keychain -p temppass build.keychain
-       security import $HOME/cert.p12 -k build.keychain -P "$APPLE_CERT_PASSWORD" -T /usr/bin/codesign
-       security set-key-partition-list -S apple-tool:,apple: -s -k temppass build.keychain
-       security default-keychain -s build.keychain
-   - name: Sign app
-     run: |
-       codesign --deep --force --options runtime \
-         --sign "Developer ID Application: NAME (TEAMID)" dist/Victoria.app
+   - run: bash scripts/package_mac.sh
+     env:
+       APPLE_CERT_P12: ${{ secrets.APPLE_CERT_P12 }}
+       APPLE_CERT_PASSWORD: ${{ secrets.APPLE_CERT_PASSWORD }}
    - name: Notarize app
      run: |
        xcrun notarytool submit Victoria.app.zip \
          --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" \
          --password "$APPLE_NOTARY_PASSWORD" --wait
-   - name: Staple ticket
-     run: xcrun stapler staple dist/Victoria.app
+     env:
+       APPLE_ID: ${{ secrets.APPLE_ID }}
+       APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+       APPLE_NOTARY_PASSWORD: ${{ secrets.APPLE_NOTARY_PASSWORD }}
+   - run: xcrun stapler staple dist/Victoria.app
    ```
-3. **Windows job** (add after building):
+3. **Windows job**
    ```yaml
-   - name: Import signing certificate
-     run: |
-       echo "%WIN_CERT_PFX%" | base64 -d > %TEMP%\win.pfx
-       certutil -f -p "%WIN_CERT_PASSWORD%" -importpfx %TEMP%\win.pfx
-   - name: Sign binaries
-     run: |
-       signtool sign /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 \
-           /a dist\Victoria.exe
-       signtool sign /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 \
-           /a dist\VictoriaSetup.exe
-     shell: pwsh
+   - run: scripts\package_win.bat
+     env:
+       WIN_CERT_PFX: ${{ secrets.WIN_CERT_PFX }}
+       WIN_CERT_PASSWORD: ${{ secrets.WIN_CERT_PASSWORD }}
    ```
 4. The rest of the existing workflow uploads the signed artifacts and publishes the release【F:.github/workflows/build-release.yml†L31-L91】.
 

@@ -47,5 +47,22 @@ fi
 EOF
 chmod +x "$MACOS/Victoria"
 
+# Sign the app if a certificate is provided via environment variables
+if [[ -n "$APPLE_CERT_P12" && -n "$APPLE_CERT_PASSWORD" ]]; then
+  echo "Importing macOS signing certificate and signing app"
+  CERT_PATH=$(mktemp)
+  echo "$APPLE_CERT_P12" | base64 --decode > "$CERT_PATH"
+  security import "$CERT_PATH" -P "$APPLE_CERT_PASSWORD" -T /usr/bin/codesign >/dev/null 2>&1 || true
+  SIGN_ID=$(security find-identity -v -p codesigning | awk 'NR==1{print $2}')
+  if [[ -n "$SIGN_ID" ]]; then
+    codesign --deep --force --options runtime --sign "$SIGN_ID" "$APP"
+  else
+    echo "Warning: no signing identity found; app will be unsigned." >&2
+  fi
+  rm -f "$CERT_PATH"
+else
+  echo "Warning: macOS signing certificate not found; app will be unsigned." >&2
+fi
+
 # Zip the app for distribution
 (cd dist && zip -r ../Victoria.app.zip Victoria.app)
