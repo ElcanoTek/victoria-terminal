@@ -18,6 +18,16 @@ are managed separately and must be updated separately.
 * `uv` – [Docs](https://docs.astral.sh/uv/getting-started/installation/)
 * `python` – download from [python.org](https://www.python.org) or use your platform's package manager.
 
+Run `install_prerequisites_macos.sh`, `install_prerequisites_linux.sh`, or
+`install_prerequisites_windows.ps1` from `dependencies/` to install these tools
+automatically. After running, confirm everything is available:
+
+```bash
+python3 --version
+uv --version
+crush --version
+```
+
 ### Python Packages (developers only)
 
 The bundled application includes its own Python libraries. When running
@@ -47,7 +57,10 @@ python3 -c "import colorama, importlib.metadata as im; print(colorama.__version_
 
 ### Environment Variables
 
-Set your environment variables manually or use `set_env_macos_linux.sh` or `set_env_windows.ps1` in the [dependencies](./dependencies) folder (triggered automatically on first run) to configure these values.
+Set your environment variables manually or use `set_env_macos_linux.sh` or
+`set_env_windows.ps1` in the [dependencies](./dependencies) folder (triggered
+automatically on first run) to append them to your shell profile. Restart your
+terminal after running the script; you can safely rerun it if needed.
 
 * `OPENROUTER_API_KEY` (required)
 * `SNOWFLAKE_ACCOUNT` (optional)
@@ -119,6 +132,19 @@ Two workflows in [`.github/workflows`](.github/workflows) can be run manually fr
   ```
 
 These packaging scripts can also be run locally if you need to build outside of GitHub.
+
+## 🔏 Certificates for Signed Builds
+
+Signed packages require platform-specific code signing certificates:
+
+- **macOS** – a *Developer ID Application* certificate (optionally *Developer ID
+  Installer*) exported as a `.p12` file. Provide the Base64-encoded file via
+  `APPLE_CERT_P12` and its password via `APPLE_CERT_PASSWORD`.
+- **Windows** – an Authenticode code-signing certificate exported as a `.pfx`
+  file and supplied through `WIN_CERT_PFX` and `WIN_CERT_PASSWORD`.
+
+Convert certificate files to one-line Base64 strings for use in GitHub Actions
+secrets.
 
 ## 🧠 Model Notes
 
