@@ -147,6 +147,4 @@ secrets.
 
 ## 🧠 Model Notes
 
-| Model                     | Price (\$/1M tokens) | Category      | Best For              |
-| ------------------------- | -------------------- | ------------- | --------------------- |
-| **Google Gemini 2.5 Pro** | \$1.25 / \$10.00     | 🏆 Premium    | Best tested model     |
+Victoria's supported models are defined in template JSON files rather than listed here. Check the [Crush template](configs/crush/crush.template.json) and the [Local Providers template](configs/crush/local.providers.json) to see the current models. If you test additional models that work well, add them to these templates so everyone can benefit.
