@@ -70,19 +70,14 @@ Victoria's modular architecture enables flexible deployment across different AI 
 
 ## 🗺️ Product Roadmap
 
-### Phase 1: Trader Terminal Agent Foundation (Current Focus)
+### Phase I: Trader Terminal Agent Foundation (Current Focus)  
+The initial Victoria implementation centers on terminal-based AI agents that deliver advanced analytics through a command-line interface. This provides rapid development cycles, local deployment flexibility, and immediate value for technical users who prefer direct, text-based interaction.
 
-The initial Victoria implementation focuses on terminal-based AI agents that provide powerful analytics capabilities through a command-line interface. This approach offers rapid development, local deployment advantages, and immediate value for technical users.
+### Phase II: Automated Agents (YOLOs)  
+YOLOs are lightweight, automated agents that operate primarily through APIs and messaging channels. Their role is to monitor campaign configurations and raise alerts—via text message, email, or other notifications—when errors or misconfigurations are detected. They function as oversight and guardrails, ensuring correctness but not executing campaigns directly.
 
-### Phase 2: Automated Agents (YOLOs)
-
-Specialized versions for demonstration and automation use cases, including sample datasets, guided tutorials, and scheduled analysis capabilities.
-
-### Phase 3: Web Platform, PWAs and/or Mobile Apps
-
-A comprehensive web platform at elcanotek.com with user accounts, web-based data upload, enterprise features, and team collaboration capabilities.
-
-Mobile applications starting with Progressive Web Apps and potentially expanding to native iOS/Android applications for on-the-go campaign monitoring.
+### Phase III: Browser OS–Based Agent with MCP Support  
+In this phase, Victoria evolves into a browser OS–based agent that connects directly to enterprise data sources via the Model Context Protocol (MCP). Unlike YOLOs, which only notify, this agent actively executes campaigns end-to-end within a browser environment. It transforms the browser into a fully capable operating system for campaign orchestration—handling data integration, workflow automation, monitoring, and optimization seamlessly across marketing platforms.
 
 ## 🔑 Key Features (Current and Planned)
 
