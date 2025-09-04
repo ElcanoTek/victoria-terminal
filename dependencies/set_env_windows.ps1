@@ -1,8 +1,20 @@
+param(
+    [switch]$SkipOpenRouter
+)
+
 Write-Host "Victoria environment variable setup"
 
-$openRouter = Read-Host "Enter your OPENROUTER_API_KEY"
-[Environment]::SetEnvironmentVariable("OPENROUTER_API_KEY", $openRouter, "User")
-Write-Host "OPENROUTER_API_KEY set."
+if (-not $SkipOpenRouter) {
+    $openRouter = Read-Host "Enter your OPENROUTER_API_KEY (leave blank to skip)"
+    if ($openRouter) {
+        [Environment]::SetEnvironmentVariable("OPENROUTER_API_KEY", $openRouter, "User")
+        Write-Host "OPENROUTER_API_KEY set."
+    } else {
+        Write-Host "Skipping OpenRouter API key configuration."
+    }
+} else {
+    Write-Host "Skipping OpenRouter API key setup."
+}
 
 $ans = Read-Host "Configure Snowflake variables? (y/N)"
 if ($ans -match '^(y|Y)$') {

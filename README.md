@@ -62,7 +62,7 @@ Set your environment variables manually or use `set_env_macos_linux.sh` or
 automatically on first run) to append them to your shell profile. Restart your
 terminal after running the script; you can safely rerun it if needed.
 
-* `OPENROUTER_API_KEY` (required)
+* `OPENROUTER_API_KEY` (optional; required for OpenRouter models)
 * `SNOWFLAKE_ACCOUNT` (optional)
 * `SNOWFLAKE_USER` (optional)
 * `SNOWFLAKE_PASSWORD` (optional)
