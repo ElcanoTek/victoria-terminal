@@ -132,11 +132,11 @@ Victoria's provides comprehensive monitoring across all campaign dimensions, wit
 
 <img src="images/victoria_performance_dashboard.png" alt="Victoria's Performance Dashboard" width="600">
 
-*Victoria's comprehensive performance dashboard provides real-time monitoring, intelligent insights, and actionable optimization recommendations across all campaign dimensions.*
+*Victoria provides real-time monitoring, intelligent insights, and actionable optimization recommendations across all campaign dimensions.*
 
 ## 🛠️ Current Configurations
 
-* Most of Victoria's configuration happens in [VICTORIA.md](./VICTORIA.md), see the latest config there.
+* Most of Victoria's configuration happens in [VICTORIA.md](../VICTORIA.md), see the latest config there.
 * You may also browse specific configuration repositories at [Elcano's Github](https://github.com/orgs/ElcanoTek/repositories).
 
 ## 🔧 Production Support Strategy
