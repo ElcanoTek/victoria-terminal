@@ -105,8 +105,10 @@ def banner() -> None:
 # First-time setup
 # ---------------------------------------------------------------------------
 
-def run_setup_scripts() -> None:
+def run_setup_scripts(use_local_model: bool) -> None:
     deps = resource_path("dependencies")
+    if use_local_model:
+        info("Running setup without OpenRouter API key")
     if os.name == "nt":
         scripts = ["install_prerequisites_windows.ps1", "set_env_windows.ps1"]
         for s in scripts:
@@ -120,6 +122,7 @@ def run_setup_scripts() -> None:
                 (
                     f"Unblock-File -Path '{script}' -ErrorAction SilentlyContinue; "
                     f"& '{script}'"
+                    f"{' -SkipOpenRouter' if use_local_model and s.startswith('set_env') else ''}"
                 ),
             ]
             try:
@@ -131,7 +134,10 @@ def run_setup_scripts() -> None:
         scripts = ["install_prerequisites_macos.sh", "set_env_macos_linux.sh"]
         for s in scripts:
             try:
-                subprocess.run(["bash", str(deps / s)], check=True)
+                cmd = ["bash", str(deps / s)]
+                if use_local_model and s.startswith("set_env"):
+                    cmd.append("--skip-openrouter")
+                subprocess.run(cmd, check=True)
             except Exception as exc:
                 err(f"Setup script failed: {exc}")
                 break
@@ -139,7 +145,10 @@ def run_setup_scripts() -> None:
         scripts = ["install_prerequisites_linux.sh", "set_env_macos_linux.sh"]
         for s in scripts:
             try:
-                subprocess.run(["bash", str(deps / s)], check=True)
+                cmd = ["bash", str(deps / s)]
+                if use_local_model and s.startswith("set_env"):
+                    cmd.append("--skip-openrouter")
+                subprocess.run(cmd, check=True)
             except Exception as exc:
                 err(f"Setup script failed: {exc}")
                 break
@@ -147,12 +156,12 @@ def run_setup_scripts() -> None:
         warn("Unsupported platform; run setup scripts manually from the dependencies folder.")
         return
 
-def first_run_check() -> None:
+def first_run_check(use_local_model: bool) -> None:
     if SETUP_SENTINEL.exists():
         return
     section("First-time setup")
     if Prompt.ask("Run first-time setup?", choices=["y", "n"], default="y") == "y":
-        run_setup_scripts()
+        run_setup_scripts(use_local_model)
         try:
             SETUP_SENTINEL.write_text("done")
         except Exception:
@@ -298,14 +307,15 @@ def preflight(use_local_model: bool) -> None:
         if which(TOOL_CMD) is None:
             err(f"Missing '{TOOL_CMD}' command-line tool")
             sys.exit(1)
-        if not use_local_model and not os.environ.get("OPENROUTER_API_KEY"):
-            err("OPENROUTER_API_KEY not configured")
-            sys.exit(1)
     good(f"{TOOL_CMD} CLI tool detected")
+    has_key = bool(os.environ.get("OPENROUTER_API_KEY"))
+    if not use_local_model and not has_key:
+        warn("OPENROUTER_API_KEY not configured. Email brad@elcanotek.com to obtain one.")
+        sys.exit(1)
+    if has_key:
+        good("OpenRouter API key configured")
     if use_local_model:
         good("Local model provider selected")
-    else:
-        good("OpenRouter API key configured")
     good("All systems ready")
 
 def launch_tool() -> None:
@@ -371,10 +381,10 @@ def main() -> None:
     ensure_default_files()
     console.clear()
     banner()
-    first_run_check()
+    use_local_model = local_model_menu()
+    first_run_check(use_local_model)
     remove_local_duckdb()
     console.print(f"[cyan]{ICONS['folder']} Place files to analyze in: [white]{APP_HOME}")
-    use_local_model = local_model_menu()
     preflight(use_local_model)
     choice = course_menu()
     if choice == "1":

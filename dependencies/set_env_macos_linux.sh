@@ -4,14 +4,26 @@ set -e
 
 PROFILE_FILES=("$HOME/.bashrc" "$HOME/.zshrc")
 
-read -p "Enter your OPENROUTER_API_KEY: " OPENROUTER_API_KEY
-for file in "${PROFILE_FILES[@]}"; do
-  if [ -f "$file" ]; then
-    echo "export OPENROUTER_API_KEY=\"$OPENROUTER_API_KEY\"" >> "$file"
-  fi
-done
+SKIP_OPENROUTER=false
+if [[ "$1" == "--skip-openrouter" ]]; then
+  SKIP_OPENROUTER=true
+fi
 
-echo "OPENROUTER_API_KEY saved to shell profile."
+if [ "$SKIP_OPENROUTER" = false ]; then
+  read -p "Enter your OPENROUTER_API_KEY (leave blank to skip): " OPENROUTER_API_KEY
+  if [ -n "$OPENROUTER_API_KEY" ]; then
+    for file in "${PROFILE_FILES[@]}"; do
+      if [ -f "$file" ]; then
+        echo "export OPENROUTER_API_KEY=\"$OPENROUTER_API_KEY\"" >> "$file"
+      fi
+    done
+    echo "OPENROUTER_API_KEY saved to shell profile."
+  else
+    echo "Skipping OpenRouter API key configuration."
+  fi
+else
+  echo "Skipping OpenRouter API key configuration."
+fi
 
 read -p "Configure Snowflake variables? (y/N): " ANSWER
 if [[ $ANSWER =~ ^[Yy]$ ]]; then
