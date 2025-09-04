@@ -3,15 +3,36 @@
   "permissions": {
     "allowed_tools": [
       "view",
-      "ls", 
+      "ls",
       "grep",
       "edit",
       "motherduck_query"
     ]
   },
+  "providers": {
+    "openrouter": {
+      "type": "openai",
+      "base_url": "https://openrouter.ai/api/v1",
+      "api_key": "${OPENROUTER_API_KEY}",
+      "name": "OpenRouter",
+      "models": [
+        {
+          "id": "google/gemini-2.5-pro",
+          "name": "Google Gemini 2.5 Pro",
+          "context_window": 131072,
+          "default_max_tokens": 4096,
+          "supports_tools": true
+        }
+      ]
+    }
+  },
   "options": {
-    "context_paths": ["VICTORIA.md"],
-    "tui": { "compact_mode": true }
+    "context_paths": [
+      "VICTORIA.md"
+    ],
+    "tui": {
+      "compact_mode": true
+    }
   },
   "mcp": {
     "motherduck": {
