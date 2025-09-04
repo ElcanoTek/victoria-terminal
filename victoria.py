@@ -249,7 +249,10 @@ def build_crush_config(include_snowflake: bool, strict_env: bool, local_model: b
         deep_merge(base["mcp"], frag.get("mcp", frag))
     if local_model:
         frag = load_tool_config("crush", "local.providers.json")
-        deep_merge(base, frag)
+        providers = frag.get("providers")
+        if providers:
+            base.setdefault("providers", {})
+            deep_merge(base["providers"], providers)
     return substitute_env(base, strict=strict_env)
 
 
@@ -331,7 +334,7 @@ def launch_tool() -> None:
 def local_model_menu() -> bool:
     section("Model provider selection")
     choice = Prompt.ask(
-        "Use locally hosted model (Ollama/LM Studio)?",
+        "Use locally hosted model (LM Studio)?",
         choices=["y", "n"],
         default="n",
     )
