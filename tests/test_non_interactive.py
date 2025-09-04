@@ -26,8 +26,8 @@ def test_victoria_non_interactive():
     
     try:
         # Prepare input to automatically answer prompts
-        # 'n' for not downloading VICTORIA.md, then Ctrl+C to exit
-        input_data = "n\n"
+        # 'n' for skipping setup, 'n' for using OpenRouter default
+        input_data = "n\nn\n"
         
         # Use sys.executable to get the current Python interpreter
         python_cmd = sys.executable

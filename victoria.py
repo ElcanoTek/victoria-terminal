@@ -241,27 +241,30 @@ def load_tool_config(tool: str, name: str) -> Dict[str, Any]:
     return read_json(path)
 
 
-def build_crush_config(include_snowflake: bool, strict_env: bool) -> Dict[str, Any]:
+def build_crush_config(include_snowflake: bool, strict_env: bool, local_model: bool) -> Dict[str, Any]:
     base = load_tool_config("crush", "crush.template.json")
     if include_snowflake:
         frag = load_tool_config("crush", "snowflake.mcp.json")
         base.setdefault("mcp", {})
         deep_merge(base["mcp"], frag.get("mcp", frag))
+    if local_model:
+        frag = load_tool_config("crush", "local.providers.json")
+        deep_merge(base, frag)
     return substitute_env(base, strict=strict_env)
 
 
-CONFIG_BUILDERS: Dict[str, Callable[[bool, bool], Dict[str, Any]]] = {
+CONFIG_BUILDERS: Dict[str, Callable[[bool, bool, bool], Dict[str, Any]]] = {
     "crush": build_crush_config,
 }
 
 
-def build_config(tool: str, include_snowflake: bool, strict_env: bool) -> Dict[str, Any]:
+def build_config(tool: str, include_snowflake: bool, strict_env: bool, local_model: bool) -> Dict[str, Any]:
     builder = CONFIG_BUILDERS.get(tool)
     if not builder:
         raise ValueError(f"Unsupported tool: {tool}")
-    return builder(include_snowflake, strict_env)
+    return builder(include_snowflake, strict_env, local_model)
 
-def generate_config(include_snowflake: bool) -> bool:
+def generate_config(include_snowflake: bool, use_local_model: bool) -> bool:
     try:
         with Progress(
             SpinnerColumn(),
@@ -269,7 +272,7 @@ def generate_config(include_snowflake: bool) -> bool:
             transient=True,
         ) as progress:
             progress.add_task("Building configuration", total=None)
-            cfg = build_config(TOOL_CMD, include_snowflake, strict_env=include_snowflake)
+            cfg = build_config(TOOL_CMD, include_snowflake, strict_env=include_snowflake, local_model=use_local_model)
             out_path = APP_HOME / OUTPUT_CONFIG
             write_json(out_path, cfg)
         good(f"Configuration written to {out_path}")
@@ -285,18 +288,21 @@ def generate_config(include_snowflake: bool) -> bool:
 def which(cmd: str) -> str | None:
     return shutil.which(cmd)
 
-def preflight() -> None:
+def preflight(use_local_model: bool) -> None:
     section("System preflight check")
     with Progress(SpinnerColumn(), TextColumn("{task.description}"), transient=True) as progress:
         progress.add_task("Verifying prerequisites", total=None)
         if which(TOOL_CMD) is None:
             err(f"Missing '{TOOL_CMD}' command-line tool")
             sys.exit(1)
-        if not os.environ.get("OPENROUTER_API_KEY"):
+        if not use_local_model and not os.environ.get("OPENROUTER_API_KEY"):
             err("OPENROUTER_API_KEY not configured")
             sys.exit(1)
     good(f"{TOOL_CMD} CLI tool detected")
-    good("OpenRouter API key configured")
+    if use_local_model:
+        good("Local model provider selected")
+    else:
+        good("OpenRouter API key configured")
     good("All systems ready")
 
 def launch_tool() -> None:
@@ -321,6 +327,15 @@ def launch_tool() -> None:
 # ---------------------------------------------------------------------------
 # Main workflow
 # ---------------------------------------------------------------------------
+
+def local_model_menu() -> bool:
+    section("Model provider selection")
+    choice = Prompt.ask(
+        "Use locally hosted model (Ollama/LM Studio)?",
+        choices=["y", "n"],
+        default="n",
+    )
+    return choice == "y"
 
 def course_menu() -> str:
     section("Navigation course selection")
@@ -356,7 +371,8 @@ def main() -> None:
     first_run_check()
     remove_local_duckdb()
     console.print(f"[cyan]{ICONS['folder']} Place files to analyze in: [white]{APP_HOME}")
-    preflight()
+    use_local_model = local_model_menu()
+    preflight(use_local_model)
     choice = course_menu()
     if choice == "1":
         missing = snowflake_env_missing()
@@ -365,10 +381,10 @@ def main() -> None:
             for v in missing:
                 console.print(f"  [red]{v}")
             sys.exit(1)
-        if not generate_config(True):
+        if not generate_config(True, use_local_model):
             sys.exit(1)
     else:
-        if not generate_config(False):
+        if not generate_config(False, use_local_model):
             sys.exit(1)
     open_victoria_folder()
     launch_tool()
