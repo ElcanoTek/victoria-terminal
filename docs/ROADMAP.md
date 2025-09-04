@@ -1,4 +1,4 @@
-# Victoria
+# Victoria Roadmap
 
 <img src="images/victoria.png" alt="Victoria AI Agent" width="350">
 
@@ -6,23 +6,7 @@
 
 Victoria is your intelligent assistant for programmatic advertising analysis. Simply ask questions about your campaign data in plain English, and Victoria will analyze your CSV files and data warehouse to provide actionable insights.
 
-## ✨ What Victoria Does
-
-Victoria is Elcano's intelligent AI agent named after the ship that completed the first circumnavigation under Juan Sebastián Elcano. She embodies the pioneering spirit of exploration and navigation, but in the digital realm of programmatic advertising.
-
-**Core Capabilities:**
-- **Analyze Your Data**: Drop in CSV/Excel files and ask questions like "Which campaigns have the best ROI?"
-- **Expert Knowledge**: Knows all major ad tech metrics (CTR, CPC, CPM, CPA, ROAS) and industry benchmarks
-- **Enterprise Ready**: Connects to Snowflake data warehouses with automatic database and schema exploration
-- **Natural Language Analytics** - Ask questions in plain English, get instant insights
-- **Real-Time Optimization** - Proactive recommendations based on comprehensive data analysis  
-- **Fraud Detection** - Advanced pattern recognition to identify threats and anomalies
-- **Human-in-the-Loop** - AI insights guided by expert human judgment
-- **Strategic Intelligence** - Data-driven recommendations for campaign optimization
-
-## 🎯 Strategic Vision & Architecture Philosophy
-
-### Why We Built Victoria This Way
+## 🎯 Philosophy: Why We Built Victoria This Way
 
 Victoria's architecture reflects a deliberate strategic decision to embrace the rapidly evolving AI agent ecosystem rather than building everything from scratch. Our philosophy centers on three core principles that guide every architectural decision and development choice.
 
@@ -52,32 +36,32 @@ Victoria's core value lies in the specialized components that connect general-pu
 
 For the foundational AI capabilities, we leverage existing open-source projects and commercial platforms that have received massive investment and development resources. This includes large language models from major AI companies, agent frameworks like those provided by Anthropic, Google, and Charm, and data processing tools like DuckDB and Snowflake.
 
+## 🗺️ High-Level Roadmap
+
+### Phase I: Trader Terminal Agent Foundation (Current Focus)
+The initial Victoria implementation centers on terminal-based AI agents that deliver advanced analytics through a command-line interface. This provides rapid development cycles, local deployment flexibility, and immediate value for technical users who prefer direct, text-based interaction.
+
+### Phase II: Automated Agents (YOLOs)
+YOLOs are lightweight, automated agents that operate primarily through APIs and messaging channels. Their role is to monitor campaign configurations and raise alerts—via text message, email, or other notifications—when errors or misconfigurations are detected. They function as oversight and guardrails, ensuring correctness but not executing campaigns directly.
+
+### Phase III: Browser OS–Based Agent with MCP Support
+In this phase, Victoria evolves into a browser OS–based agent that connects directly to enterprise data sources via the Model Context Protocol (MCP). Unlike YOLOs, which only notify, this agent actively executes campaigns end-to-end within a browser environment. It transforms the browser into a fully capable operating system for campaign orchestration—handling data integration, workflow automation, monitoring, and optimization seamlessly across marketing platforms.
+
 ## 🏗️ System Architecture
 
 <img src="images/victoria_layers.png" alt="Victoria AI Agent" width="200">
 
 Victoria's modular architecture enables flexible deployment across different AI agents while maintaining consistent functionality. The system consists of three main layers:
 
-**Auto-Optimization aka YOLO Layer** (Optional): MCP (Model Context Protocol)  tooling allows us to connect to APIs and make optimizations on the fly in "YOLO mode".
+**Auto-Optimization aka YOLO Layer** (Optional): MCP (Model Context Protocol) tooling allows us to connect to APIs and make optimizations on the fly in "YOLO mode".
 
 **AI Agent Layer**: Choose from Crush, Claude Code, gemini-cli or any new and fancy AI agent based on your preferences and requirements. Each agent provides the same core Victoria functionality through different interfaces.
 
 **Victoria Core**: The central orchestration layer that manages the Victoria.md knowledge base and facilitates coordination between AI agents and data sources.
 
-**MCP Layer**: MCP servers allow us to connect to many data sources and allow us to add new tooling in a modular way to any AI agent that supports it. 
+**MCP Layer**: MCP servers allow us to connect to many data sources and allow us to add new tooling in a modular way to any AI agent that supports it.
 
 **Data Layer**: Victoria connects EVERYWHERE - Snowflake, CSV files, BigQuery, and other SQL-compatible systems.
-
-## 🗺️ Product Roadmap
-
-### Phase I: Trader Terminal Agent Foundation (Current Focus)  
-The initial Victoria implementation centers on terminal-based AI agents that deliver advanced analytics through a command-line interface. This provides rapid development cycles, local deployment flexibility, and immediate value for technical users who prefer direct, text-based interaction.
-
-### Phase II: Automated Agents (YOLOs)  
-YOLOs are lightweight, automated agents that operate primarily through APIs and messaging channels. Their role is to monitor campaign configurations and raise alerts—via text message, email, or other notifications—when errors or misconfigurations are detected. They function as oversight and guardrails, ensuring correctness but not executing campaigns directly.
-
-### Phase III: Browser OS–Based Agent with MCP Support  
-In this phase, Victoria evolves into a browser OS–based agent that connects directly to enterprise data sources via the Model Context Protocol (MCP). Unlike YOLOs, which only notify, this agent actively executes campaigns end-to-end within a browser environment. It transforms the browser into a fully capable operating system for campaign orchestration—handling data integration, workflow automation, monitoring, and optimization seamlessly across marketing platforms.
 
 ## 🔑 Key Features (Current and Planned)
 
@@ -153,7 +137,7 @@ Victoria's provides comprehensive monitoring across all campaign dimensions, wit
 ## 🛠️ Current Configurations
 
 * Most of Victoria's configuration happens in [VICTORIA.md](./VICTORIA.md), see the latest config there.
-* You may also browse specific configuration repositories at [Elcano's Github](https://github.com/orgs/ElcanoTek/repositories). 
+* You may also browse specific configuration repositories at [Elcano's Github](https://github.com/orgs/ElcanoTek/repositories).
 
 ## 🔧 Production Support Strategy
 
