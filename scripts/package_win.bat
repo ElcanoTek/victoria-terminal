@@ -32,7 +32,7 @@ copy dependencies\set_env_windows.ps1 dist\dependencies\ >nul
 echo $dir = Split-Path -Parent $MyInvocation.MyCommand.Path
 echo $bin = Join-Path $dir 'VictoriaApp.exe'
 echo $deps = Join-Path $dir 'dependencies'
-echo if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
+echo if ^(-not ^(Get-Command python -ErrorAction SilentlyContinue^)^) {
 echo     ^& "$deps\install_prerequisites_windows.ps1"
 echo }
 echo ^& $bin
