@@ -19,9 +19,6 @@ SetupIconFile=..\assets\icon.ico
 
 [Files]
 Source: "..\dist\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-; VictoriaApp.exe is the main application. Victoria.exe is a tiny launcher
-; that ensures Python is installed before delegating to VictoriaApp.exe.
-Source: "..\dist\VictoriaApp.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\dist\dependencies\*"; DestDir: "{app}\dependencies"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
@@ -30,3 +27,4 @@ Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "Launch Victoria"; Flags: nowait postinstall skipifsilent
+
