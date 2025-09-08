@@ -19,32 +19,14 @@ uvx --with-requirements "%REQ_FILE%" pyinstaller --noconfirm --hidden-import col
   --add-data "dependencies\set_env_windows.ps1;dependencies" ^
   victoria.py
 
-rem Prepare wrapper and dependencies
-rem Prepare launcher and dependencies.  PyInstaller outputs Victoria.exe,
-rem the actual application binary. Rename it so we can generate a small
-rem wrapper named Victoria.exe that installs Python if missing and then
-rem launches the real executable.
-ren dist\Victoria.exe VictoriaApp.exe
+rem Include dependencies required for installer
 mkdir dist\dependencies
 copy dependencies\install_prerequisites_windows.ps1 dist\dependencies\ >nul
 copy dependencies\set_env_windows.ps1 dist\dependencies\ >nul
-(
-echo $dir = Split-Path -Parent $MyInvocation.MyCommand.Path
-echo $bin = Join-Path $dir 'VictoriaApp.exe'
-echo $deps = Join-Path $dir 'dependencies'
-echo if ^(-not ^(Get-Command python -ErrorAction SilentlyContinue^)^) {
-echo     ^& "$deps\install_prerequisites_windows.ps1"
-echo }
-echo ^& $bin
-) > dist\Victoria.ps1
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest https://raw.githubusercontent.com/MScholtes/PS2EXE/master/ps2exe.ps1 -UseBasicParsing | Invoke-Expression; ps2exe dist\Victoria.ps1 dist\Victoria.exe" >nul
-del dist\Victoria.ps1
 
 if defined WIN_CERT_PFX if defined WIN_CERT_PASSWORD (
   echo Importing Windows signing certificate and signing executable
   powershell -NoProfile -Command "[IO.File]::WriteAllBytes('%PFX_PATH%',[Convert]::FromBase64String($env:WIN_CERT_PFX))"
-  signtool sign /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 ^
-      /f "%PFX_PATH%" /p "%WIN_CERT_PASSWORD%" dist\VictoriaApp.exe
   signtool sign /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 ^
       /f "%PFX_PATH%" /p "%WIN_CERT_PASSWORD%" dist\Victoria.exe
 ) else (
@@ -59,7 +41,5 @@ if defined WIN_CERT_PFX if defined WIN_CERT_PASSWORD (
   del "%PFX_PATH%"
 )
 
-rem Remove intermediate launcher and binary, leaving only the installer
-if exist dist\Victoria.exe del /q dist\Victoria.exe
-if exist dist\VictoriaApp.exe del /q dist\VictoriaApp.exe
+rem Remove temporary dependencies directory
 if exist dist\dependencies rmdir /s /q dist\dependencies
