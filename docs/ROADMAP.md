@@ -137,7 +137,6 @@ Victoria's provides comprehensive monitoring across all campaign dimensions, wit
 ## 🛠️ Current Configurations
 
 * Most of Victoria's configuration happens in [VICTORIA.md](../VICTORIA.md), see the latest config there.
-* You may also browse specific configuration repositories at [Elcano's Github](https://github.com/orgs/ElcanoTek/repositories).
 
 ## 🔧 Production Support Strategy
 
