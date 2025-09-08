@@ -62,55 +62,6 @@ def test_victoria_script_syntax():
         print(f"✗ Error reading victoria.py: {e}")
         return False
 
-def test_terminal_capability_detection():
-    """Test terminal capability detection functions."""
-    print("🧪 Testing terminal capability detection...")
-    
-    try:
-        # Import the functions we need to test
-        sys.path.insert(0, '.')
-        
-        # Read the script and extract the functions we need
-        with open('victoria.py', 'r', encoding='utf-8') as f:
-            script_content = f.read()
-        
-        # Execute only the function definitions (before main)
-        main_index = script_content.find('if __name__ == "__main__"')
-        if main_index != -1:
-            functions_only = script_content[:main_index]
-        else:
-            functions_only = script_content
-        
-        # Create a namespace to execute the functions
-        namespace = {}
-        exec(functions_only, namespace)
-        
-        # Test detect_terminal_capabilities
-        caps = namespace['detect_terminal_capabilities']()
-        print(f"  Terminal capabilities: {caps}")
-        
-        # Verify expected keys exist
-        expected_keys = ['colors', 'emojis', 'unicode_box', 'colors_256', 'is_tty']
-        for key in expected_keys:
-            if key not in caps:
-                print(f"  ✗ Missing capability key: {key}")
-                return False
-            print(f"  ✓ {key}: {caps[key]}")
-        
-        # Test get_terminal_width
-        width = namespace['get_terminal_width']()
-        print(f"  Terminal width: {width}")
-        if not isinstance(width, int) or width <= 0:
-            print(f"  ✗ Invalid terminal width: {width}")
-            return False
-        
-        print("✅ Terminal capability detection works")
-        return True
-        
-    except Exception as e:
-        print(f"✗ Error testing terminal capabilities: {e}")
-        return False
-
 def test_cross_platform_compatibility():
     """Test cross-platform specific functionality."""
     print("🧪 Testing cross-platform compatibility...")
@@ -336,7 +287,6 @@ def main():
     tests = [
         test_imports,
         test_victoria_script_syntax,
-        test_terminal_capability_detection,
         test_cross_platform_compatibility,
         test_environment_variables,
         test_script_execution_modes,

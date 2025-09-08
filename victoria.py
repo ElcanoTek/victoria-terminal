@@ -168,23 +168,6 @@ def first_run_check(use_local_model: bool) -> None:
             pass
 
 # ---------------------------------------------------------------------------
-# Terminal helpers (minimal implementation for tests)
-# ---------------------------------------------------------------------------
-
-def detect_terminal_capabilities() -> Dict[str, Any]:
-    return {
-        "colors": True,
-        "emojis": True,
-        "unicode_box": True,
-        "colors_256": True,
-        "is_tty": sys.stdout.isatty(),
-    }
-
-
-def get_terminal_width() -> int:
-    return shutil.get_terminal_size(fallback=(80, 24)).columns
-
-# ---------------------------------------------------------------------------
 # JSON handling
 # ---------------------------------------------------------------------------
 
