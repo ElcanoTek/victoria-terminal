@@ -1,3 +1,4 @@
+import os
 import pytest
 import pathlib
 
@@ -9,4 +10,5 @@ def force_posix_path(monkeypatch):
     mocked to 'nt'. This fixture prevents the crash by ensuring that
     pathlib.Path always resolves to PosixPath.
     """
-    monkeypatch.setattr(pathlib, "Path", pathlib.PosixPath)
+    if os.name != "nt":
+        monkeypatch.setattr(pathlib, "Path", pathlib.PosixPath)
