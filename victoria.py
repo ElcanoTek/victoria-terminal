@@ -104,46 +104,27 @@ def banner() -> None:
         "[bold cyan]VICTORIA[/bold cyan]\n[cyan]AdTech Data Navigation[/cyan]",
         border_style="cyan"))
 
-def restart_app(
-    _sys_executable: str = sys.executable,
-    _sys_argv: list[str] = sys.argv,
-    _os_name: str = os.name,
-    _os_execv: Callable[..., None] = os.execv,
-    _subprocess_Popen: Callable[..., Any] = subprocess.Popen,
-    _sys_exit: Callable[[int], None] = sys.exit,
+def update_path_from_install(
+    _APP_HOME: Path = APP_HOME,
+    _os_environ: dict = os.environ,
     _info: Callable[[str], None] = info,
-    _sys_platform: str = sys.platform,
-    _Path: type = Path,
-    _home_dir: str = home_dir,
 ) -> None:
-    """Restart the application to apply changes to the environment."""
-    _info("Prerequisites installed. Restarting Victoria to apply changes...")
-    if _os_name == "nt":
-        # On Windows, Popen is used to launch a new instance of the app.
-        # The new process runs independently. We then exit the current process.
-        _subprocess_Popen([_sys_executable] + _sys_argv)
-        _sys_exit(0)
-    elif _sys_platform == "darwin":
-        # On macOS, the shell needs to be reloaded to pick up changes to the
-        # PATH from the prerequisite installer. We do this by re-executing
-        # the application inside a new zsh instance that sources the profile.
-        zprofile = _Path(_home_dir) / ".zprofile"
-        if zprofile.is_file():
-            def shell_quote(s: str) -> str:
-                return "'" + s.replace("'", "'\\''") + "'"
+    """Check for a newly installed tool and update the PATH if found."""
+    crush_path_file = _APP_HOME / ".crush_path"
+    if not crush_path_file.is_file():
+        return
 
-            cmd_line = " ".join(shell_quote(arg) for arg in _sys_argv)
-            shell_script = f"source {shell_quote(str(zprofile))} && exec {cmd_line}"
-
-            args = ["zsh", "-c", shell_script]
-            # /bin/zsh must exist on macOS, so we don't check for it.
-            _os_execv("/bin/zsh", args)
-        else:
-            # Fallback if .zprofile is not found
-            _os_execv(_sys_executable, _sys_argv)
-    else:
-        # Fallback for Linux
-        _os_execv(_sys_executable, _sys_argv)
+    try:
+        crush_executable = crush_path_file.read_text().strip()
+        if crush_executable:
+            crush_dir = str(Path(crush_executable).parent)
+            if crush_dir not in _os_environ["PATH"].split(os.pathsep):
+                _info(f"Adding {crush_dir} to PATH for this session")
+                _os_environ["PATH"] = f"{crush_dir}{os.pathsep}{_os_environ['PATH']}"
+        # Clean up the file after processing
+        crush_path_file.unlink()
+    except Exception as exc:
+        warn(f"Could not update PATH from install file: {exc}")
 
 
 def which(cmd: str) -> str | None:
@@ -167,7 +148,6 @@ class Tool:
 def preflight_crush(
     tool: Tool,
     use_local_model: bool,
-    just_installed: bool,
     _which: Callable[[str], str | None] = shutil.which,
     _os_environ: dict = os.environ,
     _info: Callable[[str], None] = info,
@@ -177,14 +157,11 @@ def preflight_crush(
     _sys_exit: Callable[[int], None] = sys.exit,
     _section: Callable[[str], None] = section,
     _Progress: type = Progress,
-    _restart_app: Callable[[], None] = restart_app,
 ) -> None:
     _section("System preflight check")
     with _Progress(SpinnerColumn(), TextColumn("{task.description}"), transient=True) as progress:
         progress.add_task("Verifying prerequisites", total=None)
         if _which(tool.command) is None:
-            if just_installed:
-                _restart_app()
             _err(f"Missing '{tool.command}' command-line tool. Run first-time setup or install it manually.")
             _sys_exit(1)
     _good(f"{tool.command} CLI tool detected")
@@ -355,12 +332,14 @@ def first_run_check(
     _SETUP_SENTINEL: Path = SETUP_SENTINEL,
     _Prompt_ask: Callable[..., str] = Prompt.ask,
     _section: Callable[[str], None] = section,
+    _update_path_from_install: Callable[[], None] = update_path_from_install,
 ) -> bool:
     if _SETUP_SENTINEL.exists():
         return False
     _section("First-time setup")
     if _Prompt_ask("Run first-time setup?", choices=["y", "n"], default="y") == "y":
         _run_setup_scripts(use_local_model)
+        _update_path_from_install()
         try:
             _SETUP_SENTINEL.write_text("done")
         except Exception:
@@ -573,7 +552,7 @@ def main(
     _remove_local_duckdb()
     _info(f"Place files to analyze in: {APP_HOME}")
 
-    tool.preflight(tool, use_local_model, just_installed)
+    tool.preflight(tool, use_local_model)
 
     choice = str(args.course) if args.course else _course_menu()
     if choice == "1":

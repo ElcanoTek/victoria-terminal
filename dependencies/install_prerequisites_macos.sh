@@ -40,12 +40,10 @@ install_homebrew() {
         print_status "Installing Homebrew..."
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
         
-        # Add Homebrew to PATH for Apple Silicon Macs
+        # Add Homebrew to PATH for this script's execution
         if [[ $(uname -m) == "arm64" ]]; then
-            echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
             eval "$(/opt/homebrew/bin/brew shellenv)"
         else
-            echo 'eval "$(/usr/local/bin/brew shellenv)"' >> ~/.zprofile
             eval "$(/usr/local/bin/brew shellenv)"
         fi
         
@@ -82,9 +80,8 @@ install_uv() {
         else
             # Fallback to standalone installer
             curl -LsSf https://astral.sh/uv/install.sh | sh
-            # Add to PATH
+            # Add to PATH for this script's execution
             export PATH="$HOME/.local/bin:$PATH"
-            echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zprofile
         fi
         print_success "uv installed successfully"
     else
@@ -105,7 +102,6 @@ install_crush() {
                 # Add GOPATH/bin to PATH if not already there
                 if [[ ":$PATH:" != *":$HOME/go/bin:"* ]]; then
                     export PATH="$HOME/go/bin:$PATH"
-                    echo 'export PATH="$HOME/go/bin:$PATH"' >> ~/.zprofile
                 fi
             else
                 print_error "Go is not installed. Please install Go first or use Homebrew."
@@ -116,6 +112,21 @@ install_crush() {
         print_success "crush installed successfully"
     else
         print_success "crush is already installed"
+    fi
+}
+
+# Function to find and save the path of a command
+save_command_path() {
+    local cmd="$1"
+    local output_file="$2"
+
+    if command_exists "$cmd"; then
+        local cmd_path
+        cmd_path=$(command -v "$cmd")
+        echo "$cmd_path" > "$output_file"
+        print_status "Saved path for '$cmd' to $output_file"
+    else
+        print_warning "'$cmd' command not found after installation."
     fi
 }
 
@@ -142,13 +153,16 @@ main() {
     
     install_crush
     echo
-    
+
+    # Save the path to the crush executable
+    VICTORIA_HOME="$HOME/Victoria"
+    mkdir -p "$VICTORIA_HOME"
+    save_command_path "crush" "$VICTORIA_HOME/.crush_path"
+    echo
+
     print_success "All prerequisites have been installed successfully!"
     echo
-    print_status "You may need to restart your terminal or run:"
-    print_status "source ~/.zprofile"
-    echo
-    print_status "To verify installations, run:"
+    print_status "To verify installations, you may run:"
     print_status "python3 --version"
     print_status "uv --version"
     print_status "crush --version"

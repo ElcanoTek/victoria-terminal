@@ -6,69 +6,68 @@ Victoria is Elcano's AI agent that connects to programmatic advertising reports 
 
 ---
 
-## ⚙️ Installation
+## ⚙️ Installation & Setup
 
-### Dependencies
+This section covers how to run Victoria from source. For information on the packaged releases, see the project's [GitHub Releases](https://github.com/elcanotek/victoria/releases) page.
 
-You may install prerequisites manually or run the platform script in the [dependencies](./dependencies) folder. For packaged releases,
-the application will automatically run these scripts on first launch if it
-detects that prerequisites are missing. After installation, you will be
-prompted to restart the application.
+### Prerequisites
 
-* `crush` – [GitHub](https://github.com/charmbracelet/crush)
-* `uv` – [Docs](https://docs.astral.sh/uv/getting-started/installation/)
-* `python` – download from [python.org](https://www.python.org) or use your platform's package manager.
+Before you begin, you will need the following tools installed and available on your system's `PATH`:
 
-Run `install_prerequisites_macos.sh`, `install_prerequisites_linux.sh`, or
-`install_prerequisites_windows.ps1` from `dependencies/` to install these tools
-automatically. After running, confirm everything is available:
+*   **Python 3.8+**
+*   **uv**: A fast Python package installer. ([Installation guide](https://docs.astral.sh/uv/getting-started/installation/))
+*   **crush**: The AI coding agent used by Victoria. ([Installation guide](https://github.com/charmbracelet/crush))
 
+You can verify your installations by running:
 ```bash
 python3 --version
 uv --version
 crush --version
 ```
+> **Note:** If `crush` is not installed, the application will attempt to install it for you on the first run.
 
-### Python Packages (developers only)
+### Development Setup
 
-The bundled application includes its own Python libraries. When running
-`victoria.py` directly, install the UI helpers manually, on first run make sure you setup a venv:
+1.  **Clone the Repository:**
+    ```bash
+    git clone https://github.com/elcanotek/victoria.git
+    cd victoria
+    ```
 
-```bash
-uv venv
-```
+2.  **Create a Virtual Environment:**
+    It is highly recommended to use a virtual environment to manage dependencies.
+    ```bash
+    uv venv
+    source .venv/bin/activate
+    ```
 
-Next activate your venv ***IMPORTANT*** in future you'll want to activate your venv before running the victoria.py script
+3.  **Install Dependencies:**
+    Install all application and development dependencies using `uv`.
+    ```bash
+    uv pip install -r requirements-dev.txt
+    ```
 
-```
-source .venv/bin/activate
-```
+### Environment Variables & Secrets
 
-Then install the requirements:
+Victoria uses environment variables for configuration, particularly for secrets like API keys. The recommended way to manage these during development is with a `.env` file.
 
-```bash
-uv pip install -r requirements-dev.txt
-```
+1.  Create a file named `.env` inside the `~/Victoria` directory (the script will create this directory on first run if it doesn't exist).
+    ```bash
+    mkdir -p ~/Victoria
+    touch ~/Victoria/.env
+    ```
 
-Verify the installation:
+2.  Add your secrets to this file in `KEY="VALUE"` format. For example:
+    ```
+    # ~/Victoria/.env
 
-```bash
-python3 -c "import colorama, importlib.metadata as im; print(colorama.__version__, im.version('rich'))"
-```
-
-### Environment Variables
-
-Set your environment variables manually or use `set_env_macos_linux.sh` or
-`set_env_windows.ps1` in the [dependencies](./dependencies) folder (triggered
-automatically on first run) to append them to your shell profile. Restart your
-terminal after running the script; you can safely rerun it if needed.
-
-* `OPENROUTER_API_KEY` (optional; required for OpenRouter models)
-* `SNOWFLAKE_ACCOUNT` (optional)
-* `SNOWFLAKE_USER` (optional)
-* `SNOWFLAKE_PASSWORD` (optional)
-* `SNOWFLAKE_WAREHOUSE` (optional)
-* `SNOWFLAKE_ROLE` (optional)
+    OPENROUTER_API_KEY="sk-or-v1-..."
+    SNOWFLAKE_ACCOUNT="your_account"
+    SNOWFLAKE_USER="your_user"
+    SNOWFLAKE_PASSWORD="your_password"
+    # ... etc.
+    ```
+The application will automatically load variables from this file at startup.
 
 ---
 
