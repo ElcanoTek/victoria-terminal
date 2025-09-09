@@ -30,7 +30,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 # ---------------------------------------------------------------------------
 
 VICTORIA_FILE = "VICTORIA.md"
-CONFIGS_DIR = PurePath("configs")
+CONFIGS_DIR = "configs"
 
 home_dir = os.path.expanduser("~")
 APP_HOME = Path(home_dir) / "Victoria"
@@ -191,12 +191,12 @@ def resource_path(name: str | Path) -> Path:
 
 def ensure_default_files(
     _APP_HOME: Path = APP_HOME,
-    _CONFIGS_DIR: PurePath = CONFIGS_DIR,
+    _CONFIGS_DIR: str = CONFIGS_DIR,
     _VICTORIA_FILE: str = VICTORIA_FILE,
     _resource_path: Callable[[str | Path], Path] = resource_path,
     _shutil_copy: Callable[[Path, Path], None] = shutil.copy,
 ) -> None:
-    crush_dir = _CONFIGS_DIR / "crush"
+    crush_dir = Path(_CONFIGS_DIR) / "crush"
     files = [
         (crush_dir / ".crushignore", ".crushignore"),
         (crush_dir / "CRUSH.md", "CRUSH.md"),
@@ -354,7 +354,7 @@ def snowflake_env_missing() -> list[str]:
 
 def load_tool_config(tool: str, name: str) -> Dict[str, Any]:
     path_home = APP_HOME / CONFIGS_DIR / tool / name
-    path_res = resource_path(CONFIGS_DIR / tool / name)
+    path_res = resource_path(Path(CONFIGS_DIR) / tool / name)
     path = path_home if path_home.exists() else path_res
     if not path.exists():
         raise FileNotFoundError(f"Missing {name} for {tool}")
