@@ -6,7 +6,8 @@ import os
 
 # Add project root to path to allow importing victoria
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from victoria import build_crush_config, APP_HOME, substitute_env
+from VictoriaTerminal import build_crush_config, substitute_env, load_tool_config
+from common import APP_HOME
 
 
 @pytest.fixture(autouse=True)
@@ -73,11 +74,8 @@ def test_config_snapshot_with_snowflake_and_local_model(snapshot):
     )
 
 
-import victoria
-
-
 def test_load_tool_config_not_found(mocker):
     """Test that FileNotFoundError is raised for a missing config file."""
     mocker.patch("pathlib.Path.exists", return_value=False)
     with pytest.raises(FileNotFoundError):
-        victoria.load_tool_config("crush", "non_existent.json")
+        load_tool_config("crush", "non_existent.json")

@@ -1,92 +1,106 @@
 #!/usr/bin/env bash
 set -e
-# Build a Linux AppImage for Victoria.
-# This script is designed to be run in a GitHub Actions environment on ubuntu-latest.
+# Build Linux AppImages for Victoria tools.
 
-# 0. Install ImageMagick if not available (needed for icon resizing)
+# 0. Common setup
 if ! command -v convert &> /dev/null; then
     echo ">>> Installing ImageMagick..."
     sudo apt-get update && sudo apt-get install -y imagemagick
 fi
-
-# 1. Run PyInstaller to create the executable
-echo ">>> Running PyInstaller to create the executable..."
 REQ_FILE="$(dirname "$0")/../requirements.txt"
-# We create a single file executable.
-uvx --with-requirements "$REQ_FILE" pyinstaller --noconfirm --onefile --hidden-import colorama --hidden-import rich --name Victoria \
-  --add-data "configs:configs" \
-  --add-data "VICTORIA.md:." \
+if [ -z "$VERSION" ]; then
+  echo "VERSION environment variable not set; falling back to date"
+  VERSION=$(date -u +%Y.%m.%d)
+fi
+ARCH=$(uname -m)
+case "$ARCH" in
+  x86_64) LINUXDEPLOY_ARCH="x86_64" ;;
+  aarch64) LINUXDEPLOY_ARCH="aarch64" ;;
+  *) echo "Unsupported architecture: $ARCH"; exit 1 ;;
+esac
+LINUXDEPLOY_APPIMAGE="linuxdeploy-$LINUXDEPLOY_ARCH.AppImage"
+wget -c "https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/$LINUXDEPLOY_APPIMAGE"
+chmod +x "$LINUXDEPLOY_APPIMAGE"
+
+# Clean previous builds
+rm -rf dist build *.spec Victoria*.AppDir Victoria*.AppImage
+
+# 1. Run PyInstaller for both executables
+echo ">>> Running PyInstaller for both executables..."
+uvx --with-requirements "$REQ_FILE" pyinstaller --noconfirm --onefile --hidden-import colorama --hidden-import rich --name VictoriaConfigurator \
   --add-data "dependencies/install_prerequisites_linux.sh:dependencies" \
   --add-data "dependencies/set_env_macos_linux.sh:dependencies" \
-  victoria.py
+  VictoriaConfigurator.py
 
-# 2. Set up the AppDir structure
-echo ">>> Setting up AppDir structure..."
-APPDIR="Victoria.AppDir"
-mkdir -p "$APPDIR/usr/bin"
-mv dist/Victoria "$APPDIR/usr/bin/"
+uvx --with-requirements "$REQ_FILE" pyinstaller --noconfirm --onefile --hidden-import colorama --hidden-import rich --name VictoriaTerminal \
+  --add-data "configs:configs" \
+  --add-data "VICTORIA.md:." \
+  VictoriaTerminal.py
 
-# 3. Create metadata files
-echo ">>> Creating metadata files..."
-# Desktop file - specifies this is a terminal application
-cat > "$APPDIR/victoria.desktop" <<EOF
+
+# --- Build Victoria Configurator AppImage ---
+echo ">>> Building Victoria Configurator AppImage..."
+APPDIR_CONFIG="VictoriaConfigurator.AppDir"
+mkdir -p "$APPDIR_CONFIG/usr/bin"
+mv dist/VictoriaConfigurator "$APPDIR_CONFIG/usr/bin/"
+
+cat > "$APPDIR_CONFIG/victoriaconfigurator.desktop" <<EOF
 [Desktop Entry]
-Name=Victoria
-Exec=Victoria
+Name=Victoria Configurator
+Exec=VictoriaConfigurator
 Icon=victoria
 Type=Application
 Categories=Utility;
 Terminal=true
 EOF
 
-# Copy and resize the icon to 512x512 (maximum supported by linuxdeploy)
-# The original icon is 1024x1024, but linuxdeploy only supports up to 512x512
-convert assets/icon.png -resize 512x512 "$APPDIR/victoria.png"
+convert assets/icon.png -resize 512x512 "$APPDIR_CONFIG/victoria.png"
 
-# AppRun - a simple launcher script
-cat > "$APPDIR/AppRun" <<'EOF'
+cat > "$APPDIR_CONFIG/AppRun" <<'EOF'
 #!/bin/sh
 HERE=$(dirname $(readlink -f "$0"))
-"$HERE/usr/bin/Victoria" "$@"
+"$HERE/usr/bin/VictoriaConfigurator" "$@"
 EOF
-chmod +x "$APPDIR/AppRun"
+chmod +x "$APPDIR_CONFIG/AppRun"
 
-# 4. Download and run linuxdeploy
-echo ">>> Detecting architecture..."
-ARCH=$(uname -m)
-case "$ARCH" in
-  x86_64)
-    LINUXDEPLOY_ARCH="x86_64"
-    ;;
-  aarch64)
-    LINUXDEPLOY_ARCH="aarch64"
-    ;;
-  *)
-    echo "Unsupported architecture: $ARCH"
-    exit 1
-    ;;
-esac
+echo ">>> Bundling dependencies with linuxdeploy for Configurator..."
+SOURCE_APPIMAGE_CONFIG="VictoriaConfigurator-$LINUXDEPLOY_ARCH.AppImage"
+OUTPUT="$SOURCE_APPIMAGE_CONFIG" "./$LINUXDEPLOY_APPIMAGE" --appdir "$APPDIR_CONFIG" --output appimage -i "$APPDIR_CONFIG/victoria.png" -d "$APPDIR_CONFIG/victoriaconfigurator.desktop"
+DEST_APPIMAGE_CONFIG="VictoriaConfigurator-${VERSION}-$LINUXDEPLOY_ARCH.AppImage"
+mv "$SOURCE_APPIMAGE_CONFIG" "$DEST_APPIMAGE_CONFIG"
+echo ">>> Configurator AppImage created: $DEST_APPIMAGE_CONFIG"
 
-echo ">>> Downloading linuxdeploy for $LINUXDEPLOY_ARCH..."
-LINUXDEPLOY_APPIMAGE="linuxdeploy-$LINUXDEPLOY_ARCH.AppImage"
-wget -c "https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/$LINUXDEPLOY_APPIMAGE"
-chmod +x "$LINUXDEPLOY_APPIMAGE"
 
-echo ">>> Bundling dependencies with linuxdeploy..."
-# Let linuxdeploy find and bundle all necessary libraries.
-# The output will be an AppImage file.
-# We explicitly set the output name to ensure it's predictable.
-SOURCE_APPIMAGE="Victoria-$LINUXDEPLOY_ARCH.AppImage"
-OUTPUT="$SOURCE_APPIMAGE" "./$LINUXDEPLOY_APPIMAGE" --appdir "$APPDIR" --output appimage -i "$APPDIR/victoria.png" -d "$APPDIR/victoria.desktop"
+# --- Build Victoria Terminal AppImage ---
+echo ">>> Building Victoria Terminal AppImage..."
+APPDIR_TERM="VictoriaTerminal.AppDir"
+mkdir -p "$APPDIR_TERM/usr/bin"
+mv dist/VictoriaTerminal "$APPDIR_TERM/usr/bin/"
 
-if [ -z "$VERSION" ]; then
-  echo "VERSION environment variable not set; falling back to date"
-  VERSION=$(date -u +%Y.%m.%d)
-fi
+cat > "$APPDIR_TERM/victoriaterminal.desktop" <<EOF
+[Desktop Entry]
+Name=Victoria Terminal
+Exec=VictoriaTerminal
+Icon=victoria
+Type=Application
+Categories=Utility;
+Terminal=true
+EOF
 
-echo ">>> Renaming and cleaning up..."
-# The default output name is based on the application name and architecture.
-DEST_APPIMAGE="Victoria-${VERSION}-$LINUXDEPLOY_ARCH.AppImage"
-mv "$SOURCE_APPIMAGE" "$DEST_APPIMAGE"
+convert assets/icon.png -resize 512x512 "$APPDIR_TERM/victoria.png"
 
-echo ">>> AppImage created successfully: $DEST_APPIMAGE"
+cat > "$APPDIR_TERM/AppRun" <<'EOF'
+#!/bin/sh
+HERE=$(dirname $(readlink -f "$0"))
+"$HERE/usr/bin/VictoriaTerminal" "$@"
+EOF
+chmod +x "$APPDIR_TERM/AppRun"
+
+echo ">>> Bundling dependencies with linuxdeploy for Terminal..."
+SOURCE_APPIMAGE_TERM="VictoriaTerminal-$LINUXDEPLOY_ARCH.AppImage"
+OUTPUT="$SOURCE_APPIMAGE_TERM" "./$LINUXDEPLOY_APPIMAGE" --appdir "$APPDIR_TERM" --output appimage -i "$APPDIR_TERM/victoria.png" -d "$APPDIR_TERM/victoriaterminal.desktop"
+DEST_APPIMAGE_TERM="VictoriaTerminal-${VERSION}-$LINUXDEPLOY_ARCH.AppImage"
+mv "$SOURCE_APPIMAGE_TERM" "$DEST_APPIMAGE_TERM"
+echo ">>> Terminal AppImage created: $DEST_APPIMAGE_TERM"
+
+echo ">>> All AppImages created successfully."

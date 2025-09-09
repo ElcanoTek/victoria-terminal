@@ -1,34 +1,38 @@
 #!/usr/bin/env bash
 set -e
-# Build a macOS .app bundle; use --windowed so PyInstaller creates the
-# application structure we expect. The wrapper below will launch the binary in
-# Terminal, so we do not need the console flag here.
-# Bundle identifier for the app
-BUNDLE_ID=${BUNDLE_ID:-com.elcanotek.victoria}
 
-# Install dependencies from requirements.txt and run PyInstaller
+# Common setup
 REQ_FILE="$(dirname "$0")/../requirements.txt"
-uvx --with-requirements "$REQ_FILE" pyinstaller --noconfirm --hidden-import colorama --hidden-import rich --windowed --name Victoria \
+if [ -z "$VERSION" ]; then
+  echo "VERSION environment variable not set; falling back to date"
+  VERSION=$(date -u +%Y.%m.%d)
+fi
+
+# Clean previous builds
+rm -rf dist build *.spec
+
+# --- Build Victoria Configurator ---
+echo "--- Building Victoria Configurator ---"
+CONFIGURATOR_BUNDLE_ID=${CONFIGURATOR_BUNDLE_ID:-com.elcanotek.victoriaconfigurator}
+uvx --with-requirements "$REQ_FILE" pyinstaller --noconfirm --windowed --name VictoriaConfigurator \
+  --hidden-import colorama --hidden-import rich \
   --icon assets/icon.icns \
-  --osx-bundle-identifier "$BUNDLE_ID" \
-  --add-data "configs:configs" \
-  --add-data "VICTORIA.md:." \
+  --osx-bundle-identifier "$CONFIGURATOR_BUNDLE_ID" \
   --add-data "dependencies/install_prerequisites_macos.sh:dependencies" \
   --add-data "dependencies/set_env_macos_linux.sh:dependencies" \
-  victoria.py
+  VictoriaConfigurator.py
 
-APP="dist/Victoria.app"
-MACOS="$APP/Contents/MacOS"
+CONFIGURATOR_APP="dist/VictoriaConfigurator.app"
+CONFIGURATOR_MACOS="$CONFIGURATOR_APP/Contents/MacOS"
 
-# Rename the compiled binary so we can wrap it with a launcher
-mv "$MACOS/Victoria" "$MACOS/victoria-bin"
+# Rename the compiled binary so we can wrap it
+mv "$CONFIGURATOR_MACOS/VictoriaConfigurator" "$CONFIGURATOR_MACOS/victoriaconfigurator-bin"
 
-# Wrapper executable that Finder launches. It opens Terminal and runs the binary.
-cat > "$MACOS/Victoria" <<'EOF'
+# Wrapper executable
+cat > "$CONFIGURATOR_MACOS/VictoriaConfigurator" <<'EOF'
 #!/bin/bash
 DIR="$(cd "$(dirname "$0")" && pwd)"
-BIN="$DIR/victoria-bin"
-DEPS="$DIR/../Resources/dependencies"
+BIN="$DIR/victoriaconfigurator-bin"
 if [ -n "$TERM_PROGRAM" ]; then
   exec "$BIN"
 else
@@ -43,14 +47,61 @@ tell application "Terminal"
   end if
 end tell
 END
-
 fi
 EOF
-chmod +x "$MACOS/Victoria"
+chmod +x "$CONFIGURATOR_MACOS/VictoriaConfigurator"
 
-if [ -z "$VERSION" ]; then
-  echo "VERSION environment variable not set; falling back to date"
-  VERSION=$(date -u +%Y.%m.%d)
+# Zip the app
+(cd dist && zip -r "../VictoriaConfigurator-${VERSION}.app.zip" VictoriaConfigurator.app)
+echo "--- Finished Victoria Configurator ---"
+
+# Clean up build artifacts before the next run
+rm -rf build VictoriaConfigurator.spec
+
+
+# --- Build Victoria Terminal ---
+echo "--- Building Victoria Terminal ---"
+TERMINAL_BUNDLE_ID=${TERMINAL_BUNDLE_ID:-com.elcanotek.victoriaterminal}
+uvx --with-requirements "$REQ_FILE" pyinstaller --noconfirm --windowed --name VictoriaTerminal \
+  --hidden-import colorama --hidden-import rich \
+  --icon assets/icon.icns \
+  --osx-bundle-identifier "$TERMINAL_BUNDLE_ID" \
+  --add-data "configs:configs" \
+  --add-data "VICTORIA.md:." \
+  VictoriaTerminal.py
+
+TERMINAL_APP="dist/VictoriaTerminal.app"
+TERMINAL_MACOS="$TERMINAL_APP/Contents/MacOS"
+
+# Rename the compiled binary so we can wrap it
+mv "$TERMINAL_MACOS/VictoriaTerminal" "$TERMINAL_MACOS/victoriaterminal-bin"
+
+# Wrapper executable
+cat > "$TERMINAL_MACOS/VictoriaTerminal" <<'EOF'
+#!/bin/bash
+DIR="$(cd "$(dirname "$0")" && pwd)"
+BIN="$DIR/victoriaterminal-bin"
+if [ -n "$TERM_PROGRAM" ]; then
+  exec "$BIN"
+else
+  BIN_ESCAPED=$(printf '%q' "$BIN")
+  osascript <<END
+tell application "Terminal"
+  if not (exists window 1) then
+    do script "$BIN_ESCAPED"
+  else
+    do script "$BIN_ESCAPED" in window 1
+    activate
+  end if
+end tell
+END
 fi
-# Zip the app for distribution
-(cd dist && zip -r "../Victoria-${VERSION}.app.zip" Victoria.app)
+EOF
+chmod +x "$TERMINAL_MACOS/VictoriaTerminal"
+
+# Zip the app
+(cd dist && zip -r "../VictoriaTerminal-${VERSION}.app.zip" VictoriaTerminal.app)
+echo "--- Finished Victoria Terminal ---"
+
+# Final cleanup
+rm -rf build VictoriaTerminal.spec
