@@ -48,5 +48,9 @@ fi
 EOF
 chmod +x "$MACOS/Victoria"
 
+if [ -z "$VERSION" ]; then
+  echo "VERSION environment variable not set; falling back to date"
+  VERSION=$(date -u +%Y.%m.%d)
+fi
 # Zip the app for distribution
-(cd dist && zip -r ../Victoria.app.zip Victoria.app)
+(cd dist && zip -r "../Victoria-${VERSION}.app.zip" Victoria.app)

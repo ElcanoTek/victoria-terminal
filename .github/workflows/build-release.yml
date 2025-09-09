@@ -24,9 +24,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
       - name: Run test suite
-        run: |
-          python tests/test_victoria.py
-          python tests/test_non_interactive.py
+        run: pytest
 
   build:
     needs: test
@@ -41,15 +39,15 @@ jobs:
         with:
           python-version: '3.x'
       - name: Set build version
-        shell: bash
         run: |
           python - <<'PY'
           import datetime, os, pathlib
-          version = datetime.datetime.utcnow().strftime('%Y%m%d%H%M')
+          version = datetime.datetime.utcnow().strftime('%Y.%m.%d')
           pathlib.Path('VERSION').write_text(version)
           with open(os.environ['GITHUB_ENV'], 'a') as fh:
               fh.write(f"VERSION={version}\n")
           PY
+        shell: bash
       - name: Install uv
         run: |
           python -m pip install --upgrade pip
@@ -63,7 +61,6 @@ jobs:
         shell: cmd
         run: scripts\package_win.bat
       - name: Upload build version
-        if: matrix.os == 'windows-latest'
         uses: actions/upload-artifact@v4
         with:
           name: build-version
@@ -85,7 +82,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: victoria-macos
-          path: Victoria.app.zip
+          path: Victoria-${{ env.VERSION }}.app.zip
           if-no-files-found: error
 
   release:
@@ -116,7 +113,6 @@ jobs:
       - name: Rename artifacts with version
         run: |
           mv release/VictoriaSetup.exe "release/Victoria-${VERSION}-Setup.exe"
-          mv release/Victoria.app.zip "release/Victoria-${VERSION}.app.zip"
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
