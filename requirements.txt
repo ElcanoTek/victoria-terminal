@@ -1,4 +1,2 @@
 colorama
 rich
-pytest
-pytest-mock
