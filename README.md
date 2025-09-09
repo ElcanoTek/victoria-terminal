@@ -130,15 +130,22 @@ python3 VictoriaTerminal.py --course 2 --local-model
 
 All modes store configuration and data in `~/Victoria` (or `%USERPROFILE%\Victoria` on Windows).
 
-On Windows, PowerShell may block script execution. The `VictoriaConfigurator.py` script runs setup scripts with `-NoProfile` and a temporary `-ExecutionPolicy Bypass` and unblocks them so most users won't need to tweak any settings. If you launch scripts manually and see policy errors, start a session with a bypass:
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass
-```
+On Windows, PowerShell's security policy can prevent scripts from running. We've designed the `VictoriaConfigurator.py` to handle this automatically, so for most users, **no manual configuration is necessary.** The configurator uses a temporary bypass and unblocks the necessary scripts for you.
 
-To permanently allow locally created scripts, run:
-```powershell
-Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
-```
+If you choose to run the setup scripts from the `dependencies` folder manually and encounter an error, you have two options:
+
+1.  **Start a bypassed PowerShell session:**
+    Open a new terminal and run the following command. This will start a new PowerShell session that allows scripts to run.
+    ```powershell
+    powershell -NoProfile -ExecutionPolicy Bypass
+    ```
+    From this new session, you can then run the `.ps1` scripts directly.
+
+2.  **Set a permanent policy:**
+    To allow all locally-created scripts to run on your system, you can run this command once in any PowerShell terminal. This is a common configuration for developers.
+    ```powershell
+    Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+    ```
 
 
 ## 🔄 On-Demand GitHub Actions
