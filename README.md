@@ -10,9 +10,10 @@ Victoria is Elcano's AI agent that connects to programmatic advertising reports 
 
 ### Dependencies
 
-You may install prerequisites manually or run the platform script in the [dependencies](./dependencies) folder. Packaged releases
-already include these scripts and, on both macOS and Windows, check for a system Python on launch, invoking the installer if it's
-missing. These installations are managed separately and must be updated separately.
+You may install prerequisites manually or run the platform script in the [dependencies](./dependencies) folder. For packaged releases,
+the application will automatically run these scripts on first launch if it
+detects that prerequisites are missing. After installation, you will be
+prompted to restart the application.
 
 * `crush` – [GitHub](https://github.com/charmbracelet/crush)
 * `uv` – [Docs](https://docs.astral.sh/uv/getting-started/installation/)
@@ -124,26 +125,13 @@ Two workflows in [`.github/workflows`](.github/workflows) can be run manually fr
   gh workflow run manual-tests.yml
   ```
 
-* **Build and Release** ([`build-release.yml`](.github/workflows/build-release.yml)) — executes the test suite and then calls [`scripts/package_mac.sh`](scripts/package_mac.sh) and [`scripts/package_win.bat`](scripts/package_win.bat) to produce `Victoria.app.zip` and `VictoriaSetup.exe`. The Windows packaging step creates a tiny launcher `Victoria.exe` that installs Python if required before delegating to the main `VictoriaApp.exe`. Both are bundled into the installer, and the packaging script removes the temporary copies so `dist/` contains only `VictoriaSetup.exe`:
+* **Build and Release** ([`build-release.yml`](.github/workflows/build-release.yml)) — executes the test suite and then calls [`scripts/package_mac.sh`](scripts/package_mac.sh) and [`scripts/package_win.bat`](scripts/package_win.bat) to produce `Victoria.app.zip` and `VictoriaSetup.exe`. The packaged applications produced by this workflow are self-contained and will handle the installation of dependencies on first run.
 
   ```bash
   gh workflow run build-release.yml
   ```
 
 These packaging scripts can also be run locally if you need to build outside of GitHub.
-
-## 🔏 Certificates for Signed Builds
-
-Signed packages require platform-specific code signing certificates:
-
-- **macOS** – a *Developer ID Application* certificate (optionally *Developer ID
-  Installer*) exported as a `.p12` file. Provide the Base64-encoded file via
-  `APPLE_CERT_P12` and its password via `APPLE_CERT_PASSWORD`.
-- **Windows** – an Authenticode code-signing certificate exported as a `.pfx`
-  file and supplied through `WIN_CERT_PFX` and `WIN_CERT_PASSWORD`.
-
-Convert certificate files to one-line Base64 strings for use in GitHub Actions
-secrets.
 
 ## 🧠 Model Notes
 
