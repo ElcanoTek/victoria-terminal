@@ -32,7 +32,7 @@ uvx --with-requirements "%REQ_FILE%" pyinstaller --noconfirm --hidden-import col
 
 rem --- Build Victoria Browser ---
 echo "--- Building Victoria Browser ---"
-uvx --with-requirements "%REQ_FILE%" pyinstaller --noconfirm --hidden-import tkinter --onefile --name VictoriaBrowser ^
+uvx --with-requirements "%REQ_FILE%" pyinstaller --noconfirm --onefile --name VictoriaBrowser ^
   --icon assets\VictoriaBrowser.ico ^
   VictoriaBrowser.py
 

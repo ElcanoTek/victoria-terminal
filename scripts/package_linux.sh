@@ -28,6 +28,7 @@ rm -rf dist build *.spec Victoria*.AppDir Victoria*.AppImage
 # 1. Run PyInstaller for both executables
 echo ">>> Running PyInstaller for both executables..."
 uvx --with-requirements "$REQ_FILE" pyinstaller --noconfirm --onefile --hidden-import colorama --hidden-import rich --name VictoriaConfigurator \
+  --add-data "dependencies/common.sh:dependencies" \
   --add-data "dependencies/install_prerequisites_linux.sh:dependencies" \
   --add-data "dependencies/set_env_macos_linux.sh:dependencies" \
   VictoriaConfigurator.py
@@ -37,7 +38,7 @@ uvx --with-requirements "$REQ_FILE" pyinstaller --noconfirm --onefile --hidden-i
   --add-data "VICTORIA.md:." \
   VictoriaTerminal.py
 
-uvx --with-requirements "$REQ_FILE" pyinstaller --noconfirm --onefile --hidden-import tkinter --name VictoriaBrowser \
+uvx --with-requirements "$REQ_FILE" pyinstaller --noconfirm --onefile --name VictoriaBrowser \
   VictoriaBrowser.py
 
 

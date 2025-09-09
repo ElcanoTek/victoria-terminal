@@ -18,6 +18,7 @@ uvx --with-requirements "$REQ_FILE" pyinstaller --noconfirm --windowed --name Vi
   --hidden-import colorama --hidden-import rich \
   --icon assets/VictoriaTerminal.icns \
   --osx-bundle-identifier "$CONFIGURATOR_BUNDLE_ID" \
+  --add-data "dependencies/common.sh:dependencies" \
   --add-data "dependencies/install_prerequisites_macos.sh:dependencies" \
   --add-data "dependencies/set_env_macos_linux.sh:dependencies" \
   VictoriaConfigurator.py
@@ -110,7 +111,6 @@ rm -rf build VictoriaTerminal.spec
 echo "--- Building Victoria Browser ---"
 BROWSER_BUNDLE_ID=${BROWSER_BUNDLE_ID:-com.elcanotek.victoriabrowser}
 uvx --with-requirements "$REQ_FILE" pyinstaller --noconfirm --windowed --name VictoriaBrowser \
-  --hidden-import tkinter \
   --icon assets/VictoriaBrowser.icns \
   --osx-bundle-identifier "$BROWSER_BUNDLE_ID" \
   VictoriaBrowser.py
