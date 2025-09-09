@@ -49,18 +49,24 @@ def resource_path(name: str | Path) -> Path:
     base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
     return base / name
 
-def ensure_default_files() -> None:
-    crush_dir = CONFIGS_DIR / "crush"
+def ensure_default_files(
+    _APP_HOME: Path = APP_HOME,
+    _CONFIGS_DIR: Path = CONFIGS_DIR,
+    _VICTORIA_FILE: str = VICTORIA_FILE,
+    _resource_path: Callable[[str | Path], Path] = resource_path,
+    _shutil_copy: Callable[[Path, Path], None] = shutil.copy,
+) -> None:
+    crush_dir = _CONFIGS_DIR / "crush"
     files = [
         (crush_dir / ".crushignore", ".crushignore"),
         (crush_dir / "CRUSH.md", "CRUSH.md"),
-        (Path(VICTORIA_FILE), VICTORIA_FILE),
+        (Path(_VICTORIA_FILE), _VICTORIA_FILE),
     ]
     for rel_path, fname in files:
-        src = resource_path(rel_path)
-        dst = APP_HOME / fname
+        src = _resource_path(rel_path)
+        dst = _APP_HOME / fname
         if src.exists() and not dst.exists():
-            shutil.copy(src, dst)
+            _shutil_copy(src, dst)
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Victoria launcher")
@@ -105,11 +111,20 @@ def banner() -> None:
 # First-time setup
 # ---------------------------------------------------------------------------
 
-def run_setup_scripts(use_local_model: bool) -> None:
-    deps = resource_path("dependencies")
+def run_setup_scripts(
+    use_local_model: bool,
+    _resource_path: Callable[[str | Path], Path] = resource_path,
+    _subprocess_run: Callable[..., subprocess.CompletedProcess] = subprocess.run,
+    _err: Callable[[str], None] = err,
+    _info: Callable[[str], None] = info,
+    _warn: Callable[[str], None] = warn,
+    _os_name: str = os.name,
+    _sys_platform: str = sys.platform,
+) -> None:
+    deps = _resource_path("dependencies")
     if use_local_model:
-        info("Running setup without OpenRouter API key")
-    if os.name == "nt":
+        _info("Running setup without OpenRouter API key")
+    if _os_name == "nt":
         scripts = ["install_prerequisites_windows.ps1", "set_env_windows.ps1"]
         for s in scripts:
             script = deps / s
@@ -126,44 +141,50 @@ def run_setup_scripts(use_local_model: bool) -> None:
                 ),
             ]
             try:
-                subprocess.run(cmd, check=True)
+                _subprocess_run(cmd, check=True)
             except Exception as exc:
-                err(f"Setup script failed: {exc}")
+                _err(f"Setup script failed: {exc}")
                 break
-    elif sys.platform == "darwin":
+    elif _sys_platform == "darwin":
         scripts = ["install_prerequisites_macos.sh", "set_env_macos_linux.sh"]
         for s in scripts:
             try:
                 cmd = ["bash", str(deps / s)]
                 if use_local_model and s.startswith("set_env"):
                     cmd.append("--skip-openrouter")
-                subprocess.run(cmd, check=True)
+                _subprocess_run(cmd, check=True)
             except Exception as exc:
-                err(f"Setup script failed: {exc}")
+                _err(f"Setup script failed: {exc}")
                 break
-    elif sys.platform.startswith("linux"):
+    elif _sys_platform.startswith("linux"):
         scripts = ["install_prerequisites_linux.sh", "set_env_macos_linux.sh"]
         for s in scripts:
             try:
                 cmd = ["bash", str(deps / s)]
                 if use_local_model and s.startswith("set_env"):
                     cmd.append("--skip-openrouter")
-                subprocess.run(cmd, check=True)
+                _subprocess_run(cmd, check=True)
             except Exception as exc:
-                err(f"Setup script failed: {exc}")
+                _err(f"Setup script failed: {exc}")
                 break
     else:
-        warn("Unsupported platform; run setup scripts manually from the dependencies folder.")
+        _warn("Unsupported platform; run setup scripts manually from the dependencies folder.")
         return
 
-def first_run_check(use_local_model: bool) -> bool:
-    if SETUP_SENTINEL.exists():
+def first_run_check(
+    use_local_model: bool,
+    _run_setup_scripts: Callable[[bool], None] = run_setup_scripts,
+    _SETUP_SENTINEL: Path = SETUP_SENTINEL,
+    _Prompt_ask: Callable[..., str] = Prompt.ask,
+    _section: Callable[[str], None] = section,
+) -> bool:
+    if _SETUP_SENTINEL.exists():
         return False
-    section("First-time setup")
-    if Prompt.ask("Run first-time setup?", choices=["y", "n"], default="y") == "y":
-        run_setup_scripts(use_local_model)
+    _section("First-time setup")
+    if _Prompt_ask("Run first-time setup?", choices=["y", "n"], default="y") == "y":
+        _run_setup_scripts(use_local_model)
         try:
-            SETUP_SENTINEL.write_text("done")
+            _SETUP_SENTINEL.write_text("done")
         except Exception:
             pass
         return True
@@ -285,45 +306,68 @@ def generate_config(include_snowflake: bool, use_local_model: bool) -> bool:
 def which(cmd: str) -> str | None:
     return shutil.which(cmd)
 
-def preflight(use_local_model: bool, just_installed: bool) -> None:
-    section("System preflight check")
-    with Progress(SpinnerColumn(), TextColumn("{task.description}"), transient=True) as progress:
+def preflight(
+    use_local_model: bool,
+    just_installed: bool,
+    _which: Callable[[str], str | None] = shutil.which,
+    _TOOL_CMD: str = TOOL_CMD,
+    _os_environ: dict = os.environ,
+    _info: Callable[[str], None] = info,
+    _good: Callable[[str], None] = good,
+    _warn: Callable[[str], None] = warn,
+    _err: Callable[[str], None] = err,
+    _sys_exit: Callable[[int], None] = sys.exit,
+    _section: Callable[[str], None] = section,
+    _Progress: type = Progress,
+) -> None:
+    _section("System preflight check")
+    with _Progress(SpinnerColumn(), TextColumn("{task.description}"), transient=True) as progress:
         progress.add_task("Verifying prerequisites", total=None)
-        if which(TOOL_CMD) is None:
+        if _which(_TOOL_CMD) is None:
             if just_installed:
-                info("Prerequisites installed. Please restart Victoria to continue.")
-                sys.exit(0)
-            err(f"Missing '{TOOL_CMD}' command-line tool. Run first-time setup or install it manually.")
-            sys.exit(1)
-    good(f"{TOOL_CMD} CLI tool detected")
-    has_key = bool(os.environ.get("OPENROUTER_API_KEY"))
+                _info("Prerequisites installed. Please restart Victoria to continue.")
+                _sys_exit(0)
+            _err(f"Missing '{_TOOL_CMD}' command-line tool. Run first-time setup or install it manually.")
+            _sys_exit(1)
+    _good(f"{_TOOL_CMD} CLI tool detected")
+    has_key = bool(_os_environ.get("OPENROUTER_API_KEY"))
     if not use_local_model and not has_key:
-        warn("OPENROUTER_API_KEY not configured. Email brad@elcanotek.com to obtain one.")
-        sys.exit(1)
+        _warn("OPENROUTER_API_KEY not configured. Email brad@elcanotek.com to obtain one.")
+        _sys_exit(1)
     if has_key:
-        good("OpenRouter API key configured")
+        _good("OpenRouter API key configured")
     if use_local_model:
-        good("Local model provider selected")
-    good("All systems ready")
+        _good("Local model provider selected")
+    _good("All systems ready")
 
-def launch_tool() -> None:
-    section("Mission launch")
-    info(f"Launching {TOOL_CMD}...")
-    cmd = [TOOL_CMD, "-c", str(APP_HOME)]
+def launch_tool(
+    _APP_HOME: Path = APP_HOME,
+    _TOOL_CMD: str = TOOL_CMD,
+    _os_name: str = os.name,
+    _execvp: Callable[..., None] = os.execvp,
+    _subprocess_run: Callable[..., subprocess.CompletedProcess] = subprocess.run,
+    _err: Callable[[str], None] = err,
+    _info: Callable[[str], None] = info,
+    _section: Callable[[str], None] = section,
+    _sys_exit: Callable[[int], None] = sys.exit,
+) -> None:
+    _section("Mission launch")
+    _info(f"Launching {_TOOL_CMD}...")
+    cmd = [_TOOL_CMD, "-c", str(_APP_HOME)]
     try:
-        if os.name == "nt":
-            proc = subprocess.run(cmd)
+        if _os_name == "nt":
+            proc = _subprocess_run(cmd)
             if proc.returncode != 0:
-                err(f"{TOOL_CMD} exited with {proc.returncode}")
-                sys.exit(proc.returncode)
+                _err(f"{_TOOL_CMD} exited with {proc.returncode}")
+                _sys_exit(proc.returncode)
         else:
-            os.execvp(TOOL_CMD, cmd)
+            _execvp(_TOOL_CMD, cmd)
     except FileNotFoundError:
-        err(f"'{TOOL_CMD}' command not found in PATH")
-        sys.exit(1)
+        _err(f"'{_TOOL_CMD}' command not found in PATH")
+        _sys_exit(1)
     except Exception as exc:  # pragma: no cover - runtime errors
-        err(f"Failed to launch {TOOL_CMD}: {exc}")
-        sys.exit(1)
+        _err(f"Failed to launch {_TOOL_CMD}: {exc}")
+        _sys_exit(1)
 
 # ---------------------------------------------------------------------------
 # Main workflow
@@ -364,31 +408,46 @@ def open_victoria_folder() -> None:
     except Exception as exc:  # pragma: no cover - OS dependent
         warn(f"Could not open Victoria folder: {exc}")
 
-def main() -> None:
-    parse_args()
-    ensure_default_files()
-    console.clear()
-    banner()
-    use_local_model = local_model_menu()
-    just_installed = first_run_check(use_local_model)
-    remove_local_duckdb()
-    console.print(f"[cyan]{ICONS['folder']} Place files to analyze in: [white]{APP_HOME}")
-    preflight(use_local_model, just_installed)
-    choice = course_menu()
+def main(
+    _parse_args: Callable = parse_args,
+    _ensure_default_files: Callable = ensure_default_files,
+    _banner: Callable = banner,
+    _local_model_menu: Callable = local_model_menu,
+    _first_run_check: Callable = first_run_check,
+    _remove_local_duckdb: Callable = remove_local_duckdb,
+    _preflight: Callable = preflight,
+    _course_menu: Callable = course_menu,
+    _snowflake_env_missing: Callable = snowflake_env_missing,
+    _generate_config: Callable = generate_config,
+    _open_victoria_folder: Callable = open_victoria_folder,
+    _launch_tool: Callable = launch_tool,
+    _console: Console = console,
+    _err: Callable[[str], None] = err,
+) -> None:
+    _parse_args()
+    _ensure_default_files()
+    _console.clear()
+    _banner()
+    use_local_model = _local_model_menu()
+    just_installed = _first_run_check(use_local_model)
+    _remove_local_duckdb()
+    _console.print(f"[cyan]{ICONS['folder']} Place files to analyze in: [white]{APP_HOME}")
+    _preflight(use_local_model, just_installed)
+    choice = _course_menu()
     if choice == "1":
-        missing = snowflake_env_missing()
+        missing = _snowflake_env_missing()
         if missing:
-            err("Missing Snowflake environment variables:")
+            _err("Missing Snowflake environment variables:")
             for v in missing:
-                console.print(f"  [red]{v}")
+                _console.print(f"  [red]{v}")
             sys.exit(1)
-        if not generate_config(True, use_local_model):
+        if not _generate_config(True, use_local_model):
             sys.exit(1)
     else:
-        if not generate_config(False, use_local_model):
+        if not _generate_config(False, use_local_model):
             sys.exit(1)
-    open_victoria_folder()
-    launch_tool()
+    _open_victoria_folder()
+    _launch_tool()
 
 if __name__ == "__main__":
     try:
