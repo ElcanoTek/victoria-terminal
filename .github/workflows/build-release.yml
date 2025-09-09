@@ -28,11 +28,23 @@ jobs:
 
   build:
     needs: test
-    name: Build for ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+    name: Build for ${{ matrix.platform.name }}
+    runs-on: ${{ matrix.platform.os }}
     strategy:
       matrix:
-        os: [windows-latest, macos-latest]
+        platform:
+          - name: Windows (x86_64)
+            os: windows-latest
+            arch: x86_64
+          - name: macOS (x86_64)
+            os: macos-latest
+            arch: x86_64
+          - name: Linux (x86_64)
+            os: ubuntu-latest
+            arch: x86_64
+          - name: Linux (ARM64)
+            os: ubuntu-22.04-arm64
+            arch: aarch64
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -53,36 +65,47 @@ jobs:
           python -m pip install --upgrade pip
           pip install uv
       - name: Install Inno Setup
-        if: matrix.os == 'windows-latest'
+        if: matrix.platform.os == 'windows-latest'
         run: |
           choco install -y innosetup
       - name: Build Windows executable
-        if: matrix.os == 'windows-latest'
+        if: matrix.platform.os == 'windows-latest'
         shell: cmd
         run: scripts\package_win.bat
       - name: Upload build version
         uses: actions/upload-artifact@v4
         with:
-          name: build-version-${{ matrix.os }}
+          name: build-version-${{ matrix.platform.os }}
           path: VERSION
           if-no-files-found: error
       - name: Build macOS app
-        if: matrix.os == 'macos-latest'
+        if: matrix.platform.os == 'macos-latest'
         run: |
           bash scripts/package_mac.sh
+      - name: Build Linux AppImage
+        if: contains(matrix.platform.os, 'ubuntu')
+        run: |
+          bash scripts/package_linux.sh
       - name: Upload Windows artifact
-        if: matrix.os == 'windows-latest'
+        if: matrix.platform.os == 'windows-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: victoria-windows
+          name: victoria-windows-x86_64
           path: dist/VictoriaSetup.exe
           if-no-files-found: error
       - name: Upload macOS artifact
-        if: matrix.os == 'macos-latest'
+        if: matrix.platform.os == 'macos-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: victoria-macos
+          name: victoria-macos-x86_64
           path: Victoria-${{ env.VERSION }}.app.zip
+          if-no-files-found: error
+      - name: Upload Linux artifact
+        if: contains(matrix.platform.os, 'ubuntu')
+        uses: actions/upload-artifact@v4
+        with:
+          name: victoria-linux-${{ matrix.platform.arch }}
+          path: Victoria-*-${{ matrix.platform.arch }}.AppImage
           if-no-files-found: error
 
   release:
@@ -100,16 +123,12 @@ jobs:
           VERSION=$(tr -d '\r\n' < release/VERSION)
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           rm release/VERSION
-      - name: Download Windows artifact
+      - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
-          name: victoria-windows
           path: release
-      - name: Download macOS artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: victoria-macos
-          path: release
+          pattern: victoria-*
+          merge-multiple: true
       - name: Rename artifacts with version
         run: |
           mv release/VictoriaSetup.exe "release/Victoria-${VERSION}-Setup.exe"
