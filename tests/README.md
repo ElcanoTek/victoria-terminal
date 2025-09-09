@@ -161,3 +161,62 @@ Once you have finished testing, you can completely remove the virtual machine an
 -   **Halt vs. Destroy**:
     - `vagrant halt`: Shuts down the VM but preserves its state on disk (like turning off a computer).
     - `vagrant destroy`: Completely removes the VM and all its data.
+
+---
+
+## Manual Installer Testing with UTM on Apple Silicon
+
+For users on Apple Silicon Macs, this project provides a semi-automated way to test the macOS installer using [UTM](https://mac.getutm.app/). This approach uses a script to manage a temporary test VM, but requires some manual steps inside the VM.
+
+### Prerequisites
+
+1.  **UTM**: [Download and install UTM](https://mac.getutm.app/) from the official website.
+2.  **`utmctl`**: The `run_utm_test.sh` script uses `utmctl`, UTM's command-line tool. You should make it accessible from your `PATH`. A common way to do this is to create a symbolic link:
+    ```bash
+    sudo ln -sf /Applications/UTM.app/Contents/MacOS/utmctl /usr/local/bin/utmctl
+    ```
+
+### One-Time Setup: Create a Base VM
+
+Before you can run a test, you need to create a "base" macOS virtual machine. This VM will serve as a clean template for testing.
+
+1.  **Install macOS**: Create a new macOS VM in UTM. Apple provides official IPSW files for Apple Silicon that can be used for this.
+2.  **Name the VM**: Name the VM exactly `macOS Base`. The control script looks for this name.
+3.  **Configure a Shared Directory**: In the VM's settings, go to the "Sharing" tab and enable "Directory Sharing". Choose a directory on your host machine that will be used to share files with the VM. Inside the guest macOS, this directory will be mounted at `/Users/Shared`.
+4.  **Install Dependencies**: Start the VM and install any necessary dependencies.
+5.  **Shut Down**: Once the base VM is set up, shut it down. Do not delete it.
+
+### Testing Workflow
+
+**Step 1: Place Files in Shared Directory**
+
+1.  **Installer**: Download the macOS installer, `Victoria-*.app.zip`, from the GitHub Releases page.
+2.  **Provisioning Script**: Find the `provision_macos.sh` script in the `tests/` directory of this repository.
+3.  **Copy Files**: Place both the installer zip file and the `provision_macos.sh` script into the shared directory you configured for the base VM.
+
+**Step 2: Run the Test Script**
+
+Open a terminal on your host Mac, navigate to the root of this project, and run:
+
+```bash
+bash tests/run_utm_test.sh
+```
+
+The script will:
+1.  Clone the `macOS Base` VM to a new VM named `macOS Test`.
+2.  Start the `macOS Test` VM.
+3.  Pause and wait for you to perform manual testing.
+
+**Step 3: Test the Application**
+
+1.  **Open Terminal in VM**: Once the `macOS Test` VM has booted, open the Terminal application.
+2.  **Run Provisioning Script**: Execute the provisioning script from the shared directory:
+    ```bash
+    bash /Users/Shared/provision_macos.sh
+    ```
+    This will unzip the application and move `Victoria.app` to the `/Applications` folder.
+3.  **Test**: Launch Victoria from the Applications folder and perform your tests.
+
+**Step 4: Clean Up**
+
+Once you are finished testing, return to the terminal on your host Mac where `run_utm_test.sh` is running and press `Enter`. The script will automatically stop and delete the `macOS Test` VM, freeing up all associated disk space.
