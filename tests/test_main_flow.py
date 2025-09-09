@@ -41,7 +41,7 @@ def test_main_happy_path_local_files(full_mocks):
 
     full_mocks["_local_model_menu"].assert_called_once()
     full_mocks["_first_run_check"].assert_called_once_with(False)
-    victoria.TOOLS["crush"].preflight.assert_called_once_with(victoria.TOOLS["crush"], False, False)
+    victoria.TOOLS["crush"].preflight.assert_called_once_with(victoria.TOOLS["crush"], False)
     full_mocks["_course_menu"].assert_called_once()
     full_mocks["_generate_config"].assert_called_once_with(victoria.TOOLS["crush"], False, False)
     victoria.TOOLS["crush"].launcher.assert_called_once_with(victoria.TOOLS["crush"])

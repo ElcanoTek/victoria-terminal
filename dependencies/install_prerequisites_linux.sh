@@ -143,16 +143,8 @@ install_uv() {
         print_status "Installing uv via standalone installer..."
         curl -LsSf https://astral.sh/uv/install.sh | sh
         
-        # Add to PATH
+        # Add to PATH for this script's execution
         export PATH="$HOME/.local/bin:$PATH"
-        
-        # Add to shell profile
-        if [ -f ~/.bashrc ]; then
-            echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
-        fi
-        if [ -f ~/.zshrc ]; then
-            echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
-        fi
         
         print_success "uv installed successfully"
     else
@@ -207,17 +199,9 @@ gpgkey=https://repo.charm.sh/yum/gpg.key' | sudo tee /etc/yum.repos.d/charm.repo
         if command_exists go; then
             go install github.com/charmbracelet/crush@latest
             
-            # Add GOPATH/bin to PATH
+            # Add GOPATH/bin to PATH for this script's execution
             GOPATH=$(go env GOPATH)
             export PATH="$GOPATH/bin:$PATH"
-            
-            # Add to shell profile
-            if [ -f ~/.bashrc ]; then
-                echo "export PATH=\"\$(go env GOPATH)/bin:\$PATH\"" >> ~/.bashrc
-            fi
-            if [ -f ~/.zshrc ]; then
-                echo "export PATH=\"\$(go env GOPATH)/bin:\$PATH\"" >> ~/.zshrc
-            fi
             
             print_success "crush installed via Go"
         else
@@ -272,6 +256,21 @@ install_go() {
     fi
 }
 
+# Function to find and save the path of a command
+save_command_path() {
+    local cmd="$1"
+    local output_file="$2"
+
+    if command_exists "$cmd"; then
+        local cmd_path
+        cmd_path=$(command -v "$cmd")
+        echo "$cmd_path" > "$output_file"
+        print_status "Saved path for '$cmd' to $output_file"
+    else
+        print_warning "'$cmd' command not found after installation."
+    fi
+}
+
 # Main installation function
 main() {
     echo "=================================================="
@@ -304,12 +303,15 @@ main() {
     install_crush
     echo
     
+    # Save the path to the crush executable
+    VICTORIA_HOME="$HOME/Victoria"
+    mkdir -p "$VICTORIA_HOME"
+    save_command_path "crush" "$VICTORIA_HOME/.crush_path"
+    echo
+
     print_success "All prerequisites have been installed successfully!"
     echo
-    print_status "You may need to restart your terminal or run:"
-    print_status "source ~/.bashrc  # or ~/.zshrc if using zsh"
-    echo
-    print_status "To verify installations, run:"
+    print_status "To verify installations, you may run:"
     print_status "python3 --version"
     print_status "uv --version"
     print_status "crush --version"

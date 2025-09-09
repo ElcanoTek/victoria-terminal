@@ -21,7 +21,6 @@ def test_preflight_requires_key_when_not_local(mocker):
         victoria.preflight_crush(
             mocker.Mock(),
             use_local_model=False,
-            just_installed=False,
             _which=_mock_which,
             _os_environ={},
             _warn=mock_warn,
@@ -37,7 +36,6 @@ def test_preflight_allows_local_without_key(mocker):
     victoria.preflight_crush(
         mocker.Mock(),
         use_local_model=True,
-        just_installed=False,
         _which=_mock_which,
         _os_environ={},
         _warn=mock_warn,
