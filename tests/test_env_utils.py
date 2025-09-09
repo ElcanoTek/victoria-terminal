@@ -1,11 +1,11 @@
-import importlib.util
+import sys
 from pathlib import Path
 
 import pytest
 
-spec = importlib.util.spec_from_file_location("victoria", Path(__file__).resolve().parent.parent / "victoria.py")
-victoria = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(victoria)
+# Add project root to path to allow importing victoria
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import victoria
 
 
 def test_substitute_env(monkeypatch):

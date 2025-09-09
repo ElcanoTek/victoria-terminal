@@ -62,9 +62,12 @@ def test_launch_tool_unix(mocker):
     """Test launch_tool on a Unix-like system."""
     mock_execvp = mocker.Mock()
     mock_sys_exit = mocker.Mock()
+    mock_tool = mocker.Mock()
+    mock_tool.command = "crush"
 
     fake_home = Path("/fake/home/Victoria")
-    victoria.launch_tool(
+    victoria.launch_crush(
+        mock_tool,
         _APP_HOME=fake_home,
         _os_name="posix",
         _execvp=mock_execvp,
@@ -79,9 +82,12 @@ def test_launch_tool_windows(mocker):
     """Test launch_tool on Windows."""
     mock_run = mocker.Mock(return_value=mocker.Mock(returncode=0))
     mock_sys_exit = mocker.Mock()
+    mock_tool = mocker.Mock()
+    mock_tool.command = "crush"
 
     fake_home = Path("/fake/home/Victoria")
-    victoria.launch_tool(
+    victoria.launch_crush(
+        mock_tool,
         _APP_HOME=fake_home,
         _os_name="nt",
         _subprocess_run=mock_run,
@@ -96,9 +102,12 @@ def test_launch_tool_not_found(mocker):
     """Test launch_tool when the command is not found."""
     mock_err = mocker.Mock()
     mock_sys_exit = mocker.Mock(side_effect=SystemExit(1))
+    mock_tool = mocker.Mock()
+    mock_tool.command = "crush"
 
     with pytest.raises(SystemExit) as excinfo:
-        victoria.launch_tool(
+        victoria.launch_crush(
+            mock_tool,
             _os_name="posix",
             _execvp=mocker.Mock(side_effect=FileNotFoundError),
             _err=mock_err,
@@ -150,9 +159,12 @@ def test_preflight_tool_missing(mocker):
     """Test preflight check when the tool is missing."""
     mock_err = mocker.Mock()
     mock_sys_exit = mocker.Mock(side_effect=SystemExit(1))
+    mock_tool = mocker.Mock()
+    mock_tool.command = "crush"
 
     with pytest.raises(SystemExit) as excinfo:
-        victoria.preflight(
+        victoria.preflight_crush(
+            mock_tool,
             use_local_model=False,
             just_installed=False,
             _which=lambda cmd: None,
@@ -168,9 +180,12 @@ def test_preflight_tool_missing(mocker):
 def test_preflight_tool_missing_just_installed(mocker):
     """Test preflight exits gracefully if tool is missing but was just installed."""
     mock_restart_app = mocker.Mock(side_effect=SystemExit(0))
+    mock_tool = mocker.Mock()
+    mock_tool.command = "crush"
 
     with pytest.raises(SystemExit) as excinfo:
-        victoria.preflight(
+        victoria.preflight_crush(
+            mock_tool,
             use_local_model=False,
             just_installed=True,
             _which=lambda cmd: None,

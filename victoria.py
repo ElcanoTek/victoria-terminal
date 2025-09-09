@@ -16,7 +16,7 @@ import shutil
 import subprocess
 import sys
 from dataclasses import dataclass
-from pathlib import Path, PurePath
+from pathlib import Path
 from typing import Dict, Any, Callable, List
 
 from colorama import init as colorama_init
@@ -30,7 +30,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 # ---------------------------------------------------------------------------
 
 VICTORIA_FILE = "VICTORIA.md"
-CONFIGS_DIR = PurePath("configs")
+CONFIGS_DIR = Path("configs")
 
 home_dir = os.path.expanduser("~")
 APP_HOME = Path(home_dir) / "Victoria"
@@ -40,6 +40,67 @@ SETUP_SENTINEL = APP_HOME / ".first_run_complete"
 
 colorama_init()  # Enable ANSI colors on Windows
 console = Console()
+
+# ---------------------------------------------------------------------------
+# Messaging
+# ---------------------------------------------------------------------------
+
+ICONS = {
+    "info": "ℹ️",
+    "good": "✅",
+    "warn": "⚠️",
+    "bad": "❌",
+    "rocket": "🚀",
+    "wave": "🌊",
+    "anchor": "⚓",
+    "folder": "📁",
+}
+
+def info(msg: str) -> None:  # pragma: no cover - simple wrapper
+    console.print(f"[cyan]{ICONS['info']} {msg}")
+
+def good(msg: str) -> None:  # pragma: no cover - simple wrapper
+    console.print(f"[green]{ICONS['good']} {msg}")
+
+def warn(msg: str) -> None:  # pragma: no cover - simple wrapper
+    console.print(f"[yellow]{ICONS['warn']} {msg}")
+
+def err(msg: str) -> None:  # pragma: no cover - simple wrapper
+    console.print(f"[red]{ICONS['bad']} {msg}")
+
+def section(title: str) -> None:
+    console.rule(f"[bold yellow]{title}")
+
+def banner() -> None:
+    console.print(Panel.fit(
+        "[bold cyan]VICTORIA[/bold cyan]\n[cyan]AdTech Data Navigation[/cyan]",
+        border_style="cyan"))
+
+def restart_app(
+    _sys_executable: str = sys.executable,
+    _sys_argv: list[str] = sys.argv,
+    _os_name: str = os.name,
+    _os_execv: Callable[..., None] = os.execv,
+    _subprocess_Popen: Callable[..., Any] = subprocess.Popen,
+    _sys_exit: Callable[[int], None] = sys.exit,
+    _info: Callable[[str], None] = info,
+) -> None:
+    """Restart the application to apply changes to the environment."""
+    _info("Prerequisites installed. Restarting Victoria to apply changes...")
+    if _os_name == "nt":
+        # On Windows, Popen is used to launch a new instance of the app.
+        # The new process runs independently. We then exit the current process.
+        _subprocess_Popen(_sys_argv)
+        _sys_exit(0)
+    else:
+        # On macOS/Linux, execv replaces the current process with a new one,
+        # inheriting the same process ID.
+        _os_execv(_sys_executable, _sys_argv)
+
+
+def which(cmd: str) -> str | None:
+    return shutil.which(cmd)
+
 
 # ---------------------------------------------------------------------------
 # Tooling Definition
@@ -130,7 +191,7 @@ def resource_path(name: str | Path) -> Path:
 
 def ensure_default_files(
     _APP_HOME: Path = APP_HOME,
-    _CONFIGS_DIR: PurePath = CONFIGS_DIR,
+    _CONFIGS_DIR: Path = CONFIGS_DIR,
     _VICTORIA_FILE: str = VICTORIA_FILE,
     _resource_path: Callable[[str | Path], Path] = resource_path,
     _shutil_copy: Callable[[Path, Path], None] = shutil.copy,
@@ -150,41 +211,6 @@ def ensure_default_files(
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Victoria launcher")
     return parser.parse_args()
-
-# ---------------------------------------------------------------------------
-# Messaging
-# ---------------------------------------------------------------------------
-
-ICONS = {
-    "info": "ℹ️",
-    "good": "✅",
-    "warn": "⚠️",
-    "bad": "❌",
-    "rocket": "🚀",
-    "wave": "🌊",
-    "anchor": "⚓",
-    "folder": "📁",
-}
-
-def info(msg: str) -> None:  # pragma: no cover - simple wrapper
-    console.print(f"[cyan]{ICONS['info']} {msg}")
-
-def good(msg: str) -> None:  # pragma: no cover - simple wrapper
-    console.print(f"[green]{ICONS['good']} {msg}")
-
-def warn(msg: str) -> None:  # pragma: no cover - simple wrapper
-    console.print(f"[yellow]{ICONS['warn']} {msg}")
-
-def err(msg: str) -> None:  # pragma: no cover - simple wrapper
-    console.print(f"[red]{ICONS['bad']} {msg}")
-
-def section(title: str) -> None:
-    console.rule(f"[bold yellow]{title}")
-
-def banner() -> None:
-    console.print(Panel.fit(
-        "[bold cyan]VICTORIA[/bold cyan]\n[cyan]AdTech Data Navigation[/cyan]",
-        border_style="cyan"))
 
 # ---------------------------------------------------------------------------
 # First-time setup
@@ -370,32 +396,6 @@ def generate_config(tool: Tool, include_snowflake: bool, use_local_model: bool) 
 # ---------------------------------------------------------------------------
 # Preflight and launch
 # ---------------------------------------------------------------------------
-
-def restart_app(
-    _sys_executable: str = sys.executable,
-    _sys_argv: list[str] = sys.argv,
-    _os_name: str = os.name,
-    _os_execv: Callable[..., None] = os.execv,
-    _subprocess_Popen: Callable[..., Any] = subprocess.Popen,
-    _sys_exit: Callable[[int], None] = sys.exit,
-    _info: Callable[[str], None] = info,
-) -> None:
-    """Restart the application to apply changes to the environment."""
-    _info("Prerequisites installed. Restarting Victoria to apply changes...")
-    if _os_name == "nt":
-        # On Windows, Popen is used to launch a new instance of the app.
-        # The new process runs independently. We then exit the current process.
-        _subprocess_Popen(_sys_argv)
-        _sys_exit(0)
-    else:
-        # On macOS/Linux, execv replaces the current process with a new one,
-        # inheriting the same process ID.
-        _os_execv(_sys_executable, _sys_argv)
-
-
-def which(cmd: str) -> str | None:
-    return shutil.which(cmd)
-
 
 # ---------------------------------------------------------------------------
 # Main workflow
