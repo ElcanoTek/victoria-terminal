@@ -2,10 +2,10 @@
 
 # Shell script to set up the Victoria AppImage in the Ubuntu VM
 
-echo "Looking for Victoria AppImage in /vagrant..."
+echo "Looking for Victoria AppImage in /vagrant/installers..."
 
-# Find the AppImage file. Using find with -quit to stop after the first match.
-appimage_path=$(find /vagrant -name "Victoria-*.AppImage" -print -quit)
+# Find the AppImage file in the installers directory.
+appimage_path=$(find /vagrant/installers -name "Victoria-*.AppImage" -print -quit)
 
 if [ -n "$appimage_path" ]; then
     filename=$(basename "$appimage_path")
@@ -31,9 +31,9 @@ if [ -n "$appimage_path" ]; then
 
 else
     echo "------------------------------------------------------------------"
-    echo "Victoria AppImage not found in the /vagrant directory."
+    echo "Victoria AppImage not found in the /vagrant/installers directory."
     echo "Please download the 'Victoria-*.AppImage' from GitHub Releases"
-    echo "and place it in the root directory of this project on your host machine."
+    echo "and place it in the 'installers/' directory of this project on your host machine."
     echo "Then, run 'vagrant provision' or 'vagrant reload --provision'."
     echo "------------------------------------------------------------------"
 fi

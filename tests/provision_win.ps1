@@ -1,7 +1,7 @@
 # PowerShell script to run the Victoria installer in the Windows VM
 
 $installer_name = "VictoriaSetup.exe"
-$installer_path = "C:\vagrant\$installer_name"
+$installer_path = "C:\vagrant\installers\$installer_name"
 
 Write-Host "Looking for installer at: $installer_path"
 
@@ -16,7 +16,7 @@ if (Test-Path $installer_path) {
     Write-Host "------------------------------------------------------------------"
     Write-Host "Installer not found at $installer_path."
     Write-Host "Please download the '$installer_name' from the GitHub Releases"
-    Write-Host "and place it in the root directory of this project on your host machine."
+    Write-Host "and place it in the 'installers/' directory of this project on your host machine."
     Write-Host "Then, run 'vagrant provision' or 'vagrant reload --provision'."
     Write-Host "------------------------------------------------------------------"
 }
