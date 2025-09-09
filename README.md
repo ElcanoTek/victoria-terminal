@@ -47,7 +47,7 @@ source .venv/bin/activate
 Then install the requirements:
 
 ```bash
-uv pip install -r requirements.txt
+uv pip install -r requirements-dev.txt
 ```
 
 Verify the installation:
