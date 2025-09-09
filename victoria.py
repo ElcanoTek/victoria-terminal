@@ -156,9 +156,9 @@ def run_setup_scripts(use_local_model: bool) -> None:
         warn("Unsupported platform; run setup scripts manually from the dependencies folder.")
         return
 
-def first_run_check(use_local_model: bool) -> None:
+def first_run_check(use_local_model: bool) -> bool:
     if SETUP_SENTINEL.exists():
-        return
+        return False
     section("First-time setup")
     if Prompt.ask("Run first-time setup?", choices=["y", "n"], default="y") == "y":
         run_setup_scripts(use_local_model)
@@ -166,6 +166,8 @@ def first_run_check(use_local_model: bool) -> None:
             SETUP_SENTINEL.write_text("done")
         except Exception:
             pass
+        return True
+    return False
 
 # ---------------------------------------------------------------------------
 # JSON handling
@@ -283,12 +285,15 @@ def generate_config(include_snowflake: bool, use_local_model: bool) -> bool:
 def which(cmd: str) -> str | None:
     return shutil.which(cmd)
 
-def preflight(use_local_model: bool) -> None:
+def preflight(use_local_model: bool, just_installed: bool) -> None:
     section("System preflight check")
     with Progress(SpinnerColumn(), TextColumn("{task.description}"), transient=True) as progress:
         progress.add_task("Verifying prerequisites", total=None)
         if which(TOOL_CMD) is None:
-            err(f"Missing '{TOOL_CMD}' command-line tool")
+            if just_installed:
+                info("Prerequisites installed. Please restart Victoria to continue.")
+                sys.exit(0)
+            err(f"Missing '{TOOL_CMD}' command-line tool. Run first-time setup or install it manually.")
             sys.exit(1)
     good(f"{TOOL_CMD} CLI tool detected")
     has_key = bool(os.environ.get("OPENROUTER_API_KEY"))
@@ -365,10 +370,10 @@ def main() -> None:
     console.clear()
     banner()
     use_local_model = local_model_menu()
-    first_run_check(use_local_model)
+    just_installed = first_run_check(use_local_model)
     remove_local_duckdb()
     console.print(f"[cyan]{ICONS['folder']} Place files to analyze in: [white]{APP_HOME}")
-    preflight(use_local_model)
+    preflight(use_local_model, just_installed)
     choice = course_menu()
     if choice == "1":
         missing = snowflake_env_missing()

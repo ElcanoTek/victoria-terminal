@@ -78,9 +78,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: victoria-windows
-          path: |
-            dist/Victoria.exe
-            dist/VictoriaSetup.exe
+          path: dist/VictoriaSetup.exe
           if-no-files-found: error
       - name: Upload macOS artifact
         if: matrix.os == 'macos-latest'
@@ -115,13 +113,8 @@ jobs:
         with:
           name: victoria-macos
           path: release
-      - name: Include dependencies
-        run: |
-          cp dependencies/install_prerequisites_* release/
-          cp dependencies/set_env_* release/
       - name: Rename artifacts with version
         run: |
-          mv release/Victoria.exe "release/Victoria-${VERSION}.exe"
           mv release/VictoriaSetup.exe "release/Victoria-${VERSION}-Setup.exe"
           mv release/Victoria.app.zip "release/Victoria-${VERSION}.app.zip"
       - name: Create GitHub Release
