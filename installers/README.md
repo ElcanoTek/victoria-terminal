@@ -174,6 +174,7 @@ For users on Apple Silicon Macs, this project provides a semi-automated way to t
 
 Before you can run a test, you need to create a "base" macOS virtual machine. This VM will serve as a clean template for testing.
 
+0.  **Download the right IPSW file**: You need an official file from Apple. I would stick with testing the latest Mac OS. See [Mr. Macintosh](https://mrmacintosh.com/apple-silicon-m1-full-macos-restore-ipsw-firmware-files-database/) for a full list of available files. 
 1.  **Install macOS**: Create a new macOS VM in UTM. Apple provides official IPSW files for Apple Silicon that can be used for this.
 2.  **Name the VM**: Name the VM exactly `macOS Base`. The control script looks for this name.
 3.  **Configure a Shared Directory**: In the VM's settings, go to the "Sharing" tab and enable "Directory Sharing". Choose a directory on your host machine that will be used to share files with the VM. Inside the guest macOS, this directory will be mounted at `/Users/Shared`.
