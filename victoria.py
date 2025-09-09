@@ -29,6 +29,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 # Basic setup
 # ---------------------------------------------------------------------------
 
+__version__ = "2025.9.8"
 VICTORIA_FILE = "VICTORIA.md"
 CONFIGS_DIR = "configs"
 
@@ -210,6 +211,34 @@ def ensure_default_files(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Victoria launcher")
+    parser.add_argument(
+        "--tool",
+        type=str,
+        default=None,
+        help="The name of the tool to use (e.g., 'crush').",
+    )
+    parser.add_argument(
+        "--course",
+        type=int,
+        choices=[1, 2],
+        default=None,
+        help="The course to select (1 for Snowflake, 2 for local files).",
+    )
+    parser.add_argument(
+        "--local-model",
+        action="store_true",
+        help="Use a local model.",
+    )
+    parser.add_argument(
+        "--quiet",
+        action="store_true",
+        help="Suppress informational messages.",
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
+    )
     return parser.parse_args()
 
 # ---------------------------------------------------------------------------
@@ -250,19 +279,10 @@ def run_setup_scripts(
             except Exception as exc:
                 _err(f"Setup script failed: {exc}")
                 break
-    elif _sys_platform == "darwin":
-        scripts = ["install_prerequisites_macos.sh", "set_env_macos_linux.sh"]
-        for s in scripts:
-            try:
-                cmd = ["bash", str(deps / s)]
-                if use_local_model and s.startswith("set_env"):
-                    cmd.append("--skip-openrouter")
-                _subprocess_run(cmd, check=True)
-            except Exception as exc:
-                _err(f"Setup script failed: {exc}")
-                break
-    elif _sys_platform.startswith("linux"):
-        scripts = ["install_prerequisites_linux.sh", "set_env_macos_linux.sh"]
+    elif _sys_platform == "darwin" or _sys_platform.startswith("linux"):
+        is_macos = _sys_platform == "darwin"
+        install_script = "install_prerequisites_macos.sh" if is_macos else "install_prerequisites_linux.sh"
+        scripts = [install_script, "set_env_macos_linux.sh"]
         for s in scripts:
             try:
                 cmd = ["bash", str(deps / s)]
@@ -412,9 +432,22 @@ def local_model_menu() -> bool:
 
 def course_menu() -> str:
     section("Navigation course selection")
-    console.print("1. Full ocean expedition (Snowflake)")
-    console.print("2. Coastal navigation (local files)")
+    console.print("1. Connect to Snowflake (for large-scale data)")
+    console.print("2. Analyze local files (CSVs, Excel)")
     return Prompt.ask("Select course", choices=["1", "2"], default="2")
+
+
+def tool_menu(tools: Dict[str, Tool]) -> Tool:
+    """Display a menu to select a tool if more than one is available."""
+    if len(tools) == 1:
+        return next(iter(tools.values()))
+
+    section("Tool selection")
+    for i, tool in enumerate(tools.values(), 1):
+        console.print(f"{i}. {tool.name}")
+
+    choice = Prompt.ask("Select a tool", choices=[str(i) for i in range(1, len(tools) + 1)], default="1")
+    return list(tools.values())[int(choice) - 1]
 
 def remove_local_duckdb() -> None:
     db_path = APP_HOME / "adtech.duckdb"
@@ -457,29 +490,39 @@ def main(
     _first_run_check: Callable = first_run_check,
     _remove_local_duckdb: Callable = remove_local_duckdb,
     _course_menu: Callable = course_menu,
+    _tool_menu: Callable[[Dict[str, Tool]], Tool] = tool_menu,
     _snowflake_env_missing: Callable = snowflake_env_missing,
     _generate_config: Callable = generate_config,
     _open_victoria_folder: Callable = open_victoria_folder,
     _console: Console = console,
     _err: Callable[[str], None] = err,
+    _info: Callable[[str], None] = info,
 ) -> None:
-    _parse_args()
+    args = _parse_args()
+
+    if args.quiet:
+        _info = lambda msg: None
+
     _ensure_default_files()
     _console.clear()
     _banner()
 
-    # For now, we'll default to the first tool, crush.
-    # In the future, we could add a tool selection menu here.
-    tool = TOOLS["crush"]
+    if args.tool:
+        if args.tool not in TOOLS:
+            _err(f"Unknown tool: {args.tool}")
+            sys.exit(1)
+        tool = TOOLS[args.tool]
+    else:
+        tool = _tool_menu(TOOLS)
 
-    use_local_model = _local_model_menu()
+    use_local_model = args.local_model if args.local_model is not None else _local_model_menu()
     just_installed = _first_run_check(use_local_model)
     _remove_local_duckdb()
-    _console.print(f"[cyan]{ICONS['folder']} Place files to analyze in: [white]{APP_HOME}")
+    _info(f"Place files to analyze in: {APP_HOME}")
 
     tool.preflight(tool, use_local_model, just_installed)
 
-    choice = _course_menu()
+    choice = str(args.course) if args.course else _course_menu()
     if choice == "1":
         missing = _snowflake_env_missing()
         if missing:
@@ -492,7 +535,10 @@ def main(
     else:
         if not _generate_config(tool, False, use_local_model):
             sys.exit(1)
-    _open_victoria_folder()
+
+    if not args.quiet:
+        _open_victoria_folder()
+
     tool.launcher(tool)
 
 if __name__ == "__main__":

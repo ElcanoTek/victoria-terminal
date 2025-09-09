@@ -2,7 +2,7 @@
 
 > **Prime Directive (Non‑Negotiable):** When computing any ratio metric (CPC, CTR, CVR, VCR, Viewability, etc.), **aggregate numerators and denominators first**, then divide. **Never filter out rows where the denominator is zero** (e.g., `clicks = 0`) unless explicitly instructed; instead use *safe division* (e.g., `NULLIF`, `TRY_DIVIDE`) so totals remain correct. Report "N/A" when the denominator is zero.
 >
-> Also to analyze a database or CSV file's structure efficiently, especially when it might be large, use a SQL query with  LIMIT 5  to inspect the columns before performing a full analysis
+> To analyze the structure of any data source (database table, CSV, etc.) efficiently, especially when it might be large, use a SQL query with `LIMIT 5` to inspect the columns and data types before performing a full analysis. This applies to all SQL-queriable sources.
 
 ---
 

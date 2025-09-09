@@ -1,0 +1,67 @@
+{
+  "$schema": "https://charm.land/crush.json",
+  "permissions": {
+    "allowed_tools": [
+      "view",
+      "ls",
+      "grep",
+      "edit",
+      "motherduck_query"
+    ]
+  },
+  "providers": {
+    "openrouter": {
+      "type": "openai",
+      "base_url": "https://openrouter.ai/api/v1",
+      "api_key": "test_api_key",
+      "name": "OpenRouter",
+      "models": [
+        {
+          "id": "google/gemini-2.5-pro",
+          "name": "Google Gemini 2.5 Pro",
+          "context_window": 131072,
+          "default_max_tokens": 4096,
+          "supports_tools": true
+        }
+      ]
+    }
+  },
+  "options": {
+    "context_paths": [
+      "VICTORIA.md"
+    ],
+    "tui": {
+      "compact_mode": true
+    }
+  },
+  "mcp": {
+    "motherduck": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "mcp-server-motherduck",
+        "--db-path",
+        "/home/jules/Victoria/adtech.duckdb"
+      ]
+    },
+    "snowflake": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "--python",
+        "3.12",
+        "mcp_snowflake_server",
+        "--account",
+        "test_account",
+        "--warehouse",
+        "test_warehouse",
+        "--user",
+        "test_user",
+        "--password",
+        "test_password",
+        "--role",
+        "test_role"
+      ]
+    }
+  }
+}

@@ -74,14 +74,46 @@ terminal after running the script; you can safely rerun it if needed.
 
 ## 🚀 Launching Victoria
 
-Open your terminal, change into the `victoria-app` folder, and run:
+Victoria can be launched in interactive or non-interactive mode.
+
+### Interactive Mode
+
+To launch in interactive mode, open your terminal, change into the `victoria-app` folder, and run:
 
 ```bash
 source .venv/bin/activate
 python3 victoria.py
 ```
 
-This gives you the most control and is the same across macOS, Linux, and Windows (PowerShell).
+This will present you with menus to select the tool, model, and data source.
+
+### Non-Interactive Mode (for scripting)
+
+Victoria can also be launched non-interactively using command-line arguments. This is useful for scripting and automation.
+
+```bash
+python3 victoria.py [OPTIONS]
+```
+
+**Options:**
+
+*   `--tool TEXT`: The name of the tool to use (e.g., `crush`).
+*   `--course INTEGER`: The course to select (1 for Snowflake, 2 for local files).
+*   `--local-model`: Use a local model.
+*   `--quiet`: Suppress informational messages.
+*   `--version`: Show the version and exit.
+*   `--help`: Show the help message and exit.
+
+**Example:**
+
+```bash
+python3 victoria.py --tool crush --course 2 --local-model
+```
+
+This will launch Victoria with the `crush` tool, using local files and a local model.
+
+### Platform Notes
+
 All modes store configuration and data in `~/Victoria` (or `%USERPROFILE%\Victoria` on Windows).
 On Windows, PowerShell may block script execution. `victoria.py` runs setup scripts
 with `-NoProfile` and a temporary `-ExecutionPolicy Bypass` and unblocks them so most
