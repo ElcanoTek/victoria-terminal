@@ -32,8 +32,8 @@ fi
 echo "Cloning '$BASE_VM_NAME' to '$TEST_VM_NAME'..."
 utmctl clone "$BASE_VM_NAME" --name "$TEST_VM_NAME"
 
-echo "Starting '$TEST_VM_NAME'..."
-utmctl start "$TEST_VM_NAME"
+echo "Please manually start '$TEST_VM_NAME'..."
+# utmctl start "$TEST_VM_NAME"
 
 echo "------------------------------------------------------------------"
 echo "The test VM '$TEST_VM_NAME' is starting up."
