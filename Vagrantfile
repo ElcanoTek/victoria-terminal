@@ -22,8 +22,6 @@ Vagrant.configure("2") do |config|
       vb.gui = true
     end
 
-    # Provision with a PowerShell script to run the installer
-    win.vm.provision "shell", path: "tests/provision_win.ps1"
   end
 
   # Define the Ubuntu testing machine
@@ -46,8 +44,6 @@ Vagrant.configure("2") do |config|
       echo "Ubuntu Desktop installed."
     SHELL
 
-    # Run the application setup script
-    ubu.vm.provision "shell", path: "tests/provision_ubuntu.sh"
   end
 
 end
