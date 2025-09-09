@@ -225,16 +225,22 @@ def ensure_default_files(
     _shutil_copy: Callable[[Path, Path], None] = shutil.copy,
 ) -> None:
     crush_dir = Path(_CONFIGS_DIR) / "crush"
-    files = [
+    # These files are only copied if they don't exist.
+    files_copy_if_missing = [
         (crush_dir / ".crushignore", ".crushignore"),
         (crush_dir / "CRUSH.md", "CRUSH.md"),
-        (Path(_VICTORIA_FILE), _VICTORIA_FILE),
     ]
-    for rel_path, fname in files:
+    for rel_path, fname in files_copy_if_missing:
         src = _resource_path(rel_path)
         dst = _APP_HOME / fname
         if src.exists() and not dst.exists():
             _shutil_copy(src, dst)
+
+    # VICTORIA.md is always overwritten to ensure it's pristine.
+    victoria_src = _resource_path(Path(_VICTORIA_FILE))
+    victoria_dst = _APP_HOME / _VICTORIA_FILE
+    if victoria_src.exists():
+        _shutil_copy(victoria_src, victoria_dst)
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Victoria launcher")
