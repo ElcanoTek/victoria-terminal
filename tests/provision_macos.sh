@@ -2,11 +2,11 @@
 
 # Shell script to set up the Victoria application in the macOS VM
 
-echo "Looking for Victoria app zip in /Users/Shared/..."
+echo "Looking for Victoria app zip in /Users/Shared/installers/..."
 
 # The shared directory in UTM is typically /Users/Shared
-# We are looking for a file like Victoria-2023.10.27.app.zip
-zip_path=$(find /Users/Shared -name "Victoria-*.app.zip" -print -quit)
+# We look for the installer in the 'installers' subdirectory.
+zip_path=$(find /Users/Shared/installers -name "Victoria-*.app.zip" -print -quit)
 
 if [ -n "$zip_path" ]; then
     filename=$(basename "$zip_path")
@@ -37,9 +37,9 @@ if [ -n "$zip_path" ]; then
 
 else
     echo "------------------------------------------------------------------"
-    echo "Victoria application zip not found in the /Users/Shared directory."
-    echo "Please download the 'Victoria-*.app.zip' from GitHub Releases"
-    echo "and place it in the shared directory configured in your UTM VM."
-    echo "Then, run this script again."
+    echo "Victoria application zip not found in the /Users/Shared/installers directory."
+    echo "Please download the 'Victoria-*.app.zip' from GitHub Releases,"
+    echo "place it in an 'installers' subdirectory inside your UTM shared folder,"
+    echo "and then run this script again."
     echo "------------------------------------------------------------------"
 fi

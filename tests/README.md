@@ -103,15 +103,13 @@ Before you begin, you must install the following software on your host machine:
 
 Follow these steps to test an installer on a fresh OS.
 
-**Step 1: Download the Installer**
+**Step 1: Place the Installer in the `installers/` Directory**
 
 Go to the project's **GitHub Releases** page or the **Actions** tab and download the installer artifact you wish to test (e.g., `VictoriaSetup.exe` or `Victoria-*.AppImage`).
 
-**Step 2: Place the Installer in the Project Root**
+Place the downloaded installer file into the `installers/` directory in the root of this repository. The provisioning scripts inside the VMs are configured to look for the installer in this directory.
 
-Place the downloaded installer file into the main root directory of this repository. A placeholder file named `PUT_INSTALLER_HERE.txt` indicates the correct location. The provisioning scripts inside the VMs will look for the installer in this shared directory.
-
-**Step 3: Launch the Virtual Machine**
+**Step 2: Launch the Virtual Machine**
 
 Open a terminal in the project's root directory and run one of the following commands:
 
@@ -127,14 +125,14 @@ Open a terminal in the project's root directory and run one of the following com
 
 **Note:** The first time you run this command for a specific OS, it will download the base virtual machine image, which can be several gigabytes. The Ubuntu VM will also take a significant amount of time to install its desktop environment. Subsequent launches will be much faster.
 
-**Step 4: Test the Application**
+**Step 3: Test the Application**
 
 A VirtualBox window will appear, booting the respective operating system. The provisioning process will handle the installation automatically.
 
 -   **On Windows 11**: The script runs the installer silently in the background. Once the VM is ready, you can find **Victoria** in the Start Menu and launch it to begin testing.
 -   **On Ubuntu**: The script places the AppImage on the `vagrant` user's desktop. Log in to the desktop (password is `vagrant`), and you will see the Victoria AppImage icon. Double-click it to run and begin testing.
 
-**Step 5: Clean Up**
+**Step 4: Clean Up**
 
 Once you have finished testing, you can completely remove the virtual machine and free up all associated disk space with the `destroy` command.
 
@@ -183,16 +181,15 @@ Before you can run a test, you need to create a "base" macOS virtual machine. Th
 1.  **Install macOS**: Create a new macOS VM in UTM. Apple provides official IPSW files for Apple Silicon that can be used for this.
 2.  **Name the VM**: Name the VM exactly `macOS Base`. The control script looks for this name.
 3.  **Configure a Shared Directory**: In the VM's settings, go to the "Sharing" tab and enable "Directory Sharing". Choose a directory on your host machine that will be used to share files with the VM. Inside the guest macOS, this directory will be mounted at `/Users/Shared`.
-4.  **Install Dependencies**: Start the VM and install any necessary dependencies.
+4.  **Install Dependencies**: Start the VM and install any necessary dependencies (e.g., `jq` if you plan to use the provisioning script).
 5.  **Shut Down**: Once the base VM is set up, shut it down. Do not delete it.
 
 ### Testing Workflow
 
 **Step 1: Place Files in Shared Directory**
 
-1.  **Installer**: Download the macOS installer, `Victoria-*.app.zip`, from the GitHub Releases page.
-2.  **Provisioning Script**: Find the `provision_macos.sh` script in the `tests/` directory of this repository.
-3.  **Copy Files**: Place both the installer zip file and the `provision_macos.sh` script into the shared directory you configured for the base VM.
+1.  **Installer**: Download the macOS installer, `Victoria-*.app.zip`, from the GitHub Releases page. Place it in a subdirectory named `installers` inside your main shared directory.
+2.  **Provisioning Script**: Find the `provision_macos.sh` script in the `tests/` directory of this repository. Place this script in your main shared directory (not the `installers` subdirectory).
 
 **Step 2: Run the Test Script**
 
@@ -214,7 +211,7 @@ The script will:
     ```bash
     bash /Users/Shared/provision_macos.sh
     ```
-    This will unzip the application and move `Victoria.app` to the `/Applications` folder.
+    This will find the installer in the `installers` subdirectory, unzip the application, and move `Victoria.app` to the `/Applications` folder.
 3.  **Test**: Launch Victoria from the Applications folder and perform your tests.
 
 **Step 4: Clean Up**
