@@ -112,6 +112,9 @@ def restart_app(
     _subprocess_Popen: Callable[..., Any] = subprocess.Popen,
     _sys_exit: Callable[[int], None] = sys.exit,
     _info: Callable[[str], None] = info,
+    _sys_platform: str = sys.platform,
+    _Path: type = Path,
+    _home_dir: str = home_dir,
 ) -> None:
     """Restart the application to apply changes to the environment."""
     _info("Prerequisites installed. Restarting Victoria to apply changes...")
@@ -120,9 +123,26 @@ def restart_app(
         # The new process runs independently. We then exit the current process.
         _subprocess_Popen([_sys_executable] + _sys_argv)
         _sys_exit(0)
+    elif _sys_platform == "darwin":
+        # On macOS, the shell needs to be reloaded to pick up changes to the
+        # PATH from the prerequisite installer. We do this by re-executing
+        # the application inside a new zsh instance that sources the profile.
+        zprofile = _Path(_home_dir) / ".zprofile"
+        if zprofile.is_file():
+            def shell_quote(s: str) -> str:
+                return "'" + s.replace("'", "'\\''") + "'"
+
+            cmd_line = " ".join(shell_quote(arg) for arg in _sys_argv)
+            shell_script = f"source {shell_quote(str(zprofile))} && exec {cmd_line}"
+
+            args = ["zsh", "-c", shell_script]
+            # /bin/zsh must exist on macOS, so we don't check for it.
+            _os_execv("/bin/zsh", args)
+        else:
+            # Fallback if .zprofile is not found
+            _os_execv(_sys_executable, _sys_argv)
     else:
-        # On macOS/Linux, execv replaces the current process with a new one,
-        # inheriting the same process ID.
+        # Fallback for Linux
         _os_execv(_sys_executable, _sys_argv)
 
 
