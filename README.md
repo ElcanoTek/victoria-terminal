@@ -73,25 +73,40 @@ The application will automatically load variables from this file at startup.
 
 ## 🚀 Launching Victoria
 
-Victoria can be launched in interactive or non-interactive mode.
+The application is now split into two main components:
 
-### Interactive Mode
+*   **Victoria Configurator**: A one-time setup tool that installs prerequisites (`crush`) and configures environment variables.
+*   **Victoria Terminal**: The main application for launching data analysis sessions with `crush`.
 
-To launch in interactive mode, open your terminal, change into the `victoria-app` folder, and run:
+### First-Time Setup
+
+Before launching the terminal for the first time, you must run the configurator.
 
 ```bash
 source .venv/bin/activate
-python3 victoria.py
+python3 VictoriaConfigurator.py
 ```
+This will guide you through the necessary setup steps.
 
+### Running the Terminal
+
+Once setup is complete, you can run the Victoria Terminal for your data analysis work.
+
+#### Interactive Mode
+
+To launch in interactive mode, run:
+```bash
+source .venv/bin/activate
+python3 VictoriaTerminal.py
+```
 This will present you with menus to select the tool, model, and data source.
 
-### Non-Interactive Mode (for scripting)
+#### Non-Interactive Mode (for scripting)
 
-Victoria can also be launched non-interactively using command-line arguments. This is useful for scripting and automation.
+The terminal can also be launched non-interactively using command-line arguments.
 
 ```bash
-python3 victoria.py [OPTIONS]
+python3 VictoriaTerminal.py [OPTIONS]
 ```
 
 **Options:**
@@ -106,63 +121,49 @@ python3 victoria.py [OPTIONS]
 **Example:**
 
 ```bash
-python3 victoria.py --tool crush --course 2 --local-model
+python3 VictoriaTerminal.py --tool crush --course 2 --local-model
 ```
-
-This will launch Victoria with the `crush` tool, using local files and a local model.
 
 ### Platform Notes
 
 All modes store configuration and data in `~/Victoria` (or `%USERPROFILE%\Victoria` on Windows).
-On Windows, PowerShell may block script execution. `victoria.py` runs setup scripts
-with `-NoProfile` and a temporary `-ExecutionPolicy Bypass` and unblocks them so most
-users won't need to tweak any settings. The bundled application unblocks the
-scripts before invoking them so the "downloaded from the internet" mark is removed.
-If you launch scripts manually and see policy errors, start a session with a bypass:
 
+On Windows, PowerShell may block script execution. The `VictoriaConfigurator.py` script runs setup scripts with `-NoProfile` and a temporary `-ExecutionPolicy Bypass` and unblocks them so most users won't need to tweak any settings. If you launch scripts manually and see policy errors, start a session with a bypass:
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass
 ```
 
 To permanently allow locally created scripts, run:
-
 ```powershell
 Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
 ```
 
 ## 🔌 Extending Victoria with New Tools
 
-The Victoria app is essentially an installer that configures and runs a tool that is able to connect via MCP to our data sources and use VICTORIA.md as instructions. By default, it uses `crush`, but you can swap in another tool by following the steps below.
+The Victoria Terminal is designed to be extensible, allowing you to add new tools besides the default `crush` agent.
 
 ### Integrating a New Tool
 
-Adding a new tool with its own configuration logic requires a few modifications to `victoria.py`:
+Adding a new tool requires a few modifications to `VictoriaTerminal.py`:
 
 1.  **Create a Configuration Directory**: Under the [`configs/`](configs) directory, add a new folder named after your tool (e.g., `configs/your_tool`).
 
 2.  **Add Template Files**: Place any necessary JSON configuration templates inside your tool's directory. The system can substitute environment variables using the `${VAR_NAME}` syntax.
 
-3.  **Implement Tool-Specific Functions**: In [`victoria.py`](victoria.py), create the following functions for your tool:
+3.  **Implement Tool-Specific Functions**: In [`VictoriaTerminal.py`](VictoriaTerminal.py), create the following functions for your tool:
     *   `build_<tool_name>_config`: Contains the logic to load your templates, merge data, and produce the final configuration dictionary.
     *   `preflight_<tool_name>`: Checks if the tool's dependencies are met before launch.
-    *   `launch_<tool_name>`: Contains the logic to start the tool. This is especially important for tools that are not simple command-line executables.
+    *   `launch_<tool_name>`: Contains the logic to start the tool.
 
-4.  **Register the Tool**: Add a new `Tool` object to the `TOOLS` dictionary in `victoria.py`. This object will link your new functions and configuration files to the main application.
+4.  **Register the Tool**: Add a new `Tool` object to the `TOOLS` dictionary in `VictoriaTerminal.py`. This object will link your new functions and configuration files to the main application.
 
     ```python
-    # In victoria.py
+    # In VictoriaTerminal.py
     TOOLS: Dict[str, Tool] = {
-        "crush": Tool(
-            name="Crush",
-            command="crush",
-            output_config="crush.json",
-            config_builder=build_crush_config,
-            preflight=preflight_crush,
-            launcher=launch_crush,
-        ),
+        "crush": Tool(...),
         "your_tool": Tool(
             name="Your Tool",
-            command="your_tool_command", # Or an identifier for non-CLI tools
+            command="your_tool_command",
             output_config="your_tool.json",
             config_builder=build_your_tool_config,
             preflight=preflight_your_tool,
@@ -171,19 +172,19 @@ Adding a new tool with its own configuration logic requires a few modifications 
     }
     ```
 
-If you add multiple tools, you will need to implement a tool selection menu in the `main` function to allow users to choose which tool to run.
+If you add multiple tools, the tool selection menu in the `main` function will automatically display them as choices.
 
 ## 🔄 On-Demand GitHub Actions
 
 Two workflows in [`.github/workflows`](.github/workflows) can be run manually from the **Actions** tab or via the GitHub CLI.
 
-* **Manual Tests** ([`manual-tests.yml`](.github/workflows/manual-tests.yml)) — runs `tests/test_victoria.py` and `tests/test_non_interactive.py` on Linux, macOS, and Windows:
+* **Manual Tests** ([`manual-tests.yml`](.github/workflows/manual-tests.yml)) — runs the test suite, which has been updated to reflect the new application structure.
 
   ```bash
   gh workflow run manual-tests.yml
   ```
 
-* **Build and Release** ([`build-release.yml`](.github/workflows/build-release.yml)) — executes the test suite and then calls [`scripts/package_mac.sh`](scripts/package_mac.sh) and [`scripts/package_win.bat`](scripts/package_win.bat) to produce `Victoria.app.zip` and `VictoriaSetup.exe`. The packaged applications produced by this workflow are self-contained and will handle the installation of dependencies on first run.
+* **Build and Release** ([`build-release.yml`](.github/workflows/build-release.yml)) — executes the test suite and then calls the packaging scripts to produce application bundles for macOS, Windows, and Linux. For each platform, this workflow now produces two applications: **Victoria Configurator** and **Victoria Terminal**.
 
   ```bash
   gh workflow run build-release.yml

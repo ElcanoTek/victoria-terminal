@@ -5,7 +5,8 @@ from unittest.mock import MagicMock
 
 # Add project root to path to allow importing victoria
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-import victoria
+from VictoriaConfigurator import run_setup_scripts, update_path_from_install
+from VictoriaTerminal import launch_crush, ensure_default_files, preflight_crush
 
 
 @pytest.mark.parametrize(
@@ -22,7 +23,7 @@ def test_run_setup_scripts(mocker, platform_name, os_name, scripts):
     fake_deps = Path("/fake/deps")
     mock_resource_path = mocker.Mock(return_value=fake_deps)
 
-    victoria.run_setup_scripts(
+    run_setup_scripts(
         use_local_model=False,
         _resource_path=mock_resource_path,
         _subprocess_run=mock_run,
@@ -45,7 +46,7 @@ def test_run_setup_scripts_skip_openrouter(mocker):
     fake_deps = Path("/fake/deps")
     mock_resource_path = mocker.Mock(return_value=fake_deps)
 
-    victoria.run_setup_scripts(
+    run_setup_scripts(
         use_local_model=True,
         _resource_path=mock_resource_path,
         _subprocess_run=mock_run,
@@ -66,7 +67,7 @@ def test_launch_tool_unix(mocker):
     mock_tool.command = "crush"
 
     fake_home = Path("/fake/home/Victoria")
-    victoria.launch_crush(
+    launch_crush(
         mock_tool,
         _APP_HOME=fake_home,
         _os_name="posix",
@@ -86,7 +87,7 @@ def test_launch_tool_windows(mocker):
     mock_tool.command = "crush"
 
     fake_home = Path("/fake/home/Victoria")
-    victoria.launch_crush(
+    launch_crush(
         mock_tool,
         _APP_HOME=fake_home,
         _os_name="nt",
@@ -106,7 +107,7 @@ def test_launch_tool_not_found(mocker):
     mock_tool.command = "crush"
 
     with pytest.raises(SystemExit) as excinfo:
-        victoria.launch_crush(
+        launch_crush(
             mock_tool,
             _os_name="posix",
             _execvp=mocker.Mock(side_effect=FileNotFoundError),
@@ -115,7 +116,7 @@ def test_launch_tool_not_found(mocker):
         )
 
     assert excinfo.value.code == 1
-    mock_err.assert_called_with("'crush' command not found in PATH")
+    mock_err.assert_called_with("'crush' command not found in PATH. Please run the Victoria Configurator.")
 
 
 def test_ensure_default_files(mocker, tmp_path):
@@ -139,9 +140,9 @@ def test_ensure_default_files(mocker, tmp_path):
         src_file.touch()
         return src_file
 
-    victoria.ensure_default_files(
+    ensure_default_files(
         _APP_HOME=mock_app_home,
-        _CONFIGS_DIR=Path("configs"),
+        _CONFIGS_DIR="configs",
         _VICTORIA_FILE="VICTORIA.md",
         _resource_path=mock_resource_path_func,
         _shutil_copy=mock_copy,
@@ -163,7 +164,7 @@ def test_preflight_tool_missing(mocker):
     mock_tool.command = "crush"
 
     with pytest.raises(SystemExit) as excinfo:
-        victoria.preflight_crush(
+        preflight_crush(
             mock_tool,
             use_local_model=False,
             _which=lambda cmd: None,
@@ -173,7 +174,7 @@ def test_preflight_tool_missing(mocker):
         )
 
     assert excinfo.value.code == 1
-    mock_err.assert_called_with("Missing 'crush' command-line tool. Run first-time setup or install it manually.")
+    mock_err.assert_called_with("Missing 'crush' command-line tool. Please run the Victoria Configurator first.")
 
 
 def test_update_path_from_install(mocker, tmp_path):
@@ -186,7 +187,7 @@ def test_update_path_from_install(mocker, tmp_path):
     mock_environ = {"PATH": "/usr/bin:/bin"}
     mock_info = mocker.Mock()
 
-    victoria.update_path_from_install(
+    update_path_from_install(
         _APP_HOME=mock_app_home,
         _os_environ=mock_environ,
         _info=mock_info,
@@ -204,7 +205,7 @@ def test_update_path_from_install_file_not_found(mocker):
     mock_environ = {"PATH": "/usr/bin:/bin"}
 
     # This should run without raising an error
-    victoria.update_path_from_install(
+    update_path_from_install(
         _APP_HOME=mock_app_home,
         _os_environ=mock_environ,
     )

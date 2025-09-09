@@ -1,6 +1,5 @@
 """
-Tests for the main victoria.py script, refactored from the original
-test_victoria.py script to use pytest.
+Tests for the main Victoria scripts: Configurator and Terminal.
 """
 
 import os
@@ -13,32 +12,18 @@ import shutil
 
 import pytest
 
-# Add project root to path to allow importing victoria
+# Add project root to path to allow importing scripts if needed, though not directly imported
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-import victoria
 
-
-def test_imports():
-    """Test that all required modules can be imported."""
-    required_modules = [
-        'json', 'os', 're', 'shutil', 'subprocess', 'sys',
-        'pathlib', 'typing', 'platform'
-    ]
-    for module in required_modules:
-        try:
-            __import__(module)
-        except ImportError as e:
-            pytest.fail(f"Failed to import {module}: {e}")
-
-
-def test_victoria_script_syntax():
-    """Test that victoria.py has valid Python syntax."""
+@pytest.mark.parametrize("script_name", ["VictoriaConfigurator.py", "VictoriaTerminal.py", "common.py"])
+def test_script_syntax(script_name):
+    """Test that the main scripts have valid Python syntax."""
     try:
-        with open('victoria.py', 'r', encoding='utf-8') as f:
+        with open(script_name, 'r', encoding='utf-8') as f:
             source = f.read()
-        compile(source, 'victoria.py', 'exec')
+        compile(source, script_name, 'exec')
     except (SyntaxError, Exception) as e:
-        pytest.fail(f"Syntax error or other issue in victoria.py: {e}")
+        pytest.fail(f"Syntax error or other issue in {script_name}: {e}")
 
 
 def test_cross_platform_compatibility(tmp_path):
@@ -53,7 +38,7 @@ def test_cross_platform_compatibility(tmp_path):
 
     assert read_data == test_data
 
-    # Test shutil.which (used in victoria.py)
+    # Test shutil.which (used in scripts)
     python_path = shutil.which('python') or shutil.which('python3')
     assert python_path is not None, "shutil.which should find python"
 
@@ -70,21 +55,30 @@ def test_environment_variables(monkeypatch):
 
 
 @pytest.mark.timeout(5)
-def test_script_execution_no_input():
-    """Test that the script can be executed with no input without hanging."""
+@pytest.mark.parametrize("script_name", ["VictoriaConfigurator.py", "VictoriaTerminal.py"])
+def test_script_execution_no_input(script_name):
+    """Test that the scripts can be executed with no input without hanging."""
     try:
+        # For the terminal, we need to create the sentinel file to avoid it exiting immediately
+        if "Terminal" in script_name:
+            sentinel = Path(os.path.expanduser("~")) / "Victoria" / ".first_run_complete"
+            sentinel.parent.mkdir(exist_ok=True)
+            sentinel.touch()
+
         result = subprocess.run(
-            [sys.executable, 'victoria.py'],
-            input='',
+            [sys.executable, script_name],
+            input='n\n',  # Provide 'n' to any prompts to avoid hanging
             text=True,
             capture_output=True,
             timeout=3
         )
-        # The script should exit with a non-zero code because it expects input,
-        # or 0 if it exits gracefully. We just want to ensure it doesn't hang.
         assert result.returncode is not None
+
+        if "Terminal" in script_name:
+            sentinel.unlink()
+
     except subprocess.TimeoutExpired:
-        pytest.fail("Script execution timed out")
+        pytest.fail(f"Script execution timed out for {script_name}")
 
 
 def test_unicode_handling():

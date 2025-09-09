@@ -7,7 +7,7 @@ import pytest
 # Add project root to path to allow importing victoria
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 # We import the function directly to test it in isolation
-from victoria import load_dotenv
+from common import load_dotenv
 
 
 @pytest.fixture

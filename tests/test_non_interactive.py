@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
-Non-interactive test for victoria.py to ensure it doesn't hang in CI environments.
-This script tests the victoria.py script by providing automated input.
+Non-interactive tests for Victoria scripts.
 """
 
 import subprocess
@@ -9,77 +8,106 @@ import sys
 import time
 import platform
 import signal
+from pathlib import Path
+import os
+import pytest
 
-# Fix Windows console encoding for Unicode characters
-if platform.system() == 'Windows':
-    try:
-        import codecs
-        sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
-        sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'strict')
-    except (AttributeError, ImportError):
-        # Fallback for older Python versions or if encoding fix fails
-        pass
 
-def test_victoria_non_interactive():
-    """Test victoria.py with automated input to prevent hanging."""
-    print("🧪 Testing victoria.py in non-interactive mode...")
-    
+def test_configurator_non_interactive():
+    """Test VictoriaConfigurator.py with automated input."""
+    print("🧪 Testing VictoriaConfigurator.py in non-interactive mode...")
+
     try:
-        # Prepare input to automatically answer prompts
-        # 'n' for skipping setup, 'n' for using OpenRouter default
+        # Provide 'n' to both prompts (local model? and run setup?)
         input_data = "n\nn\n"
-        
-        # Use sys.executable to get the current Python interpreter
         python_cmd = sys.executable
-        
-        # Run the script with timeout
-        process = subprocess.Popen(
-            [python_cmd, 'victoria.py'],
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
+
+        process = subprocess.run(
+            [python_cmd, 'VictoriaConfigurator.py'],
+            input=input_data,
+            text=True,
+            capture_output=True,
+            timeout=10
         )
-        
-        # Send input and wait for completion with timeout
-        try:
-            stdout, stderr = process.communicate(input=input_data, timeout=10)
-            exit_code = process.returncode
-            
-            print(f"  Exit code: {exit_code}")
-            print(f"  Stdout length: {len(stdout)} characters")
-            print(f"  Stderr length: {len(stderr)} characters")
-            
-            # Check if the script produced expected output
-            assert "VICTORIA" in stdout and "AdTech" in stdout
-            
-            # Check for graceful handling
-            assert exit_code in [0, 1, 130]
-                
-        except subprocess.TimeoutExpired:
-            print("  ⚠️ Script timed out (may be waiting for input)")
-            process.kill()
-            process.wait()
-            # Timeout is acceptable in CI
-            
+
+        assert "First-time setup" in process.stdout
+        # The script should exit gracefully
+        assert process.returncode == 0
+
     except Exception as e:
         assert False, f"  ✗ Error testing script: {e}"
 
-def test_victoria_with_interrupt():
-    """Test that victoria.py handles keyboard interrupt gracefully."""
-    print("🧪 Testing victoria.py keyboard interrupt handling...")
+def test_terminal_non_interactive_no_setup():
+    """Test VictoriaTerminal.py exits if setup has not been run."""
+    print("🧪 Testing VictoriaTerminal.py without setup...")
+
+    sentinel = Path(os.path.expanduser("~")) / "Victoria" / ".first_run_complete"
+    if sentinel.exists():
+        sentinel.unlink()
+
+    python_cmd = sys.executable
+    process = subprocess.run(
+        [python_cmd, 'VictoriaTerminal.py'],
+        text=True,
+        capture_output=True,
+        timeout=10
+    )
+
+    assert "First-time setup has not been completed" in process.stdout
+    assert process.returncode == 1
+
+def test_terminal_non_interactive_with_setup(tmp_path):
+    """Test VictoriaTerminal.py with automated input after setup."""
+    print("🧪 Testing VictoriaTerminal.py with setup...")
+
+    sentinel = Path(os.path.expanduser("~")) / "Victoria" / ".first_run_complete"
+    sentinel.parent.mkdir(exist_ok=True)
+    sentinel.touch()
+
+    # Create a dummy crush executable to pass preflight checks
+    dummy_crush_dir = tmp_path / "bin"
+    dummy_crush_dir.mkdir()
+    dummy_crush_path = dummy_crush_dir / "crush"
+    dummy_crush_path.write_text("#!/bin/sh\necho 'Crush mock executed'\nexit 0")
+    os.chmod(dummy_crush_path, 0o755)
+
+    env = os.environ.copy()
+    env["PATH"] = str(dummy_crush_dir) + os.pathsep + env.get("PATH", "")
+    env["OPENROUTER_API_KEY"] = "test-key"
     
+    try:
+        input_data = "n\n2\n" # No to local model, yes to local files
+        python_cmd = sys.executable
+
+        process = subprocess.run(
+            [python_cmd, 'VictoriaTerminal.py'],
+            input=input_data,
+            text=True,
+            capture_output=True,
+            timeout=10,
+            env=env
+        )
+        
+        assert "System preflight check" in process.stdout
+        assert "Mission launch" in process.stdout
+
+    finally:
+        if sentinel.exists():
+            sentinel.unlink()
+
+def test_configurator_interrupt_handling():
+    """Test that the configurator handles keyboard interrupt gracefully."""
+    print(f"🧪 Testing VictoriaConfigurator.py keyboard interrupt handling...")
+
     try:
         python_cmd = sys.executable
         
-        # On Windows we need a process group to send CTRL_BREAK_EVENT
         creationflags = 0
         if platform.system() == 'Windows':
             creationflags = subprocess.CREATE_NEW_PROCESS_GROUP
 
-        # Start the process
         process = subprocess.Popen(
-            [python_cmd, 'victoria.py'],
+            [python_cmd, 'VictoriaConfigurator.py'],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -87,32 +115,69 @@ def test_victoria_with_interrupt():
             creationflags=creationflags
         )
 
-        # Let it run for a moment
         time.sleep(1)
 
-        # Send interrupt signal (Ctrl+C)
         if platform.system() == 'Windows':
             process.send_signal(signal.CTRL_BREAK_EVENT)
         else:
             process.send_signal(signal.SIGINT)
         
-        try:
-            stdout, stderr = process.communicate(timeout=5)
-            exit_code = process.returncode
-            
-            print(f"  Exit code after interrupt: {exit_code}")
+        stdout, stderr = process.communicate(timeout=5)
 
-            # Check for expected exit code and graceful interrupt handling
-            if platform.system() == 'Windows':
-                assert exit_code == 3221225786
-            else:
-                    assert exit_code in (130, -2)
-            
-        except subprocess.TimeoutExpired:
-            process.kill()
-            process.wait()
-            print("  ⚠️ Process had to be killed")
-            # Timeout is acceptable in CI
+        assert process.returncode == 130
             
     except Exception as e:
-        assert False, f"  ✗ Error testing interrupt: {e}"
+        assert False, f"  ✗ Error testing interrupt for VictoriaConfigurator.py: {e}"
+
+
+def test_terminal_interrupt_handling(tmp_path):
+    """Test that the terminal handles keyboard interrupt gracefully."""
+    print(f"🧪 Testing VictoriaTerminal.py keyboard interrupt handling...")
+
+    sentinel = Path(os.path.expanduser("~")) / "Victoria" / ".first_run_complete"
+    sentinel.parent.mkdir(exist_ok=True)
+    sentinel.touch()
+
+    dummy_crush_dir = tmp_path / "bin"
+    dummy_crush_dir.mkdir()
+    dummy_crush_path = dummy_crush_dir / "crush"
+    dummy_crush_path.write_text("#!/bin/sh\nsleep 5\n")
+    os.chmod(dummy_crush_path, 0o755)
+    
+    env = os.environ.copy()
+    env["PATH"] = str(dummy_crush_dir) + os.pathsep + env.get("PATH", "")
+    env["OPENROUTER_API_KEY"] = "test-key"
+
+    try:
+        python_cmd = sys.executable
+        
+        creationflags = 0
+        if platform.system() == 'Windows':
+            creationflags = subprocess.CREATE_NEW_PROCESS_GROUP
+
+        process = subprocess.Popen(
+            [python_cmd, 'VictoriaTerminal.py'],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            creationflags=creationflags,
+            env=env
+        )
+
+        time.sleep(2)
+
+        if platform.system() == 'Windows':
+            process.send_signal(signal.CTRL_BREAK_EVENT)
+        else:
+            process.send_signal(signal.SIGINT)
+        
+        stdout, stderr = process.communicate(timeout=5)
+
+        assert process.returncode == 130
+            
+    except Exception as e:
+        assert False, f"  ✗ Error testing interrupt for VictoriaTerminal.py: {e}"
+    finally:
+        if sentinel.exists():
+            sentinel.unlink()
