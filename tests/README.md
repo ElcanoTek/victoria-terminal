@@ -148,10 +148,6 @@ Once you have finished testing, you can completely remove the virtual machine an
 
 ### Useful Vagrant Commands
 
--   **Re-run Provisioning**: If you change an installer file and want to re-run the installation without rebuilding the VM from scratch:
-    ```bash
-    vagrant reload --provision <vm_name>
-    ```
 -   **SSH Access**: To get a command-line shell inside a running VM:
     ```bash
     vagrant ssh <vm_name>
