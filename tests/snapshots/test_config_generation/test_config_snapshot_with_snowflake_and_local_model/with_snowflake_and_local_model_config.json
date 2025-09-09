@@ -63,7 +63,7 @@
       "args": [
         "mcp-server-motherduck",
         "--db-path",
-        "/home/jules/Victoria/adtech.duckdb"
+        "/home/victoria/app/adtech.duckdb"
       ]
     },
     "snowflake": {
