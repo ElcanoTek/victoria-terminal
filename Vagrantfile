@@ -14,7 +14,7 @@ Vagrant.configure("2") do |config|
 
   # Define the Windows 11 testing machine
   config.vm.define "windows11" do |win|
-    win.vm.box = "bento/windows-11"
+    win.vm.box = "rgl/windows-11"
     win.vm.communicator = "winrm"
 
     # Enable the GUI for manual testing
