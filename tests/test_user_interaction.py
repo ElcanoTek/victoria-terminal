@@ -80,3 +80,20 @@ def test_first_run_check_user_says_yes(mocker):
     assert result is True
     mock_run_setup.assert_called_once_with(True)
     mock_sentinel.write_text.assert_called_once_with("done")
+
+
+def test_tool_menu_multiple_tools(mocker):
+    """Test the tool selection menu with multiple tools."""
+    mock_prompt = mocker.patch("rich.prompt.Prompt.ask", return_value="2")
+
+    tool1 = mocker.Mock()
+    tool1.name = "Tool 1"
+    tool2 = mocker.Mock()
+    tool2.name = "Tool 2"
+
+    tools = {"tool1": tool1, "tool2": tool2}
+
+    selected_tool = victoria.tool_menu(tools)
+
+    assert selected_tool == tool2
+    mock_prompt.assert_called_once_with("Select a tool", choices=["1", "2"], default="1")
