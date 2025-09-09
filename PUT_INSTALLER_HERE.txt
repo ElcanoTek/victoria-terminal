@@ -1,0 +1,5 @@
+Please place the downloaded installer files (e.g., VictoriaSetup.exe or Victoria-*.AppImage) in this directory.
+
+The Vagrant virtual machines will look for the installers here to automatically set up the test environment.
+
+See tests/README.md for the full manual testing guide.

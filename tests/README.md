@@ -85,3 +85,79 @@ Tests run automatically on:
 - Manual workflow dispatch
 
 All tests must pass before code can be merged, ensuring the script remains compatible across all supported platforms and environments.
+
+---
+
+## Manual Installer Testing with Vagrant and VirtualBox
+
+For testing the final packaged installers (`VictoriaSetup.exe` and `.AppImage`), this project includes a Vagrant setup to quickly create and destroy clean virtual machines for Windows 11 and Ubuntu.
+
+### Prerequisites
+
+Before you begin, you must install the following software on your host machine:
+
+1.  **VirtualBox**: [Download and install VirtualBox](https://www.virtualbox.org/wiki/Downloads).
+2.  **Vagrant**: [Download and install Vagrant](https://www.vagrantup.com/downloads).
+
+### Testing Workflow
+
+Follow these steps to test an installer on a fresh OS.
+
+**Step 1: Download the Installer**
+
+Go to the project's **GitHub Releases** page or the **Actions** tab and download the installer artifact you wish to test (e.g., `VictoriaSetup.exe` or `Victoria-*.AppImage`).
+
+**Step 2: Place the Installer in the Project Root**
+
+Place the downloaded installer file into the main root directory of this repository. A placeholder file named `PUT_INSTALLER_HERE.txt` indicates the correct location. The provisioning scripts inside the VMs will look for the installer in this shared directory.
+
+**Step 3: Launch the Virtual Machine**
+
+Open a terminal in the project's root directory and run one of the following commands:
+
+-   **To test on Windows 11:**
+    ```bash
+    vagrant up windows11
+    ```
+
+-   **To test on Ubuntu 22.04:**
+    ```bash
+    vagrant up ubuntu
+    ```
+
+**Note:** The first time you run this command for a specific OS, it will download the base virtual machine image, which can be several gigabytes. The Ubuntu VM will also take a significant amount of time to install its desktop environment. Subsequent launches will be much faster.
+
+**Step 4: Test the Application**
+
+A VirtualBox window will appear, booting the respective operating system. The provisioning process will handle the installation automatically.
+
+-   **On Windows 11**: The script runs the installer silently in the background. Once the VM is ready, you can find **Victoria** in the Start Menu and launch it to begin testing.
+-   **On Ubuntu**: The script places the AppImage on the `vagrant` user's desktop. Log in to the desktop (password is `vagrant`), and you will see the Victoria AppImage icon. Double-click it to run and begin testing.
+
+**Step 5: Clean Up**
+
+Once you have finished testing, you can completely remove the virtual machine and free up all associated disk space with the `destroy` command.
+
+-   **To destroy the Windows VM:**
+    ```bash
+    vagrant destroy windows11 -f
+    ```
+
+-   **To destroy the Ubuntu VM:**
+    ```bash
+    vagrant destroy ubuntu -f
+    ```
+
+### Useful Vagrant Commands
+
+-   **Re-run Provisioning**: If you change an installer file and want to re-run the installation without rebuilding the VM from scratch:
+    ```bash
+    vagrant reload --provision <vm_name>
+    ```
+-   **SSH Access**: To get a command-line shell inside a running VM:
+    ```bash
+    vagrant ssh <vm_name>
+    ```
+-   **Halt vs. Destroy**:
+    - `vagrant halt`: Shuts down the VM but preserves its state on disk (like turning off a computer).
+    - `vagrant destroy`: Completely removes the VM and all its data.
