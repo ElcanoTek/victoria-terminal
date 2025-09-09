@@ -15,7 +15,7 @@ import re
 import shutil
 import subprocess
 import sys
-from pathlib import Path
+from pathlib import Path, PurePath
 from typing import Dict, Any, Callable
 
 from colorama import init as colorama_init
@@ -31,7 +31,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 VICTORIA_FILE = "VICTORIA.md"
 TOOL_CMD = os.environ.get("VICTORIA_TOOL", "crush")
 OUTPUT_CONFIG = os.environ.get("VICTORIA_OUTPUT", f"{TOOL_CMD}.json")
-CONFIGS_DIR = Path("configs")
+CONFIGS_DIR = PurePath("configs")
 
 APP_HOME = Path.home() / "Victoria"
 APP_HOME.mkdir(exist_ok=True)
@@ -51,7 +51,7 @@ def resource_path(name: str | Path) -> Path:
 
 def ensure_default_files(
     _APP_HOME: Path = APP_HOME,
-    _CONFIGS_DIR: Path = CONFIGS_DIR,
+    _CONFIGS_DIR: PurePath = CONFIGS_DIR,
     _VICTORIA_FILE: str = VICTORIA_FILE,
     _resource_path: Callable[[str | Path], Path] = resource_path,
     _shutil_copy: Callable[[Path, Path], None] = shutil.copy,

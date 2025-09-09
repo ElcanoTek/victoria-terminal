@@ -19,7 +19,8 @@ import victoria
 def test_run_setup_scripts(mocker, platform_name, os_name, scripts):
     """Test that the correct setup scripts are called for each platform."""
     mock_run = mocker.Mock(return_value=mocker.Mock(returncode=0))
-    mock_resource_path = mocker.Mock(return_value=Path("/fake/deps"))
+    fake_deps = Path("/fake/deps")
+    mock_resource_path = mocker.Mock(return_value=fake_deps)
 
     victoria.run_setup_scripts(
         use_local_model=False,
@@ -35,13 +36,14 @@ def test_run_setup_scripts(mocker, platform_name, os_name, scripts):
     else:
         assert mock_run.call_count == len(scripts)
         for i, script_name in enumerate(scripts):
-            assert mock_run.call_args_list[i].args[0] == ["bash", f"/fake/deps/{script_name}"]
+            assert mock_run.call_args_list[i].args[0] == ["bash", str(fake_deps / script_name)]
 
 
 def test_run_setup_scripts_skip_openrouter(mocker):
     """Test that the skip openrouter flag is passed correctly."""
     mock_run = mocker.Mock(return_value=mocker.Mock(returncode=0))
-    mock_resource_path = mocker.Mock(return_value=Path("/fake/deps"))
+    fake_deps = Path("/fake/deps")
+    mock_resource_path = mocker.Mock(return_value=fake_deps)
 
     victoria.run_setup_scripts(
         use_local_model=True,
@@ -52,8 +54,8 @@ def test_run_setup_scripts_skip_openrouter(mocker):
     )
 
     assert mock_run.call_count == 2
-    assert mock_run.call_args_list[0].args[0] == ["bash", "/fake/deps/install_prerequisites_macos.sh"]
-    assert mock_run.call_args_list[1].args[0] == ["bash", "/fake/deps/set_env_macos_linux.sh", "--skip-openrouter"]
+    assert mock_run.call_args_list[0].args[0] == ["bash", str(fake_deps / "install_prerequisites_macos.sh")]
+    assert mock_run.call_args_list[1].args[0] == ["bash", str(fake_deps / "set_env_macos_linux.sh"), "--skip-openrouter"]
 
 
 def test_launch_tool_unix(mocker):
@@ -61,14 +63,15 @@ def test_launch_tool_unix(mocker):
     mock_execvp = mocker.Mock()
     mock_sys_exit = mocker.Mock()
 
+    fake_home = Path("/fake/home/Victoria")
     victoria.launch_tool(
-        _APP_HOME=Path("/fake/home/Victoria"),
+        _APP_HOME=fake_home,
         _os_name="posix",
         _execvp=mock_execvp,
         _sys_exit=mock_sys_exit,
     )
 
-    mock_execvp.assert_called_once_with("crush", ["crush", "-c", "/fake/home/Victoria"])
+    mock_execvp.assert_called_once_with("crush", ["crush", "-c", str(fake_home)])
     mock_sys_exit.assert_not_called()
 
 
@@ -77,14 +80,15 @@ def test_launch_tool_windows(mocker):
     mock_run = mocker.Mock(return_value=mocker.Mock(returncode=0))
     mock_sys_exit = mocker.Mock()
 
+    fake_home = Path("/fake/home/Victoria")
     victoria.launch_tool(
-        _APP_HOME=Path("/fake/home/Victoria"),
+        _APP_HOME=fake_home,
         _os_name="nt",
         _subprocess_run=mock_run,
         _sys_exit=mock_sys_exit,
     )
 
-    mock_run.assert_called_once_with(["crush", "-c", "/fake/home/Victoria"])
+    mock_run.assert_called_once_with(["crush", "-c", str(fake_home)])
     mock_sys_exit.assert_not_called()
 
 
@@ -163,18 +167,16 @@ def test_preflight_tool_missing(mocker):
 
 def test_preflight_tool_missing_just_installed(mocker):
     """Test preflight exits gracefully if tool is missing but was just installed."""
-    mock_info = mocker.Mock()
-    mock_sys_exit = mocker.Mock(side_effect=SystemExit(0))
+    mock_restart_app = mocker.Mock(side_effect=SystemExit(0))
 
     with pytest.raises(SystemExit) as excinfo:
         victoria.preflight(
             use_local_model=False,
             just_installed=True,
             _which=lambda cmd: None,
-            _info=mock_info,
-            _sys_exit=mock_sys_exit,
             _Progress=MagicMock(),
+            _restart_app=mock_restart_app,
         )
 
     assert excinfo.value.code == 0
-    mock_info.assert_called_with("Prerequisites installed. Please restart Victoria to continue.")
+    mock_restart_app.assert_called_once()
