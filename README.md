@@ -99,21 +99,45 @@ To permanently allow locally created scripts, run:
 Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
 ```
 
-### Customizing the launch tool
+## 🔌 Extending Victoria with New Tools
 
-Victoria uses the `crush` CLI by default. Set the following environment variables to swap in a different tool or output file:
+Victoria is designed to be extensible, allowing you to integrate different command-line tools for data analysis. By default, it uses `crush`, but you can swap in another tool by following the steps below.
 
+### Using a Different Tool
+
+To switch the active tool, set the following environment variables before launching the application:
+
+- `VICTORIA_TOOL`: The name of the command-line executable (e.g., `your_cli`).
+- `VICTORIA_OUTPUT`: The name of the configuration file Victoria should generate (e.g., `your_cli.json`).
+
+Example:
 ```bash
 export VICTORIA_TOOL="your_cli"
-export VICTORIA_OUTPUT="your_cli.json"
+export VICTORIA_OUTPUT="your_cli_config.json"
+python3 victoria.py
 ```
 
-#### Adding a new tool configuration
+### Integrating a New Tool
 
-1. Create a folder under [`configs/`](configs) named after your tool.
-2. Place your template file inside that folder (e.g. `your_cli.template.json`).
-3. Add a `build_<tool>_config` function and register it in `CONFIG_BUILDERS` within [`victoria.py`](victoria.py).
-4. Run Victoria with `VICTORIA_TOOL="<tool>"` and optionally set `VICTORIA_OUTPUT`.
+Adding a new tool with its own configuration logic requires a few modifications:
+
+1.  **Create a Configuration Directory**: Under the [`configs/`](configs) directory, add a new folder named after your tool (e.g., `configs/your_cli`).
+
+2.  **Add Template Files**: Place any necessary JSON configuration templates inside your tool's directory. The system can substitute environment variables using the `${VAR_NAME}` syntax.
+
+3.  **Implement a Config Builder**: In [`victoria.py`](victoria.py), create a `build_<tool>_config` function. This function will contain the logic to load your templates, merge data, and produce the final configuration dictionary.
+
+4.  **Register the Builder**: Add your new function to the `CONFIG_BUILDERS` dictionary in `victoria.py` to make it accessible to the application.
+
+    ```python
+    # In victoria.py
+    CONFIG_BUILDERS: Dict[str, Callable[[bool, bool, bool], Dict[str, Any]]] = {
+        "crush": build_crush_config,
+        "your_cli": build_your_cli_config,  # Add your new tool here
+    }
+    ```
+
+With these changes, you can run Victoria with `VICTORIA_TOOL` set to your tool's name, and it will use your custom configuration logic.
 
 ## 🔄 On-Demand GitHub Actions
 
