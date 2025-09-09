@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-import importlib.util
+import sys
 from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
 
-spec = importlib.util.spec_from_file_location("victoria", Path(__file__).resolve().parent.parent / "victoria.py")
-victoria = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(victoria)
+# Add project root to path to allow importing victoria
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import victoria
 
 
 def _mock_which(cmd: str) -> str:
@@ -18,7 +18,8 @@ def test_preflight_requires_key_when_not_local(mocker):
     mock_warn = mocker.Mock()
     mock_sys_exit = mocker.Mock(side_effect=SystemExit(1))
     with pytest.raises(SystemExit):
-        victoria.preflight(
+        victoria.preflight_crush(
+            mocker.Mock(),
             use_local_model=False,
             just_installed=False,
             _which=_mock_which,
@@ -33,7 +34,8 @@ def test_preflight_requires_key_when_not_local(mocker):
 def test_preflight_allows_local_without_key(mocker):
     mock_warn = mocker.Mock()
     mock_sys_exit = mocker.Mock()
-    victoria.preflight(
+    victoria.preflight_crush(
+        mocker.Mock(),
         use_local_model=True,
         just_installed=False,
         _which=_mock_which,

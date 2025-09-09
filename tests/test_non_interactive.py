@@ -51,28 +51,19 @@ def test_victoria_non_interactive():
             print(f"  Stderr length: {len(stderr)} characters")
             
             # Check if the script produced expected output
-            if "VICTORIA" in stdout and "ADTECH" in stdout:
-                print("  ✓ Script displayed banner correctly")
-            else:
-                print("  ⚠️ Banner not found in output")
+            assert "VICTORIA" in stdout and "AdTech" in stdout
             
             # Check for graceful handling
-            if exit_code in [0, 1, 130]:  # 0=success, 1=error, 130=SIGINT
-                print("  ✓ Script exited gracefully")
-                return True
-            else:
-                print(f"  ⚠️ Unexpected exit code: {exit_code}")
-                return True  # Still consider it a pass if it didn't hang
+            assert exit_code in [0, 1, 130]
                 
         except subprocess.TimeoutExpired:
             print("  ⚠️ Script timed out (may be waiting for input)")
             process.kill()
             process.wait()
-            return True  # Timeout is acceptable in CI
+            # Timeout is acceptable in CI
             
     except Exception as e:
-        print(f"  ✗ Error testing script: {e}")
-        return False
+        assert False, f"  ✗ Error testing script: {e}"
 
 def test_victoria_with_interrupt():
     """Test that victoria.py handles keyboard interrupt gracefully."""
@@ -112,62 +103,14 @@ def test_victoria_with_interrupt():
             print(f"  Exit code after interrupt: {exit_code}")
 
             # Check for expected exit code and graceful interrupt handling
-            if exit_code == 130:
-                print("  ✓ Correct exit code (130) for SIGINT")
-            else:
-                print(f"  ⚠️ Unexpected exit code: {exit_code}")
-
-            if "cancelled" in stdout.lower() or "interrupted" in stdout.lower():
-                print("  ✓ Script handled interrupt gracefully")
-            else:
-                print("  ⚠️ No interrupt message found")
-
-            return True
+            assert exit_code == 130
+            assert "cancelled" in stdout.lower() or "interrupted" in stdout.lower()
             
         except subprocess.TimeoutExpired:
             process.kill()
             process.wait()
             print("  ⚠️ Process had to be killed")
-            return True
+            # Timeout is acceptable in CI
             
     except Exception as e:
-        print(f"  ✗ Error testing interrupt: {e}")
-        return False
-
-def main():
-    """Run all non-interactive tests."""
-    print("🚀 Starting Non-Interactive Victoria Tests")
-    print(f"Platform: {platform.system()}")
-    print("=" * 50)
-    
-    tests = [
-        test_victoria_non_interactive,
-        test_victoria_with_interrupt,
-    ]
-    
-    passed = 0
-    failed = 0
-    
-    for test in tests:
-        try:
-            if test():
-                passed += 1
-            else:
-                failed += 1
-        except Exception as e:
-            print(f"✗ Test {test.__name__} crashed: {e}")
-            failed += 1
-        print()
-    
-    print("=" * 50)
-    print(f"📊 Non-Interactive Test Results: {passed} passed, {failed} failed")
-    
-    if failed == 0:
-        print("🎉 All non-interactive tests passed!")
-        return 0
-    else:
-        print("❌ Some non-interactive tests failed.")
-        return 1
-
-if __name__ == "__main__":
-    sys.exit(main())
+        assert False, f"  ✗ Error testing interrupt: {e}"

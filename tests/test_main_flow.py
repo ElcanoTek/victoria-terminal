@@ -10,6 +10,7 @@ import victoria
 @pytest.fixture
 def full_mocks(mocker):
     """A fixture to provide a full set of mocks for victoria.main()."""
+    mocker.patch.dict(victoria.TOOLS, {"crush": mocker.Mock()})
     mocks = {
         "_parse_args": mocker.Mock(),
         "_ensure_default_files": mocker.Mock(),
@@ -17,12 +18,10 @@ def full_mocks(mocker):
         "_local_model_menu": mocker.Mock(return_value=False),
         "_first_run_check": mocker.Mock(return_value=False),
         "_remove_local_duckdb": mocker.Mock(),
-        "_preflight": mocker.Mock(),
         "_course_menu": mocker.Mock(return_value="2"),
         "_snowflake_env_missing": mocker.Mock(return_value=[]),
         "_generate_config": mocker.Mock(return_value=True),
         "_open_victoria_folder": mocker.Mock(),
-        "_launch_tool": mocker.Mock(),
         "_console": mocker.Mock(),
     }
     return mocks
@@ -34,10 +33,10 @@ def test_main_happy_path_local_files(full_mocks):
 
     full_mocks["_local_model_menu"].assert_called_once()
     full_mocks["_first_run_check"].assert_called_once_with(False)
-    full_mocks["_preflight"].assert_called_once_with(False, False)
+    victoria.TOOLS["crush"].preflight.assert_called_once_with(victoria.TOOLS["crush"], False, False)
     full_mocks["_course_menu"].assert_called_once()
-    full_mocks["_generate_config"].assert_called_once_with(False, False)
-    full_mocks["_launch_tool"].assert_called_once()
+    full_mocks["_generate_config"].assert_called_once_with(victoria.TOOLS["crush"], False, False)
+    victoria.TOOLS["crush"].launcher.assert_called_once_with(victoria.TOOLS["crush"])
     full_mocks["_snowflake_env_missing"].assert_not_called()
 
 
@@ -50,8 +49,8 @@ def test_main_happy_path_snowflake(full_mocks):
 
     full_mocks["_course_menu"].assert_called_once()
     full_mocks["_snowflake_env_missing"].assert_called_once()
-    full_mocks["_generate_config"].assert_called_once_with(True, True)
-    full_mocks["_launch_tool"].assert_called_once()
+    full_mocks["_generate_config"].assert_called_once_with(victoria.TOOLS["crush"], True, True)
+    victoria.TOOLS["crush"].launcher.assert_called_once_with(victoria.TOOLS["crush"])
 
 
 def test_main_snowflake_missing_env_vars(full_mocks, mocker):
@@ -66,7 +65,7 @@ def test_main_snowflake_missing_env_vars(full_mocks, mocker):
     assert excinfo.value.code == 1
     mock_err.assert_called_with("Missing Snowflake environment variables:")
     full_mocks["_generate_config"].assert_not_called()
-    full_mocks["_launch_tool"].assert_not_called()
+    victoria.TOOLS["crush"].launcher.assert_not_called()
 
 
 def test_main_config_generation_fails(full_mocks):
@@ -77,4 +76,4 @@ def test_main_config_generation_fails(full_mocks):
         victoria.main(**full_mocks)
 
     assert excinfo.value.code == 1
-    full_mocks["_launch_tool"].assert_not_called()
+    victoria.TOOLS["crush"].launcher.assert_not_called()
