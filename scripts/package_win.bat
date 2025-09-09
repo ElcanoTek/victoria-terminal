@@ -2,10 +2,12 @@
 setlocal
 set "PFX_PATH=%TEMP%\win.pfx"
 
-rem Determine version string from the current date in YYYY.MM.DD format.
-for /f %%i in ('powershell -NoProfile -Command "Get-Date -Format yyyy.MM.dd"') do set VERSION=%%i
-
 echo Building Victoria version %VERSION%
+
+if not defined VERSION (
+    echo "VERSION environment variable is not set."
+    exit /b 1
+)
 
 rem Update installer script with the version
 powershell -NoProfile -Command "(Get-Content '%~dp0installer_win.iss') -replace 'MyAppVersion ^"[0-9\.]*^"', 'MyAppVersion ^"%VERSION%^"' ^| Set-Content '%~dp0installer_win.iss'"
