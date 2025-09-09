@@ -32,7 +32,8 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 VICTORIA_FILE = "VICTORIA.md"
 CONFIGS_DIR = PurePath("configs")
 
-APP_HOME = Path.home() / "Victoria"
+home_dir = os.path.expanduser("~")
+APP_HOME = Path(home_dir) / "Victoria"
 APP_HOME.mkdir(exist_ok=True)
 os.environ.setdefault("VICTORIA_HOME", str(APP_HOME))
 SETUP_SENTINEL = APP_HOME / ".first_run_complete"
