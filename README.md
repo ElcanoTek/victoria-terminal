@@ -101,19 +101,19 @@ Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
 
 ## 🔌 Extending Victoria with New Tools
 
-Victoria is designed to be extensible, allowing you to integrate different command-line tools for data analysis. By default, it uses `crush`, but you can swap in another tool by following the steps below.
+The Victoria app is essentially an installer that configures and runs a tool that is able to connect via MCP to our data sources and use VICTORIA.md as instructions.  By default, it uses `crush`, but you can swap in another tool by following the steps below.
 
 ### Using a Different Tool
 
 To switch the active tool, set the following environment variables before launching the application:
 
-- `VICTORIA_TOOL`: The name of the command-line executable (e.g., `your_cli`).
-- `VICTORIA_OUTPUT`: The name of the configuration file Victoria should generate (e.g., `your_cli.json`).
+- `VICTORIA_TOOL`: The name of the command-line executable (e.g., `your_tool`).
+- `VICTORIA_OUTPUT`: The name of the configuration file Victoria should generate (e.g., `your_tool_config.json`).
 
 Example:
 ```bash
-export VICTORIA_TOOL="your_cli"
-export VICTORIA_OUTPUT="your_cli_config.json"
+export VICTORIA_TOOL="your_tool"
+export VICTORIA_OUTPUT="your_tool_config.json"
 python3 victoria.py
 ```
 
