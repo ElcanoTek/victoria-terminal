@@ -1,0 +1,82 @@
+import sys
+from pathlib import Path
+import pytest
+
+# Add project root to path to allow importing victoria
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import victoria
+
+
+def test_local_model_menu_yes(mocker):
+    """Test local_model_menu returns True when user enters 'y'."""
+    mocker.patch("rich.prompt.Prompt.ask", return_value="y")
+    assert victoria.local_model_menu() is True
+
+
+def test_local_model_menu_no(mocker):
+    """Test local_model_menu returns False when user enters 'n'."""
+    mocker.patch("rich.prompt.Prompt.ask", return_value="n")
+    assert victoria.local_model_menu() is False
+
+
+def test_course_menu_one(mocker):
+    """Test course_menu returns '1'."""
+    mocker.patch("rich.prompt.Prompt.ask", return_value="1")
+    assert victoria.course_menu() == "1"
+
+
+def test_course_menu_two(mocker):
+    """Test course_menu returns '2'."""
+    mocker.patch("rich.prompt.Prompt.ask", return_value="2")
+    assert victoria.course_menu() == "2"
+
+
+def test_first_run_check_sentinel_exists(mocker):
+    """Test first_run_check returns False if sentinel file exists."""
+    mock_sentinel = mocker.Mock()
+    mock_sentinel.exists.return_value = True
+    mock_ask = mocker.Mock()
+
+    result = victoria.first_run_check(
+        use_local_model=False,
+        _SETUP_SENTINEL=mock_sentinel,
+        _Prompt_ask=mock_ask,
+    )
+    assert result is False
+    mock_ask.assert_not_called()
+
+
+def test_first_run_check_user_says_no(mocker):
+    """Test first_run_check returns False if user says no to setup."""
+    mock_run_setup = mocker.Mock()
+    mock_sentinel = mocker.Mock()
+    mock_sentinel.exists.return_value = False
+    mock_prompt_ask = mocker.Mock(return_value="n")
+
+    result = victoria.first_run_check(
+        use_local_model=False,
+        _run_setup_scripts=mock_run_setup,
+        _SETUP_SENTINEL=mock_sentinel,
+        _Prompt_ask=mock_prompt_ask,
+    )
+    assert result is False
+    mock_run_setup.assert_not_called()
+
+
+def test_first_run_check_user_says_yes(mocker):
+    """Test first_run_check runs setup and returns True if user says yes."""
+    mock_run_setup = mocker.Mock()
+    mock_sentinel = mocker.Mock()
+    mock_sentinel.exists.return_value = False
+    mock_prompt_ask = mocker.Mock(return_value="y")
+
+    result = victoria.first_run_check(
+        use_local_model=True,
+        _run_setup_scripts=mock_run_setup,
+        _SETUP_SENTINEL=mock_sentinel,
+        _Prompt_ask=mock_prompt_ask,
+    )
+
+    assert result is True
+    mock_run_setup.assert_called_once_with(True)
+    mock_sentinel.write_text.assert_called_once_with("done")
