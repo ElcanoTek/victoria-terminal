@@ -118,7 +118,7 @@ def restart_app(
     if _os_name == "nt":
         # On Windows, Popen is used to launch a new instance of the app.
         # The new process runs independently. We then exit the current process.
-        _subprocess_Popen(_sys_argv)
+        _subprocess_Popen([_sys_executable] + _sys_argv)
         _sys_exit(0)
     else:
         # On macOS/Linux, execv replaces the current process with a new one,

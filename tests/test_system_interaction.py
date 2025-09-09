@@ -195,3 +195,43 @@ def test_preflight_tool_missing_just_installed(mocker):
 
     assert excinfo.value.code == 0
     mock_restart_app.assert_called_once()
+
+
+def test_restart_app_windows(mocker):
+    """Test that restart_app on Windows calls Popen correctly."""
+    mock_popen = mocker.Mock()
+    mock_exit = mocker.Mock(side_effect=SystemExit(0))
+    mock_sys_executable = "C:\\Python\\python.exe"
+    mock_sys_argv = ["victoria.py", "--foo"]
+
+    with pytest.raises(SystemExit):
+        victoria.restart_app(
+            _sys_executable=mock_sys_executable,
+            _sys_argv=mock_sys_argv,
+            _os_name="nt",
+            _subprocess_Popen=mock_popen,
+            _sys_exit=mock_exit,
+            _info=lambda msg: None,
+        )
+
+    mock_popen.assert_called_once_with([mock_sys_executable] + mock_sys_argv)
+    mock_exit.assert_called_once_with(0)
+
+
+def test_restart_app_unix(mocker):
+    """Test that restart_app on a Unix-like system calls execv correctly."""
+    mock_execv = mocker.Mock()
+    mock_sys_executable = "/usr/bin/python"
+    mock_sys_argv = ["victoria.py", "--bar"]
+
+    # We don't expect this to exit, as execv replaces the process
+    victoria.restart_app(
+        _sys_executable=mock_sys_executable,
+        _sys_argv=mock_sys_argv,
+        _os_name="posix",
+        _os_execv=mock_execv,
+        _sys_exit=mocker.Mock(),
+        _info=lambda msg: None,
+    )
+
+    mock_execv.assert_called_once_with(mock_sys_executable, mock_sys_argv)
