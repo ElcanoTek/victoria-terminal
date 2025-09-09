@@ -5,7 +5,7 @@ import pytest
 # Add project root to path to allow importing victoria
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from VictoriaConfigurator import first_run_check
-from VictoriaTerminal import local_model_menu, course_menu, tool_menu
+from VictoriaTerminal import local_model_menu, course_menu
 
 
 def test_local_model_menu_yes(mocker):
@@ -92,18 +92,3 @@ def test_first_run_check_user_says_yes(mocker):
     mock_good.assert_called_once()
 
 
-def test_tool_menu_multiple_tools(mocker):
-    """Test the tool selection menu with multiple tools."""
-    mock_prompt = mocker.patch("rich.prompt.Prompt.ask", return_value="2")
-
-    tool1 = mocker.Mock()
-    tool1.name = "Tool 1"
-    tool2 = mocker.Mock()
-    tool2.name = "Tool 2"
-
-    tools = {"tool1": tool1, "tool2": tool2}
-
-    selected_tool = tool_menu(tools)
-
-    assert selected_tool == tool2
-    mock_prompt.assert_called_once_with("Select a tool", choices=["1", "2"], default="1")

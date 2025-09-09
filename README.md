@@ -73,10 +73,11 @@ The application will automatically load variables from this file at startup.
 
 ## 🚀 Launching Victoria
 
-The application is now split into two main components:
+The application is now split into three main components:
 
 *   **Victoria Configurator**: A one-time setup tool that installs prerequisites (`crush`) and configures environment variables.
 *   **Victoria Terminal**: The main application for launching data analysis sessions with `crush`.
+*   **Victoria Browser**: A simple tool that opens your default web browser to the ElcanoTek website.
 
 ### First-Time Setup
 
@@ -99,7 +100,7 @@ To launch in interactive mode, run:
 source .venv/bin/activate
 python3 VictoriaTerminal.py
 ```
-This will present you with menus to select the tool, model, and data source.
+This will present you with menus to select the model and data source.
 
 #### Non-Interactive Mode (for scripting)
 
@@ -111,7 +112,6 @@ python3 VictoriaTerminal.py [OPTIONS]
 
 **Options:**
 
-*   `--tool TEXT`: The name of the tool to use (e.g., `crush`).
 *   `--course INTEGER`: The course to select (1 for Snowflake, 2 for local files).
 *   `--local-model`: Use a local model.
 *   `--quiet`: Suppress informational messages.
@@ -121,7 +121,7 @@ python3 VictoriaTerminal.py [OPTIONS]
 **Example:**
 
 ```bash
-python3 VictoriaTerminal.py --tool crush --course 2 --local-model
+python3 VictoriaTerminal.py --course 2 --local-model
 ```
 
 ### Platform Notes
@@ -138,41 +138,6 @@ To permanently allow locally created scripts, run:
 Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
 ```
 
-## 🔌 Extending Victoria with New Tools
-
-The Victoria Terminal is designed to be extensible, allowing you to add new tools besides the default `crush` agent.
-
-### Integrating a New Tool
-
-Adding a new tool requires a few modifications to `VictoriaTerminal.py`:
-
-1.  **Create a Configuration Directory**: Under the [`configs/`](configs) directory, add a new folder named after your tool (e.g., `configs/your_tool`).
-
-2.  **Add Template Files**: Place any necessary JSON configuration templates inside your tool's directory. The system can substitute environment variables using the `${VAR_NAME}` syntax.
-
-3.  **Implement Tool-Specific Functions**: In [`VictoriaTerminal.py`](VictoriaTerminal.py), create the following functions for your tool:
-    *   `build_<tool_name>_config`: Contains the logic to load your templates, merge data, and produce the final configuration dictionary.
-    *   `preflight_<tool_name>`: Checks if the tool's dependencies are met before launch.
-    *   `launch_<tool_name>`: Contains the logic to start the tool.
-
-4.  **Register the Tool**: Add a new `Tool` object to the `TOOLS` dictionary in `VictoriaTerminal.py`. This object will link your new functions and configuration files to the main application.
-
-    ```python
-    # In VictoriaTerminal.py
-    TOOLS: Dict[str, Tool] = {
-        "crush": Tool(...),
-        "your_tool": Tool(
-            name="Your Tool",
-            command="your_tool_command",
-            output_config="your_tool.json",
-            config_builder=build_your_tool_config,
-            preflight=preflight_your_tool,
-            launcher=launch_your_tool,
-        ),
-    }
-    ```
-
-If you add multiple tools, the tool selection menu in the `main` function will automatically display them as choices.
 
 ## 🔄 On-Demand GitHub Actions
 
