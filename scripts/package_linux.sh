@@ -75,7 +75,9 @@ chmod +x "$LINUXDEPLOY_APPIMAGE"
 echo ">>> Bundling dependencies with linuxdeploy..."
 # Let linuxdeploy find and bundle all necessary libraries.
 # The output will be an AppImage file.
-"./$LINUXDEPLOY_APPIMAGE" --appdir "$APPDIR" --output appimage -i "$APPDIR/victoria.png" -d "$APPDIR/victoria.desktop"
+# We explicitly set the output name to ensure it's predictable.
+SOURCE_APPIMAGE="Victoria-$LINUXDEPLOY_ARCH.AppImage"
+OUTPUT="$SOURCE_APPIMAGE" "./$LINUXDEPLOY_APPIMAGE" --appdir "$APPDIR" --output appimage -i "$APPDIR/victoria.png" -d "$APPDIR/victoria.desktop"
 
 if [ -z "$VERSION" ]; then
   echo "VERSION environment variable not set; falling back to date"
@@ -84,7 +86,6 @@ fi
 
 echo ">>> Renaming and cleaning up..."
 # The default output name is based on the application name and architecture.
-SOURCE_APPIMAGE="Victoria-$LINUXDEPLOY_ARCH.AppImage"
 DEST_APPIMAGE="Victoria-${VERSION}-$LINUXDEPLOY_ARCH.AppImage"
 mv "$SOURCE_APPIMAGE" "$DEST_APPIMAGE"
 
