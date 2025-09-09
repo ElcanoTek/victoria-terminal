@@ -303,6 +303,28 @@ def generate_config(include_snowflake: bool, use_local_model: bool) -> bool:
 # Preflight and launch
 # ---------------------------------------------------------------------------
 
+def restart_app(
+    _sys_executable: str = sys.executable,
+    _sys_argv: list[str] = sys.argv,
+    _os_name: str = os.name,
+    _os_execv: Callable[..., None] = os.execv,
+    _subprocess_Popen: Callable[..., Any] = subprocess.Popen,
+    _sys_exit: Callable[[int], None] = sys.exit,
+    _info: Callable[[str], None] = info,
+) -> None:
+    """Restart the application to apply changes to the environment."""
+    _info("Prerequisites installed. Restarting Victoria to apply changes...")
+    if _os_name == "nt":
+        # On Windows, Popen is used to launch a new instance of the app.
+        # The new process runs independently. We then exit the current process.
+        _subprocess_Popen(_sys_argv)
+        _sys_exit(0)
+    else:
+        # On macOS/Linux, execv replaces the current process with a new one,
+        # inheriting the same process ID.
+        _os_execv(_sys_executable, _sys_argv)
+
+
 def which(cmd: str) -> str | None:
     return shutil.which(cmd)
 
@@ -319,14 +341,14 @@ def preflight(
     _sys_exit: Callable[[int], None] = sys.exit,
     _section: Callable[[str], None] = section,
     _Progress: type = Progress,
+    _restart_app: Callable[[], None] = restart_app,
 ) -> None:
     _section("System preflight check")
     with _Progress(SpinnerColumn(), TextColumn("{task.description}"), transient=True) as progress:
         progress.add_task("Verifying prerequisites", total=None)
         if _which(_TOOL_CMD) is None:
             if just_installed:
-                _info("Prerequisites installed. Please restart Victoria to continue.")
-                _sys_exit(0)
+                _restart_app()
             _err(f"Missing '{_TOOL_CMD}' command-line tool. Run first-time setup or install it manually.")
             _sys_exit(1)
     _good(f"{_TOOL_CMD} CLI tool detected")

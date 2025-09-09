@@ -26,5 +26,5 @@ Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 
 [Run]
-Filename: "{app}\{#MyAppExeName}"; Description: "Launch Victoria"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\{#MyAppExeName}"; Description: "Launch Victoria"; Flags: waituntilterminated postinstall skipifsilent
 
