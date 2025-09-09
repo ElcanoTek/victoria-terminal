@@ -4,6 +4,8 @@
 
 Victoria is Elcano's AI agent that connects to programmatic advertising reports via MCP. Traders can ask powerful questions of CSVs, Excel files, and SQL-queryable datasets — making it easier to surface insights, spot trends, and optimize campaigns.
 
+Victoria is not a single application, but a **fleet of apps** designed to work together. This approach allows for greater flexibility and modularity, enabling each component to be updated and deployed independently. For more details on the project's philosophy, see the [Victoria Roadmap](docs/ROADMAP.md).
+
 ---
 
 ## ⚙️ Installation & Setup
@@ -71,13 +73,13 @@ The application will automatically load variables from this file at startup.
 
 ---
 
-## 🚀 Launching Victoria
+## 🚀 The Victoria Fleet
 
-The application is now split into three main components:
+The Victoria project is a **fleet of applications**, each with a specific purpose. The initial fleet consists of three main components:
 
-*   **Victoria Configurator**: A one-time setup tool that installs prerequisites (`crush`) and configures environment variables.
-*   **Victoria Terminal**: The main application for launching data analysis sessions with `crush`.
-*   **Victoria Browser**: A simple tool that opens your default web browser to the ElcanoTek website.
+*   **Victoria Configurator**: The starting point for all new users. This is a one-time setup tool that installs prerequisites (`crush`) and configures your environment variables.
+*   **Victoria Terminal**: The flagship application for launching data analysis sessions with the `crush` AI agent.
+*   **Victoria Browser**: A simple utility that opens your default web browser to the ElcanoTek website.
 
 ### First-Time Setup
 
