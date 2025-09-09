@@ -3,6 +3,12 @@ set -e
 # Build a Linux AppImage for Victoria.
 # This script is designed to be run in a GitHub Actions environment on ubuntu-latest.
 
+# 0. Install ImageMagick if not available (needed for icon resizing)
+if ! command -v convert &> /dev/null; then
+    echo ">>> Installing ImageMagick..."
+    sudo apt-get update && sudo apt-get install -y imagemagick
+fi
+
 # 1. Run PyInstaller to create the executable
 echo ">>> Running PyInstaller to create the executable..."
 REQ_FILE="$(dirname "$0")/../requirements.txt"
@@ -33,8 +39,9 @@ Categories=Utility;
 Terminal=true
 EOF
 
-# Copy the icon
-cp assets/icon.png "$APPDIR/victoria.png"
+# Copy and resize the icon to 512x512 (maximum supported by linuxdeploy)
+# The original icon is 1024x1024, but linuxdeploy only supports up to 512x512
+convert assets/icon.png -resize 512x512 "$APPDIR/victoria.png"
 
 # AppRun - a simple launcher script
 cat > "$APPDIR/AppRun" <<'EOF'
@@ -68,7 +75,7 @@ chmod +x "$LINUXDEPLOY_APPIMAGE"
 echo ">>> Bundling dependencies with linuxdeploy..."
 # Let linuxdeploy find and bundle all necessary libraries.
 # The output will be an AppImage file.
-"./$LINUXDEPLOY_APPIMAGE" --appdir "$APPDIR" --output appimage -i assets/icon.png -d "$APPDIR/victoria.desktop"
+"./$LINUXDEPLOY_APPIMAGE" --appdir "$APPDIR" --output appimage -i "$APPDIR/victoria.png" -d "$APPDIR/victoria.desktop"
 
 if [ -z "$VERSION" ]; then
   echo "VERSION environment variable not set; falling back to date"
