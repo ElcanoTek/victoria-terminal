@@ -39,6 +39,33 @@ APP_HOME.mkdir(exist_ok=True)
 os.environ.setdefault("VICTORIA_HOME", str(APP_HOME))
 SETUP_SENTINEL = APP_HOME / ".first_run_complete"
 
+
+def load_dotenv(
+    _APP_HOME: Path = APP_HOME,
+    _os_environ: dict = os.environ,
+) -> None:
+    """Load environment variables from the .env file in the app home."""
+    env_file = _APP_HOME / ".env"
+    if not env_file.exists():
+        return
+    try:
+        with env_file.open("r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, value = line.split("=", 1)
+                key = key.strip()
+                value = value.strip().strip("\"'")
+                if key:
+                    _os_environ.setdefault(key, value)
+    except Exception:
+        # Silently ignore errors in .env file parsing
+        pass
+
+load_dotenv()
+
+
 colorama_init()  # Enable ANSI colors on Windows
 console = Console()
 
