@@ -148,12 +148,6 @@ def ensure_default_files(
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Victoria Terminal")
     parser.add_argument(
-        "--tool",
-        type=str,
-        default="crush",
-        help="The name of the tool to use (e.g., 'crush').",
-    )
-    parser.add_argument(
         "--course",
         type=int,
         choices=[1, 2],
@@ -307,19 +301,6 @@ def course_menu() -> str:
     return Prompt.ask("Select course", choices=["1", "2"], default="2")
 
 
-def tool_menu(tools: Dict[str, Tool]) -> Tool:
-    """Display a menu to select a tool if more than one is available."""
-    if len(tools) == 1:
-        return next(iter(tools.values()))
-
-    section("Tool selection")
-    for i, tool in enumerate(tools.values(), 1):
-        console.print(f"{i}. {tool.name}")
-
-    choice = Prompt.ask("Select a tool", choices=[str(i) for i in range(1, len(tools) + 1)], default="1")
-    return list(tools.values())[int(choice) - 1]
-
-
 def remove_local_duckdb() -> None:
     db_path = APP_HOME / "adtech.duckdb"
     try:
@@ -342,16 +323,14 @@ def open_victoria_folder() -> None:
         warn(f"Could not open Victoria folder: {exc}")
 
 
-TOOLS: Dict[str, Tool] = {
-    "crush": Tool(
-        name="Crush",
-        command="crush",
-        output_config="crush.json",
-        config_builder=build_crush_config,
-        preflight=preflight_crush,
-        launcher=launch_crush,
-    ),
-}
+TOOL = Tool(
+    name="Crush",
+    command="crush",
+    output_config="crush.json",
+    config_builder=build_crush_config,
+    preflight=preflight_crush,
+    launcher=launch_crush,
+)
 
 
 def main(
@@ -361,7 +340,6 @@ def main(
     _local_model_menu: Callable = local_model_menu,
     _remove_local_duckdb: Callable = remove_local_duckdb,
     _course_menu: Callable = course_menu,
-    _tool_menu: Callable[[Dict[str, Tool]], Tool] = tool_menu,
     _snowflake_env_missing: Callable = snowflake_env_missing,
     _generate_config: Callable = generate_config,
     _open_victoria_folder: Callable = open_victoria_folder,
@@ -382,13 +360,7 @@ def main(
     _console.clear()
     _banner()
 
-    if args.tool:
-        if args.tool not in TOOLS:
-            _err(f"Unknown tool: {args.tool}")
-            sys.exit(1)
-        tool = TOOLS[args.tool]
-    else:
-        tool = _tool_menu(TOOLS)
+    tool = TOOL
 
     use_local_model = args.local_model if args.local_model is not None else _local_model_menu()
 

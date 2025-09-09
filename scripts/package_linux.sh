@@ -37,6 +37,9 @@ uvx --with-requirements "$REQ_FILE" pyinstaller --noconfirm --onefile --hidden-i
   --add-data "VICTORIA.md:." \
   VictoriaTerminal.py
 
+uvx --with-requirements "$REQ_FILE" pyinstaller --noconfirm --onefile --hidden-import tkinter --name VictoriaBrowser \
+  VictoriaBrowser.py
+
 
 # --- Build Victoria Configurator AppImage ---
 echo ">>> Building Victoria Configurator AppImage..."
@@ -48,13 +51,13 @@ cat > "$APPDIR_CONFIG/victoriaconfigurator.desktop" <<EOF
 [Desktop Entry]
 Name=Victoria Configurator
 Exec=VictoriaConfigurator
-Icon=victoria
+Icon=victoriaconfigurator
 Type=Application
 Categories=Utility;
 Terminal=true
 EOF
 
-convert assets/icon.png -resize 512x512 "$APPDIR_CONFIG/victoria.png"
+convert assets/VictoriaTerminal.png -resize 512x512 "$APPDIR_CONFIG/victoriaconfigurator.png"
 
 cat > "$APPDIR_CONFIG/AppRun" <<'EOF'
 #!/bin/sh
@@ -65,7 +68,7 @@ chmod +x "$APPDIR_CONFIG/AppRun"
 
 echo ">>> Bundling dependencies with linuxdeploy for Configurator..."
 SOURCE_APPIMAGE_CONFIG="VictoriaConfigurator-$LINUXDEPLOY_ARCH.AppImage"
-OUTPUT="$SOURCE_APPIMAGE_CONFIG" "./$LINUXDEPLOY_APPIMAGE" --appdir "$APPDIR_CONFIG" --output appimage -i "$APPDIR_CONFIG/victoria.png" -d "$APPDIR_CONFIG/victoriaconfigurator.desktop"
+OUTPUT="$SOURCE_APPIMAGE_CONFIG" "./$LINUXDEPLOY_APPIMAGE" --appdir "$APPDIR_CONFIG" --output appimage -i "$APPDIR_CONFIG/victoriaconfigurator.png" -d "$APPDIR_CONFIG/victoriaconfigurator.desktop"
 DEST_APPIMAGE_CONFIG="VictoriaConfigurator-${VERSION}-$LINUXDEPLOY_ARCH.AppImage"
 mv "$SOURCE_APPIMAGE_CONFIG" "$DEST_APPIMAGE_CONFIG"
 echo ">>> Configurator AppImage created: $DEST_APPIMAGE_CONFIG"
@@ -81,13 +84,13 @@ cat > "$APPDIR_TERM/victoriaterminal.desktop" <<EOF
 [Desktop Entry]
 Name=Victoria Terminal
 Exec=VictoriaTerminal
-Icon=victoria
+Icon=victoriaterminal
 Type=Application
 Categories=Utility;
 Terminal=true
 EOF
 
-convert assets/icon.png -resize 512x512 "$APPDIR_TERM/victoria.png"
+convert assets/VictoriaTerminal.png -resize 512x512 "$APPDIR_TERM/victoriaterminal.png"
 
 cat > "$APPDIR_TERM/AppRun" <<'EOF'
 #!/bin/sh
@@ -98,9 +101,43 @@ chmod +x "$APPDIR_TERM/AppRun"
 
 echo ">>> Bundling dependencies with linuxdeploy for Terminal..."
 SOURCE_APPIMAGE_TERM="VictoriaTerminal-$LINUXDEPLOY_ARCH.AppImage"
-OUTPUT="$SOURCE_APPIMAGE_TERM" "./$LINUXDEPLOY_APPIMAGE" --appdir "$APPDIR_TERM" --output appimage -i "$APPDIR_TERM/victoria.png" -d "$APPDIR_TERM/victoriaterminal.desktop"
+OUTPUT="$SOURCE_APPIMAGE_TERM" "./$LINUXDEPLOY_APPIMAGE" --appdir "$APPDIR_TERM" --output appimage -i "$APPDIR_TERM/victoriaterminal.png" -d "$APPDIR_TERM/victoriaterminal.desktop"
 DEST_APPIMAGE_TERM="VictoriaTerminal-${VERSION}-$LINUXDEPLOY_ARCH.AppImage"
 mv "$SOURCE_APPIMAGE_TERM" "$DEST_APPIMAGE_TERM"
 echo ">>> Terminal AppImage created: $DEST_APPIMAGE_TERM"
+
+
+# --- Build Victoria Browser AppImage ---
+echo ">>> Building Victoria Browser AppImage..."
+APPDIR_BROWSER="VictoriaBrowser.AppDir"
+mkdir -p "$APPDIR_BROWSER/usr/bin"
+mv dist/VictoriaBrowser "$APPDIR_BROWSER/usr/bin/"
+
+cat > "$APPDIR_BROWSER/victoriabrowser.desktop" <<EOF
+[Desktop Entry]
+Name=Victoria Browser
+Exec=VictoriaBrowser
+Icon=victoriabrowser
+Type=Application
+Categories=Utility;
+Terminal=false
+EOF
+
+convert assets/VictoriaBrowser.png -resize 512x512 "$APPDIR_BROWSER/victoriabrowser.png"
+
+cat > "$APPDIR_BROWSER/AppRun" <<'EOF'
+#!/bin/sh
+HERE=$(dirname $(readlink -f "$0"))
+"$HERE/usr/bin/VictoriaBrowser" "$@"
+EOF
+chmod +x "$APPDIR_BROWSER/AppRun"
+
+echo ">>> Bundling dependencies with linuxdeploy for Browser..."
+SOURCE_APPIMAGE_BROWSER="VictoriaBrowser-$LINUXDEPLOY_ARCH.AppImage"
+OUTPUT="$SOURCE_APPIMAGE_BROWSER" "./$LINUXDEPLOY_APPIMAGE" --appdir "$APPDIR_BROWSER" --output appimage -i "$APPDIR_BROWSER/victoriabrowser.png" -d "$APPDIR_BROWSER/victoriabrowser.desktop"
+DEST_APPIMAGE_BROWSER="VictoriaBrowser-${VERSION}-$LINUXDEPLOY_ARCH.AppImage"
+mv "$SOURCE_APPIMAGE_BROWSER" "$DEST_APPIMAGE_BROWSER"
+echo ">>> Browser AppImage created: $DEST_APPIMAGE_BROWSER"
+
 
 echo ">>> All AppImages created successfully."

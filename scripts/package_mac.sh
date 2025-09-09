@@ -16,7 +16,7 @@ echo "--- Building Victoria Configurator ---"
 CONFIGURATOR_BUNDLE_ID=${CONFIGURATOR_BUNDLE_ID:-com.elcanotek.victoriaconfigurator}
 uvx --with-requirements "$REQ_FILE" pyinstaller --noconfirm --windowed --name VictoriaConfigurator \
   --hidden-import colorama --hidden-import rich \
-  --icon assets/icon.icns \
+  --icon assets/VictoriaTerminal.icns \
   --osx-bundle-identifier "$CONFIGURATOR_BUNDLE_ID" \
   --add-data "dependencies/install_prerequisites_macos.sh:dependencies" \
   --add-data "dependencies/set_env_macos_linux.sh:dependencies" \
@@ -64,7 +64,7 @@ echo "--- Building Victoria Terminal ---"
 TERMINAL_BUNDLE_ID=${TERMINAL_BUNDLE_ID:-com.elcanotek.victoriaterminal}
 uvx --with-requirements "$REQ_FILE" pyinstaller --noconfirm --windowed --name VictoriaTerminal \
   --hidden-import colorama --hidden-import rich \
-  --icon assets/icon.icns \
+  --icon assets/VictoriaTerminal.icns \
   --osx-bundle-identifier "$TERMINAL_BUNDLE_ID" \
   --add-data "configs:configs" \
   --add-data "VICTORIA.md:." \
@@ -105,3 +105,19 @@ echo "--- Finished Victoria Terminal ---"
 
 # Final cleanup
 rm -rf build VictoriaTerminal.spec
+
+# --- Build Victoria Browser ---
+echo "--- Building Victoria Browser ---"
+BROWSER_BUNDLE_ID=${BROWSER_BUNDLE_ID:-com.elcanotek.victoriabrowser}
+uvx --with-requirements "$REQ_FILE" pyinstaller --noconfirm --windowed --name VictoriaBrowser \
+  --hidden-import tkinter \
+  --icon assets/VictoriaBrowser.icns \
+  --osx-bundle-identifier "$BROWSER_BUNDLE_ID" \
+  VictoriaBrowser.py
+
+# Zip the app
+(cd dist && zip -r "../VictoriaBrowser-${VERSION}.app.zip" VictoriaBrowser.app)
+echo "--- Finished Victoria Browser ---"
+
+# Final cleanup
+rm -rf build VictoriaBrowser.spec
