@@ -1,87 +1,53 @@
-# Victoria Script Testing
+# Victoria Testing
 
-This repository includes comprehensive tests for the `victoria.py` starter script to ensure it works correctly across different platforms and terminal environments.
+This directory contains the automated tests for the Victoria project, ensuring its components are reliable and function correctly across different scenarios.
+
+## Testing Framework
+
+The test suite is built using the [pytest](https://docs.pytest.org/) framework.
+
+## How to Run Tests
+
+To run the full suite of tests, navigate to the project's root directory and execute the following command:
+
+```bash
+pytest
+```
+
+This command will automatically discover and run all the tests located in the `tests/` directory.
 
 ## Test Coverage
 
-### Automated Testing (GitHub Actions)
+The tests are organized into several modules, each focusing on a specific part of the application's functionality:
 
-The GitHub Actions workflow (`.github/workflows/test-victoria.yml`) automatically tests the script on:
+### Configuration Generation (`test_config_generation.py`)
 
-- **Operating Systems**: Ubuntu (Linux), Windows, macOS
-- **Python Version**: Latest stable Python (3.x)
-- **Terminal Environments**: Various TERM settings, PowerShell (Windows), Bash (Unix)
-- **Locale Settings**: UTF-8, C locale, and others
+- **Snapshot Testing**: Verifies that the `crush.json` configuration file is generated correctly for different scenarios.
+- **Scenarios Covered**:
+  - Local file analysis only.
+  - Integration with Snowflake.
+  - Usage of a local language model (e.g., LM Studio).
+  - A combination of Snowflake and a local model.
+- **File Loading**: Ensures that the application correctly loads tool configurations.
 
-### Test Categories
+### Environment Handling
 
-1. **Import Tests**: Verifies all required Python modules are available
-2. **Syntax Tests**: Ensures the script has valid Python syntax
-3. **Terminal Capability Detection**: Tests cross-platform terminal feature detection
-4. **Cross-Platform Compatibility**: Validates file operations and platform detection
-5. **Environment Variable Handling**: Tests environment variable access and manipulation
-6. **Script Execution**: Verifies the script runs without hanging in different environments
-7. **Unicode Handling**: Tests emoji and Unicode character support
-8. **JSON Operations**: Validates JSON parsing and file I/O operations
+- **`.env` File Management (`test_dotenv.py`)**: Tests the loading and parsing of `.env` files.
+- **Environment Utilities (`test_env_utils.py`)**: Verifies helper functions that interact with environment variables.
 
-### Running Tests Locally
+### Non-Interactive Mode (`test_non_interactive.py`)
 
-All test scripts now reside in the `tests/` directory. To run the full test suite:
+- Tests the application's ability to run non-interactively, using command-line arguments to bypass interactive prompts for course selection and model provider.
 
-```bash
-pytest tests/test_victoria.py tests/test_non_interactive.py
-```
+### Preflight Checks (`test_preflight.py`)
 
-Or run the scripts directly:
+- Ensures that the system's preflight checks work as expected. This includes verifying the presence of required command-line tools (like `crush`) and API keys.
 
-```bash
-python tests/test_victoria.py
-python tests/test_non_interactive.py
-```
+### System and User Interaction
 
-### Test Script Features
+- **System Interaction (`test_system_interaction.py`)**: Mocks and tests interactions with the operating system, such as opening file explorers.
+- **User Interaction (`test_user_interaction.py`)**: Tests the interactive menus and prompts presented to the user.
 
-- **Cross-Platform**: Works on Windows, macOS, and Linux
-- **No Dependencies**: Uses only Python standard library modules
-- **Comprehensive Coverage**: Tests all major functionality without requiring external services
-- **Graceful Degradation**: Tests that the script handles different terminal capabilities appropriately
-- **Non-Destructive**: All tests clean up after themselves
+## Continuous Integration
 
-### GitHub Actions Matrix
-
-The CI pipeline tests multiple combinations:
-
-- **Linux**: All Python versions (3.8-3.12)
-- **Windows**: Python 3.10, 3.11, 3.12 (reduced matrix for efficiency)
-- **macOS**: Python 3.10, 3.11, 3.12 (reduced matrix for efficiency)
-
-### Terminal Environment Testing
-
-The workflow specifically tests:
-
-- No TERM variable set
-- TERM=dumb (basic terminal)
-- TERM=xterm-256color (full-featured terminal)
-- Different shells (bash, PowerShell, CMD on Windows)
-- Various locale settings (UTF-8, C locale)
-- Debug mode enabled
-
-### Expected Behavior
-
-The `victoria.py` script is designed to:
-
-- Display a fancy banner with Unicode characters and emojis when supported
-- Gracefully degrade to ASCII alternatives on basic terminals
-- Handle user interruption (Ctrl+C) gracefully
-- Prompt for user input and handle different response scenarios
-- Work without requiring external dependencies or network access for basic functionality
-
-### Continuous Integration
-
-Tests run automatically on:
-
-- Every push to `main` or `develop` branches
-- Every pull request to `main` or `develop` branches
-- Manual workflow dispatch
-
-All tests must pass before code can be merged, ensuring the script remains compatible across all supported platforms and environments.
+The tests are designed to be run in a CI/CD pipeline to ensure that any changes to the codebase do not introduce regressions. All tests must pass before code is merged.
