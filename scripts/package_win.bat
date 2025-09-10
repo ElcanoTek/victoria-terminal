@@ -13,11 +13,23 @@ if exist dist rmdir /s /q dist
 if exist build rmdir /s /q build
 del /q *.spec
 
+rem Check for ImageMagick
+where /q convert
+if %errorlevel% neq 0 (
+    echo ImageMagick not found. Please install it and add to PATH.
+    exit /b 1
+)
+
 rem --- Build Victoria Configurator ---
 echo "--- Building Victoria Configurator ---"
 set REQ_FILE=%~dp0..\requirements.txt
+set CONFIGURATOR_ICON=assets\VictoriaConfigurator.ico
+if not exist %CONFIGURATOR_ICON% (
+    echo "--- Creating ICO for Configurator ---"
+    convert assets\VictoriaConfigurator.png -define icon:auto-resize=256,128,64,48,32,16 %CONFIGURATOR_ICON%
+)
 uvx --with-requirements "%REQ_FILE%" pyinstaller --noconfirm --hidden-import colorama --hidden-import rich --onefile --name VictoriaConfigurator ^
-  --icon assets\VictoriaTerminal.ico ^
+  --icon %CONFIGURATOR_ICON% ^
   --add-data "dependencies\install_prerequisites_windows.ps1;dependencies" ^
   --add-data "dependencies\set_env_windows.ps1;dependencies" ^
   VictoriaConfigurator.py

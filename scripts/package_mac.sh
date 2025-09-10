@@ -2,6 +2,10 @@
 set -e
 
 # Common setup
+if ! command -v convert &> /dev/null; then
+    echo ">>> Installing ImageMagick..."
+    brew install imagemagick
+fi
 REQ_FILE="$(dirname "$0")/../requirements.txt"
 if [ -z "$VERSION" ]; then
   echo "VERSION environment variable not set; falling back to date"
@@ -14,9 +18,14 @@ rm -rf dist build *.spec
 # --- Build Victoria Configurator ---
 echo "--- Building Victoria Configurator ---"
 CONFIGURATOR_BUNDLE_ID=${CONFIGURATOR_BUNDLE_ID:-com.elcanotek.victoriaconfigurator}
+CONFIGURATOR_ICON="assets/VictoriaConfigurator.icns"
+if [ ! -f "$CONFIGURATOR_ICON" ]; then
+  echo ">>> Creating ICNS for Configurator..."
+  convert "assets/VictoriaConfigurator.png" -define icon:auto-resize=256,128,64,48,32,16 "$CONFIGURATOR_ICON"
+fi
 uvx --with-requirements "$REQ_FILE" pyinstaller --noconfirm --windowed --name VictoriaConfigurator \
   --hidden-import colorama --hidden-import rich \
-  --icon assets/VictoriaTerminal.icns \
+  --icon "$CONFIGURATOR_ICON" \
   --osx-bundle-identifier "$CONFIGURATOR_BUNDLE_ID" \
   --add-data "dependencies/common.sh:dependencies" \
   --add-data "dependencies/install_prerequisites_macos.sh:dependencies" \
