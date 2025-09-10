@@ -49,6 +49,46 @@ crush --version
     uv pip install -r requirements-dev.txt
     ```
 
+### Code Quality & Linting
+
+Victoria follows Python best practices with automated code formatting and linting. The project uses:
+
+- **[Black](https://black.readthedocs.io/)**: Code formatter for consistent style
+- **[isort](https://pycqa.github.io/isort/)**: Import statement organizer
+- **[flake8](https://flake8.pycqa.org/)**: Linter for PEP8 compliance and code quality
+
+#### Running Linting Tools
+
+After installing development dependencies, you can run the linting tools:
+
+```bash
+# Format code with Black (88 character line length)
+black .
+
+# Sort imports with isort
+isort .
+
+# Check for linting issues with flake8
+flake8 .
+```
+
+#### Pre-commit Workflow
+
+For the best development experience, run all linting tools before committing:
+
+```bash
+# Format and lint all code
+black . && isort . && flake8 .
+```
+
+#### Configuration
+
+- **Black**: Uses 88 character line length (default)
+- **isort**: Configured to work with Black's formatting
+- **flake8**: Configured in `.flake8` with 88 character line length and ignores E402 in test files
+
+All linting tools are included in `requirements-dev.txt` and will be installed automatically during development setup.
+
 ### Environment Variables & Secrets
 
 Victoria uses environment variables for configuration, particularly for secrets like API keys. The recommended way to manage these during development is with a `.env` file.

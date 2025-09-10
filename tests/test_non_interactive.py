@@ -5,12 +5,6 @@ Non-interactive tests for Victoria scripts.
 
 import subprocess
 import sys
-import time
-import platform
-import signal
-from pathlib import Path
-import os
-import pytest
 
 
 def test_configurator_non_interactive():
@@ -23,13 +17,13 @@ def test_configurator_non_interactive():
         python_cmd = sys.executable
 
         process = subprocess.run(
-            [python_cmd, 'VictoriaConfigurator.py'],
+            [python_cmd, "VictoriaConfigurator.py"],
             input=input_data,
             text=True,
             capture_output=True,
             timeout=10,
             encoding="utf-8",
-            errors="replace"
+            errors="replace",
         )
 
         assert "First-time setup" in process.stdout

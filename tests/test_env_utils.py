@@ -5,7 +5,9 @@ import pytest
 
 # Add project root to path to allow importing victoria
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from VictoriaTerminal import substitute_env, deep_merge, SNOWFLAKE_ENV_VARS, snowflake_env_missing
+
+from VictoriaTerminal import (SNOWFLAKE_ENV_VARS, deep_merge,
+                              snowflake_env_missing, substitute_env)
 
 
 def test_substitute_env(monkeypatch):
@@ -34,4 +36,3 @@ def test_snowflake_env_missing(monkeypatch):
     for var in SNOWFLAKE_ENV_VARS:
         monkeypatch.delenv(var, raising=False)
     assert snowflake_env_missing() == SNOWFLAKE_ENV_VARS
-

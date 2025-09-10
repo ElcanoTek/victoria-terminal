@@ -12,26 +12,15 @@ import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict
 
-from rich.prompt import Prompt
+from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.prompt import Prompt
 
-from common import (
-    APP_HOME,
-    CONFIGS_DIR,
-    SETUP_SENTINEL,
-    VICTORIA_FILE,
-    __version__,
-    banner,
-    console,
-    err,
-    good,
-    info,
-    resource_path,
-    section,
-    warn,
-)
+from common import (APP_HOME, CONFIGS_DIR, SETUP_SENTINEL, VICTORIA_FILE,
+                    __version__, banner, console, err, good, info,
+                    resource_path, section, warn)
 
 
 def which(cmd: str) -> str | None:
@@ -67,15 +56,23 @@ def preflight_crush(
     _Progress: type = Progress,
 ) -> None:
     _section("System preflight check")
-    with _Progress(SpinnerColumn(), TextColumn("{task.description}"), transient=True) as progress:
+    with _Progress(
+        SpinnerColumn(), TextColumn("{task.description}"), transient=True
+    ) as progress:
         progress.add_task("Verifying prerequisites", total=None)
         if _which(tool.command) is None:
-            _err(f"Missing '{tool.command}' command-line tool. Please run the Victoria Configurator first.")
+            _err(
+                f"Missing '{tool.command}' command-line tool. "
+                "Please run the Victoria Configurator first."
+            )
             _sys_exit(1)
     _good(f"{tool.command} CLI tool detected")
     has_key = bool(_os_environ.get("OPENROUTER_API_KEY"))
     if not use_local_model and not has_key:
-        _warn("OPENROUTER_API_KEY not configured. Please run the Victoria Configurator to set it up.")
+        _warn(
+            "OPENROUTER_API_KEY not configured. "
+            "Please run the Victoria Configurator to set it up."
+        )
         _sys_exit(1)
     if has_key:
         _good("OpenRouter API key configured")
@@ -107,7 +104,10 @@ def launch_crush(
         else:
             _execvp(tool.command, cmd)
     except FileNotFoundError:
-        _err(f"'{tool.command}' command not found in PATH. Please run the Victoria Configurator.")
+        _err(
+            f"'{tool.command}' command not found in PATH. "
+            "Please run the Victoria Configurator."
+        )
         _sys_exit(1)
     except Exception as exc:  # pragma: no cover - runtime errors
         _err(f"Failed to launch {tool.name}: {exc}")
@@ -208,14 +208,18 @@ def substitute_env(obj: Any, strict: bool = False) -> Any:
     if isinstance(obj, list):
         return [substitute_env(v, strict) for v in obj]
     if isinstance(obj, str):
+
         def repl(m: re.Match[str]) -> str:
             var = m.group(1)
             val = os.environ.get(var)
             if val is None:
                 if strict:
-                    raise KeyError(f"Environment variable {var} is required but not set")
+                    raise KeyError(
+                        f"Environment variable {var} is required but not set"
+                    )
                 return m.group(0)
             return val
+
         return _env_token.sub(repl, obj)
     return obj
 
@@ -246,7 +250,9 @@ def load_tool_config(tool: str, name: str) -> Dict[str, Any]:
     return read_json(path)
 
 
-def build_crush_config(include_snowflake: bool, strict_env: bool, local_model: bool) -> Dict[str, Any]:
+def build_crush_config(
+    include_snowflake: bool, strict_env: bool, local_model: bool
+) -> Dict[str, Any]:
     base = load_tool_config("crush", "crush.template.json")
     if include_snowflake:
         frag = load_tool_config("crush", "snowflake.mcp.json")
@@ -269,7 +275,11 @@ def generate_config(tool: Tool, include_snowflake: bool, use_local_model: bool) 
             transient=True,
         ) as progress:
             progress.add_task("Building configuration", total=None)
-            cfg = tool.config_builder(include_snowflake, strict_env=include_snowflake, local_model=use_local_model)
+            cfg = tool.config_builder(
+                include_snowflake,
+                strict_env=include_snowflake,
+                local_model=use_local_model,
+            )
             out_path = APP_HOME / tool.output_config
             write_json(out_path, cfg)
         good(f"Configuration written to {out_path}")
@@ -348,13 +358,19 @@ def main(
     _info: Callable[[str], None] = info,
 ) -> None:
     if not SETUP_SENTINEL.exists():
-        _err("First-time setup has not been completed. Please run the Victoria Configurator first.")
+        _err(
+            "First-time setup has not been completed. "
+            "Please run the Victoria Configurator first."
+        )
         sys.exit(1)
 
     args = _parse_args()
 
+    def quiet_info(msg):
+        pass
+
     if args.quiet:
-        _info = lambda msg: None
+        _info = quiet_info
 
     _ensure_default_files()
     _console.clear()
@@ -362,7 +378,9 @@ def main(
 
     tool = TOOL
 
-    use_local_model = args.local_model if args.local_model is not None else _local_model_menu()
+    use_local_model = (
+        args.local_model if args.local_model is not None else _local_model_menu()
+    )
 
     _remove_local_duckdb()
     _info(f"Place files to analyze in: {APP_HOME}")
@@ -393,5 +411,5 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:  # pragma: no cover - user interaction
-        console.print(f"\n[yellow]Voyage cancelled. Fair winds!")
+        console.print("\n[yellow]Voyage cancelled. Fair winds!")
         sys.exit(130)

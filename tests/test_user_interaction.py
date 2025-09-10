@@ -1,11 +1,11 @@
 import sys
 from pathlib import Path
-import pytest
 
 # Add project root to path to allow importing victoria
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
 from VictoriaConfigurator import first_run_check
-from VictoriaTerminal import local_model_menu, course_menu
+from VictoriaTerminal import course_menu, local_model_menu
 
 
 def test_local_model_menu_yes(mocker):
@@ -90,5 +90,3 @@ def test_first_run_check_user_says_yes(mocker):
     mock_sentinel.write_text.assert_called_once_with("done")
     mock_update_path.assert_called_once()
     mock_good.assert_called_once()
-
-

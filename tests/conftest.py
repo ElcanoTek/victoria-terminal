@@ -1,6 +1,8 @@
 import os
-import pytest
 import pathlib
+
+import pytest
+
 
 @pytest.fixture(autouse=True)
 def force_posix_path(monkeypatch):
