@@ -1,19 +1,28 @@
 import sys
 from pathlib import Path
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 
 # Add project root to path to allow importing victoria
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from VictoriaConfigurator import run_setup_scripts, update_path_from_install
-from VictoriaTerminal import launch_crush, ensure_default_files, preflight_crush
+from VictoriaTerminal import ensure_default_files, launch_crush, preflight_crush
 
 
 @pytest.mark.parametrize(
     "platform_name, os_name, scripts",
     [
-        ("darwin", "posix", ["install_prerequisites_macos.sh", "set_env_macos_linux.sh"]),
-        ("linux", "posix", ["install_prerequisites_linux.sh", "set_env_macos_linux.sh"]),
+        (
+            "darwin",
+            "posix",
+            ["install_prerequisites_macos.sh", "set_env_macos_linux.sh"],
+        ),
+        (
+            "linux",
+            "posix",
+            ["install_prerequisites_linux.sh", "set_env_macos_linux.sh"],
+        ),
         ("nt", "nt", ["install_prerequisites_windows.ps1", "set_env_windows.ps1"]),
     ],
 )
@@ -37,7 +46,10 @@ def test_run_setup_scripts(mocker, platform_name, os_name, scripts):
     else:
         assert mock_run.call_count == len(scripts)
         for i, script_name in enumerate(scripts):
-            assert mock_run.call_args_list[i].args[0] == ["bash", str(fake_deps / script_name)]
+            assert mock_run.call_args_list[i].args[0] == [
+                "bash",
+                str(fake_deps / script_name),
+            ]
 
 
 def test_run_setup_scripts_skip_openrouter(mocker):
@@ -55,8 +67,15 @@ def test_run_setup_scripts_skip_openrouter(mocker):
     )
 
     assert mock_run.call_count == 2
-    assert mock_run.call_args_list[0].args[0] == ["bash", str(fake_deps / "install_prerequisites_macos.sh")]
-    assert mock_run.call_args_list[1].args[0] == ["bash", str(fake_deps / "set_env_macos_linux.sh"), "--skip-openrouter"]
+    assert mock_run.call_args_list[0].args[0] == [
+        "bash",
+        str(fake_deps / "install_prerequisites_macos.sh"),
+    ]
+    assert mock_run.call_args_list[1].args[0] == [
+        "bash",
+        str(fake_deps / "set_env_macos_linux.sh"),
+        "--skip-openrouter",
+    ]
 
 
 def test_launch_tool_unix(mocker):
@@ -116,7 +135,9 @@ def test_launch_tool_not_found(mocker):
         )
 
     assert excinfo.value.code == 1
-    mock_err.assert_called_with("'crush' command not found in PATH. Please run the Victoria Configurator.")
+    mock_err.assert_called_with(
+        "'crush' command not found in PATH. Please run the Victoria Configurator."
+    )
 
 
 def test_ensure_default_files(mocker, tmp_path):
@@ -191,5 +212,3 @@ def test_update_path_from_install_file_not_found(mocker):
 
     # PATH should be unchanged
     assert mock_environ["PATH"] == "/usr/bin:/bin"
-
-

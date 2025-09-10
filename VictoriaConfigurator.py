@@ -85,7 +85,11 @@ def run_setup_scripts(
                 break
     elif _sys_platform == "darwin" or _sys_platform.startswith("linux"):
         is_macos = _sys_platform == "darwin"
-        install_script = "install_prerequisites_macos.sh" if is_macos else "install_prerequisites_linux.sh"
+        install_script = (
+            "install_prerequisites_macos.sh"
+            if is_macos
+            else "install_prerequisites_linux.sh"
+        )
         scripts = [install_script, "set_env_macos_linux.sh"]
         for s in scripts:
             try:
@@ -97,7 +101,9 @@ def run_setup_scripts(
                 _err(f"Setup script failed: {exc}")
                 break
     else:
-        _warn("Unsupported platform; run setup scripts manually from the dependencies folder.")
+        _warn(
+            "Unsupported platform; run setup scripts manually from the dependencies folder."
+        )
         return
 
 
@@ -112,7 +118,9 @@ def first_run_check(
     _good: Callable[[str], None] = good,
 ) -> bool:
     if _SETUP_SENTINEL.exists():
-        _info("Setup has already been completed. You can run the Crush Launcher directly.")
+        _info(
+            "Setup has already been completed. You can run the Crush Launcher directly."
+        )
         return False
     _section("First-time setup")
     if _Prompt_ask("Run first-time setup?", choices=["y", "n"], default="y") == "y":

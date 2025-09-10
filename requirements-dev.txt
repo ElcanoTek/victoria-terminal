@@ -4,3 +4,5 @@ pytest-mock
 pytest-snapshot
 pytest-cov
 pytest-timeout
+black
+isort

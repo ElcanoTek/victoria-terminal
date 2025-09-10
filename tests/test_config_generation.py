@@ -1,13 +1,14 @@
-import sys
-from pathlib import Path
-import pytest
 import json
 import os
+import sys
+from pathlib import Path
+
+import pytest
 
 # Add project root to path to allow importing victoria
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from VictoriaTerminal import build_crush_config, substitute_env, load_tool_config
 from common import APP_HOME
+from VictoriaTerminal import build_crush_config, load_tool_config, substitute_env
 
 
 @pytest.fixture(autouse=True)
@@ -43,7 +44,9 @@ def normalize_config_for_snapshot(config: dict) -> str:
 
 def test_config_snapshot_local_only(snapshot):
     """Test config generation for local files only."""
-    config = build_crush_config(include_snowflake=False, strict_env=False, local_model=False)
+    config = build_crush_config(
+        include_snowflake=False, strict_env=False, local_model=False
+    )
     snapshot.assert_match(
         normalize_config_for_snapshot(config), "local_only_config.json"
     )
@@ -51,7 +54,9 @@ def test_config_snapshot_local_only(snapshot):
 
 def test_config_snapshot_with_snowflake(snapshot):
     """Test config generation with Snowflake included."""
-    config = build_crush_config(include_snowflake=True, strict_env=True, local_model=False)
+    config = build_crush_config(
+        include_snowflake=True, strict_env=True, local_model=False
+    )
     snapshot.assert_match(
         normalize_config_for_snapshot(config), "with_snowflake_config.json"
     )
@@ -59,7 +64,9 @@ def test_config_snapshot_with_snowflake(snapshot):
 
 def test_config_snapshot_with_local_model(snapshot):
     """Test config generation with a local model."""
-    config = build_crush_config(include_snowflake=False, strict_env=False, local_model=True)
+    config = build_crush_config(
+        include_snowflake=False, strict_env=False, local_model=True
+    )
     snapshot.assert_match(
         normalize_config_for_snapshot(config), "with_local_model_config.json"
     )
@@ -67,7 +74,9 @@ def test_config_snapshot_with_local_model(snapshot):
 
 def test_config_snapshot_with_snowflake_and_local_model(snapshot):
     """Test config generation with Snowflake and a local model."""
-    config = build_crush_config(include_snowflake=True, strict_env=True, local_model=True)
+    config = build_crush_config(
+        include_snowflake=True, strict_env=True, local_model=True
+    )
     snapshot.assert_match(
         normalize_config_for_snapshot(config),
         "with_snowflake_and_local_model_config.json",

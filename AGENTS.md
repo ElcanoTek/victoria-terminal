@@ -21,21 +21,62 @@ Victoria follows a "tires, not the car" philosophy. We build the specialized com
 - **Humans in the Loop**: Victoria is an intelligent assistant, not a replacement for human expertise.
 - **Rapid Evolution**: The architecture is designed for adaptability and quick iteration.
 
-## Development Environment
+## Development Environment Setup
 
-1.  **Prerequisites**:
-    - Python 3.8+
-    - `uv`
-    - `crush`
+To ensure a consistent development environment, please follow these steps carefully.
 
-2.  **Setup**:
+1.  **Clone the repository**:
     ```bash
     git clone https://github.com/elcanotek/victoria.git
     cd victoria
+    ```
+
+2.  **Create a Virtual Environment**:
+    We use `uv` for fast package management. Create a virtual environment by running:
+    ```bash
     uv venv
+    ```
+    This will create a `.venv` directory in the project root.
+
+3.  **Activate the Virtual Environment**:
+    Before installing dependencies, you must activate the virtual environment. This ensures that `python`, `pip`, and other tools point to the versions inside the `.venv`.
+    ```bash
     source .venv/bin/activate
+    ```
+    Your shell prompt should now be prefixed with `(.venv)`.
+
+4.  **Install Dependencies**:
+    Install all required development packages using:
+    ```bash
     uv pip install -r requirements-dev.txt
     ```
+
+## Testing and Code Style
+
+The project includes a full test suite and code style checks to maintain quality.
+
+### Running Tests
+
+- The test suite is located in the `tests/` directory.
+- With your virtual environment activated, run the tests using `pytest`:
+  ```bash
+  pytest
+  ```
+- A manual test workflow can also be triggered on GitHub Actions:
+  ```bash
+  gh workflow run manual-tests.yml
+  ```
+
+### Code Style & Conventions
+- We use `black` for code formatting and `isort` for import sorting.
+- The test suite automatically enforces these styles.
+- To format your code locally before committing, run:
+  ```bash
+  black .
+  isort .
+  ```
+- Use type hints for all function signatures.
+- Use `rich` for all terminal output.
 
 ## Configuration & Secrets
 
@@ -54,26 +95,6 @@ Victoria follows a "tires, not the car" philosophy. We build the specialized com
 - **Victoria Configurator (`VictoriaConfigurator.py`)**: First-time setup tool that installs prerequisites and configures the environment.
 - **Victoria Terminal (`VictoriaTerminal.py`)**: The main application for launching data analysis sessions with `crush`.
 - **Victoria Browser (`VictoriaBrowser.py`)**: A utility to open the ElcanoTek website.
-
-## Testing Instructions
-
-- The test suite is located in the `tests/` directory.
-- Run the tests using `pytest`:
-  ```bash
-  pytest
-  ```
-- A manual test workflow can be triggered on GitHub Actions:
-  ```bash
-  gh workflow run manual-tests.yml
-  ```
-
-## Code Style & Conventions
-
-- Follow PEP 8 for Python code style.
-- Use `black` for code formatting.
-- Use `isort` for import sorting.
-- Use type hints for all function signatures.
-- Use `rich` for all terminal output.
 
 ## Data Analysis Principles
 
