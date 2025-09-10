@@ -79,3 +79,20 @@ def test_load_tool_config_not_found(mocker):
     mocker.patch("pathlib.Path.exists", return_value=False)
     with pytest.raises(FileNotFoundError):
         load_tool_config("crush", "non_existent.json")
+
+
+def test_load_tool_config_success(mocker, tmp_path):
+    """Test successfully loading a config file."""
+    # Create a dummy config file in a temporary directory
+    tool_dir = tmp_path / "configs" / "crush"
+    tool_dir.mkdir(parents=True)
+    config_path = tool_dir / "my_config.json"
+    expected_config = {"key": "value", "nested": {"works": True}}
+    config_path.write_text(json.dumps(expected_config))
+
+    # Mock APP_HOME to point to our temporary directory
+    mocker.patch("VictoriaTerminal.APP_HOME", tmp_path)
+
+    # Call the function and assert the result
+    config = load_tool_config("crush", "my_config.json")
+    assert config == expected_config
