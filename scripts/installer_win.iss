@@ -17,7 +17,7 @@ OutputDir=..\dist
 OutputBaseFilename=VictoriaSetup
 Compression=lzma
 SolidCompression=yes
-SetupIconFile=..\assets\VictoriaTerminal.ico
+SetupIconFile=..\assets\Victoria.ico
 
 [Files]
 Source: "..\dist\{#MyConfiguratorExeName}"; DestDir: "{app}"; Flags: ignoreversion
