@@ -82,6 +82,9 @@ jobs:
           name: build-version-${{ matrix.platform.os }}
           path: VERSION
           if-no-files-found: error
+      - name: Install ImageMagick
+        if: matrix.platform.os == 'macos-latest'
+        run: brew install imagemagick
       - name: Generate rounded .icns files
         if: matrix.platform.os == 'macos-latest'
         run: |
