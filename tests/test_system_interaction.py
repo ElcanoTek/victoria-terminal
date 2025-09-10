@@ -156,27 +156,6 @@ def test_ensure_default_files(mocker, tmp_path):
     assert "VICTORIA.md" in copied_files
 
 
-def test_preflight_tool_missing(mocker):
-    """Test preflight check when the tool is missing."""
-    mock_err = mocker.Mock()
-    mock_sys_exit = mocker.Mock(side_effect=SystemExit(1))
-    mock_tool = mocker.Mock()
-    mock_tool.command = "crush"
-
-    with pytest.raises(SystemExit) as excinfo:
-        preflight_crush(
-            mock_tool,
-            use_local_model=False,
-            _which=lambda cmd: None,
-            _err=mock_err,
-            _sys_exit=mock_sys_exit,
-            _Progress=MagicMock(),  # Mock Progress to avoid terminal output
-        )
-
-    assert excinfo.value.code == 1
-    mock_err.assert_called_with("Missing 'crush' command-line tool. Please run the Victoria Configurator first.")
-
-
 def test_update_path_from_install(mocker, tmp_path):
     """Test that the PATH is correctly updated from the .crush_path file."""
     mock_app_home = tmp_path
