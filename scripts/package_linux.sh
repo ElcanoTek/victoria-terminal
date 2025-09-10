@@ -58,7 +58,7 @@ Categories=Utility;
 Terminal=true
 EOF
 
-convert assets/VictoriaTerminal.png -resize 512x512 "$APPDIR_CONFIG/victoriaconfigurator.png"
+convert assets/VictoriaConfigurator.png -resize 512x512 "$APPDIR_CONFIG/victoriaconfigurator.png"
 
 cat > "$APPDIR_CONFIG/AppRun" <<'EOF'
 #!/bin/sh
