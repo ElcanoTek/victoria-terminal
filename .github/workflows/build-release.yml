@@ -70,8 +70,9 @@ jobs:
         run: |
           choco install imagemagick.app -y
           magick convert assets\VictoriaBrowser.png -define icon:auto-resize="256,128,64,48,32,16" assets\VictoriaBrowser.ico
+          magick convert assets\VictoriaConfigurator.png -define icon:auto-resize="256,128,64,48,32,16" assets\VictoriaConfigurator.ico
+          magick convert assets\VictoriaFleet.png -define icon:auto-resize="256,128,64,48,32,16" assets\VictoriaFleet.ico
           magick convert assets\VictoriaTerminal.png -define icon:auto-resize="256,128,64,48,32,16" assets\VictoriaTerminal.ico
-          magick convert assets\Victoria.png -define icon:auto-resize="256,128,64,48,32,16" assets\Victoria.ico
       - name: Build Windows executable
         if: matrix.platform.os == 'windows-latest'
         shell: cmd
@@ -139,8 +140,9 @@ jobs:
           }
 
           generate_icns "VictoriaBrowser"
+          generate_icns "VictoriaConfigurator"
+          generate_icns "VictoriaFleet"
           generate_icns "VictoriaTerminal"
-          generate_icns "Victoria"
       - name: Build macOS app
         if: matrix.platform.os == 'macos-latest'
         run: |
