@@ -17,7 +17,7 @@ rem --- Build Victoria Configurator ---
 echo "--- Building Victoria Configurator ---"
 set REQ_FILE=%~dp0..\requirements.txt
 uvx --with-requirements "%REQ_FILE%" pyinstaller --noconfirm --hidden-import colorama --hidden-import rich --onefile --name VictoriaConfigurator ^
-  --icon assets\VictoriaTerminal.ico ^
+  --icon assets\VictoriaConfigurator.ico ^
   --add-data "dependencies\install_prerequisites_windows.ps1;dependencies" ^
   --add-data "dependencies\set_env_windows.ps1;dependencies" ^
   VictoriaConfigurator.py

@@ -17,19 +17,22 @@ OutputDir=..\dist
 OutputBaseFilename=VictoriaSetup
 Compression=lzma
 SolidCompression=yes
-SetupIconFile=..\assets\VictoriaTerminal.ico
+SetupIconFile=..\assets\VictoriaInstaller.ico
 
 [Files]
 Source: "..\dist\{#MyConfiguratorExeName}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\dist\{#MyTerminalExeName}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\dist\{#MyBrowserExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\assets\VictoriaConfigurator.ico"; DestDir: "{app}\assets"; Flags: ignoreversion
+Source: "..\assets\VictoriaTerminal.ico"; DestDir: "{app}\assets"; Flags: ignoreversion
+Source: "..\assets\VictoriaBrowser.ico"; DestDir: "{app}\assets"; Flags: ignoreversion
 
 [Icons]
-Name: "{group}\Victoria Configurator"; Filename: "{app}\{#MyConfiguratorExeName}"
-Name: "{group}\Victoria Terminal"; Filename: "{app}\{#MyTerminalExeName}"
-Name: "{group}\Victoria Browser"; Filename: "{app}\{#MyBrowserExeName}"
-Name: "{commondesktop}\Victoria Terminal"; Filename: "{app}\{#MyTerminalExeName}";
-Name: "{commondesktop}\Victoria Browser"; Filename: "{app}\{#MyBrowserExeName}";
+Name: "{group}\Victoria Configurator"; Filename: "{app}\{#MyConfiguratorExeName}"; IconFilename: "{app}\assets\VictoriaConfigurator.ico"
+Name: "{group}\Victoria Terminal"; Filename: "{app}\{#MyTerminalExeName}"; IconFilename: "{app}\assets\VictoriaTerminal.ico"
+Name: "{group}\Victoria Browser"; Filename: "{app}\{#MyBrowserExeName}"; IconFilename: "{app}\assets\VictoriaBrowser.ico"
+Name: "{commondesktop}\Victoria Terminal"; Filename: "{app}\{#MyTerminalExeName}"; IconFilename: "{app}\assets\VictoriaTerminal.ico"
+Name: "{commondesktop}\Victoria Browser"; Filename: "{app}\{#MyBrowserExeName}"; IconFilename: "{app}\assets\VictoriaBrowser.ico"
 
 [Run]
 Filename: "{app}\{#MyTerminalExeName}"; Description: "Launch Victoria Terminal"; Flags: nowait postinstall skipifsilent

@@ -16,7 +16,7 @@ echo "--- Building Victoria Configurator ---"
 CONFIGURATOR_BUNDLE_ID=${CONFIGURATOR_BUNDLE_ID:-com.elcanotek.victoriaconfigurator}
 uvx --with-requirements "$REQ_FILE" pyinstaller --noconfirm --windowed --name VictoriaConfigurator \
   --hidden-import colorama --hidden-import rich \
-  --icon assets/VictoriaTerminal.icns \
+  --icon assets/VictoriaConfigurator.icns \
   --osx-bundle-identifier "$CONFIGURATOR_BUNDLE_ID" \
   --add-data "dependencies/common.sh:dependencies" \
   --add-data "dependencies/install_prerequisites_macos.sh:dependencies" \
