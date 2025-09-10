@@ -9,7 +9,7 @@ from common import console
 def main():
     """Opens the default web browser to the ElcanoTek website."""
     console.print("[cyan]ℹ️ Opening the ElcanoTek website in your default browser...")
-    webbrowser.open("https://elcano.tek.com")
+    webbrowser.open("https://www.elcanotek.com/")
 
 
 if __name__ == "__main__":

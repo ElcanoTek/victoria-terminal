@@ -1,4 +1,4 @@
-# Victoria
+# Victoria Fleet
 
 <img src="assets/Victoria.png" alt="Victoria Icon" width="200" />
 
@@ -10,7 +10,7 @@ Victoria is not a single application, but a **fleet of apps** designed to work t
 
 ## ⚙️ Installation & Setup
 
-This section covers how to run Victoria from source. For information on the packaged releases, see the project's [GitHub Releases](https://github.com/elcanotek/victoria/releases) page.
+This section covers how to run Victoria from source. For information on the packaged releases, see the project's [GitHub Releases](https://github.com/ElcanoTek/victoria-fleet/releases) page.
 
 ### Prerequisites
 
@@ -32,8 +32,8 @@ crush --version
 
 1.  **Clone the Repository:**
     ```bash
-    git clone https://github.com/elcanotek/victoria.git
-    cd victoria
+    git clone git@github.com:ElcanoTek/victoria-fleet.git
+    cd victoria-fleet
     ```
 
 2.  **Create a Virtual Environment:**
