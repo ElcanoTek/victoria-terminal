@@ -48,6 +48,7 @@ def load_dotenv(
         # Silently ignore errors in .env file parsing
         pass
 
+
 load_dotenv()
 
 
@@ -69,30 +70,40 @@ ICONS = {
     "folder": "📁",
 }
 
+
 def info(msg: str) -> None:  # pragma: no cover - simple wrapper
     console.print(f"[cyan]{ICONS['info']} {msg}")
+
 
 def good(msg: str) -> None:  # pragma: no cover - simple wrapper
     console.print(f"[green]{ICONS['good']} {msg}")
 
+
 def warn(msg: str) -> None:  # pragma: no cover - simple wrapper
     console.print(f"[yellow]{ICONS['warn']} {msg}")
+
 
 def err(msg: str) -> None:  # pragma: no cover - simple wrapper
     console.print(f"[red]{ICONS['bad']} {msg}")
 
+
 def section(title: str) -> None:
     console.rule(f"[bold yellow]{title}")
 
+
 def banner() -> None:
-    console.print(Panel.fit(
-        "[bold cyan]VICTORIA[/bold cyan]\n[cyan]AdTech Data Navigation[/cyan]",
-        border_style="cyan"))
+    console.print(
+        Panel.fit(
+            "[bold cyan]VICTORIA[/bold cyan]\n[cyan]AdTech Data Navigation[/cyan]",
+            border_style="cyan",
+        )
+    )
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def resource_path(name: str | Path) -> Path:
     base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))

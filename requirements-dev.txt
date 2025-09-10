@@ -4,3 +4,6 @@ pytest-mock
 pytest-snapshot
 pytest-cov
 pytest-timeout
+black
+flake8
+isort

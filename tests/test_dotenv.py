@@ -1,4 +1,3 @@
-import os
 import sys
 from pathlib import Path
 
@@ -6,6 +5,7 @@ import pytest
 
 # Add project root to path to allow importing victoria
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
 # We import the function directly to test it in isolation
 from common import load_dotenv
 
@@ -26,9 +26,9 @@ def test_load_dotenv_loads_variables(temp_app_home):
     env_file.write_text(
         'OPENROUTER_API_KEY="test_key_from_dotenv"\n'
         'SNOWFLAKE_USER = "test_user_from_dotenv"\n'
-        '# This is a comment\n'
-        'MALFORMED_LINE\n'
-        'EMPTY_VALUE=\n'
+        "# This is a comment\n"
+        "MALFORMED_LINE\n"
+        "EMPTY_VALUE=\n"
         'QUOTED_VALUE="some value with spaces"\n'
     )
 
@@ -74,4 +74,4 @@ def test_load_dotenv_handles_nonexistent_file(temp_app_home):
     except Exception as e:
         pytest.fail(f"load_dotenv raised an exception unexpectedly: {e}")
 
-    assert not mock_environ # Ensure no variables were added
+    assert not mock_environ  # Ensure no variables were added
