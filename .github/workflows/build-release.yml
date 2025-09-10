@@ -153,22 +153,22 @@ jobs:
         if: matrix.platform.os == 'windows-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: victoria-windows-x86_64
+          name: victoria-windows
           path: dist/VictoriaSetup.exe
           if-no-files-found: error
       - name: Upload macOS artifact
         if: matrix.platform.os == 'macos-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: victoria-macos-x86_64
-          path: Victoria-${{ env.VERSION }}.app.zip
+          name: victoria-macos
+          path: Victoria-${{ env.VERSION }}-macos.zip
           if-no-files-found: error
       - name: Upload Linux artifact
         if: contains(matrix.platform.os, 'ubuntu')
         uses: actions/upload-artifact@v4
         with:
-          name: victoria-linux-${{ matrix.platform.arch }}
-          path: Victoria-*-${{ matrix.platform.arch }}.AppImage
+          name: victoria-linux
+          path: Victoria-${{ env.VERSION }}-linux-${{ matrix.platform.arch }}.tar.gz
           if-no-files-found: error
 
   release:
