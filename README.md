@@ -1,6 +1,6 @@
 # Victoria
 
-<img src="assets/icon.png" alt="Victoria Icon" width="200" />
+<img src="assets/Victoria.png" alt="Victoria Icon" width="200" />
 
 Victoria is Elcano's AI agent that connects to programmatic advertising reports via MCP. Traders can ask powerful questions of CSVs, Excel files, and SQL-queryable datasets — making it easier to surface insights, spot trends, and optimize campaigns.
 
