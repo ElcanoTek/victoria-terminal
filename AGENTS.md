@@ -23,19 +23,66 @@ Victoria follows a "tires, not the car" philosophy. We build the specialized com
 
 ## Development Environment
 
+To get started with Victoria development, you'll need to set up a Python environment and install the necessary dependencies.
+
+### Local Development Setup (Recommended)
+
+For local development, we strongly recommend using a virtual environment to isolate project dependencies. This prevents conflicts with other Python projects on your system. We support both `uv` and the standard `venv`/`pip`.
+
+#### Using `uv` (Fastest)
+
 1.  **Prerequisites**:
     - Python 3.8+
-    - `uv`
-    - `crush`
+    - `uv` installed (`pip install uv`)
 
 2.  **Setup**:
     ```bash
+    # Clone the repository
     git clone https://github.com/elcanotek/victoria.git
     cd victoria
+
+    # Create and activate a virtual environment
     uv venv
-    source .venv/bin/activate
+    source .venv/bin/activate  # On macOS/Linux
+    # .venv\Scripts\activate  # On Windows
+
+    # Install development dependencies
     uv pip install -r requirements-dev.txt
     ```
+
+#### Using `pip` and `venv`
+
+1.  **Prerequisites**:
+    - Python 3.8+
+
+2.  **Setup**:
+    ```bash
+    # Clone the repository
+    git clone https://github.com/elcanotek/victoria.git
+    cd victoria
+
+    # Create and activate a virtual environment
+    python -m venv .venv
+    source .venv/bin/activate  # On macOS/Linux
+    # .venv\Scripts\activate  # On Windows
+
+    # Install development dependencies
+    pip install -r requirements-dev.txt
+    ```
+
+### Isolated Environments (e.g., Docker)
+
+If you are working within an isolated environment like a Docker container, creating an additional virtual environment is often unnecessary. You can install the dependencies directly.
+
+```bash
+# From the repository root
+pip install -r requirements-dev.txt
+```
+
+### Dependencies Explained
+
+- `requirements.txt`: Contains the core dependencies required to run the Victoria applications.
+- `requirements-dev.txt`: Contains all core dependencies plus additional tools for development, such as `pytest` for testing and `black` for code formatting. For development, you should always install from this file.
 
 ## Configuration & Secrets
 
@@ -57,15 +104,22 @@ Victoria follows a "tires, not the car" philosophy. We build the specialized com
 
 ## Testing Instructions
 
-- The test suite is located in the `tests/` directory.
-- Run the tests using `pytest`:
-  ```bash
-  pytest
-  ```
-- A manual test workflow can be triggered on GitHub Actions:
-  ```bash
-  gh workflow run manual-tests.yml
-  ```
+The test suite is located in the `tests/` directory and uses `pytest`.
+
+To run the tests:
+
+1.  **Set up your environment**: Ensure you have installed the development dependencies from `requirements-dev.txt` as described in the "Development Environment" section. If you are using a virtual environment, make sure it is activated.
+
+2.  **Run `pytest`**: From the root of the repository, run the following command:
+    ```bash
+    pytest
+    ```
+    This command will automatically discover and execute all tests in the `tests/` directory.
+
+3.  **Manual Workflow**: A manual test workflow can also be triggered on GitHub Actions for additional verification:
+    ```bash
+    gh workflow run manual-tests.yml
+    ```
 
 ## Code Style & Conventions
 
