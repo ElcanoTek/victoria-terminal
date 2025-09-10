@@ -49,46 +49,6 @@ crush --version
     uv pip install -r requirements-dev.txt
     ```
 
-### Code Quality & Linting
-
-Victoria follows Python best practices with automated code formatting and linting. The project uses:
-
-- **[Black](https://black.readthedocs.io/)**: Code formatter for consistent style
-- **[isort](https://pycqa.github.io/isort/)**: Import statement organizer
-- **[flake8](https://flake8.pycqa.org/)**: Linter for PEP8 compliance and code quality
-
-#### Running Linting Tools
-
-After installing development dependencies, you can run the linting tools:
-
-```bash
-# Format code with Black (88 character line length)
-black .
-
-# Sort imports with isort
-isort .
-
-# Check for linting issues with flake8
-flake8 .
-```
-
-#### Pre-commit Workflow
-
-For the best development experience, run all linting tools before committing:
-
-```bash
-# Format and lint all code
-black . && isort . && flake8 .
-```
-
-#### Configuration
-
-- **Black**: Uses 88 character line length (default)
-- **isort**: Configured to work with Black's formatting
-- **flake8**: Configured in `.flake8` with 88 character line length and ignores E402 in test files
-
-All linting tools are included in `requirements-dev.txt` and will be installed automatically during development setup.
-
 ### Environment Variables & Secrets
 
 Victoria uses environment variables for configuration, particularly for secrets like API keys. The recommended way to manage these during development is with a `.env` file.
@@ -170,42 +130,13 @@ python3 VictoriaTerminal.py --course 2 --local-model
 
 All modes store configuration and data in `~/Victoria` (or `%USERPROFILE%\Victoria` on Windows).
 
-On Windows, PowerShell's security policy can prevent scripts from running. We've designed the `VictoriaConfigurator.py` to handle this automatically, so for most users, **no manual configuration is necessary.** The configurator uses a temporary bypass and unblocks the necessary scripts for you.
+On Windows, PowerShell's security policy can sometimes prevent scripts from running. The `VictoriaConfigurator.py` script handles this for you, so **no manual steps are typically needed.**
 
-If you choose to run the setup scripts from the `dependencies` folder manually and encounter an error, you have two options:
+### Model Notes
 
-1.  **Start a bypassed PowerShell session:**
-    Open a new terminal and run the following command. This will start a new PowerShell session that allows scripts to run.
-    ```powershell
-    powershell -NoProfile -ExecutionPolicy Bypass
-    ```
-    From this new session, you can then run the `.ps1` scripts directly.
+Victoria's supported models are defined in template JSON files. Check the [Crush template](configs/crush/crush.template.json) and the [Local Providers template](configs/crush/local.providers.json) to see the current models.
 
-2.  **Set a permanent policy:**
-    To allow all locally-created scripts to run on your system, you can run this command once in any PowerShell terminal. This is a common configuration for developers.
-    ```powershell
-    Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
-    ```
+---
+## 🤝 Contributing
 
-
-## 🔄 On-Demand GitHub Actions
-
-Two workflows in [`.github/workflows`](.github/workflows) can be run manually from the **Actions** tab or via the GitHub CLI.
-
-* **Manual Tests** ([`manual-tests.yml`](.github/workflows/manual-tests.yml)) — runs the test suite, which has been updated to reflect the new application structure.
-
-  ```bash
-  gh workflow run manual-tests.yml
-  ```
-
-* **Build and Release** ([`build-release.yml`](.github/workflows/build-release.yml)) — executes the test suite and then calls the packaging scripts to produce application bundles for macOS, Windows, and Linux. For each platform, this workflow now produces two applications: **Victoria Configurator** and **Victoria Terminal**.
-
-  ```bash
-  gh workflow run build-release.yml
-  ```
-
-These packaging scripts can also be run locally if you need to build outside of GitHub.
-
-## 🧠 Model Notes
-
-Victoria's supported models are defined in template JSON files rather than listed here. Check the [Crush template](configs/crush/crush.template.json) and the [Local Providers template](configs/crush/local.providers.json) to see the current models. If you test additional models that work well, add them to these templates so everyone can benefit.
+We welcome contributions to Victoria! If you're interested in fixing bugs or adding new features, please see our [**Contributing Guidelines**](CONTRIBUTING.md) to get started.
