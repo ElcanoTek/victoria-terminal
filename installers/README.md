@@ -1,6 +1,6 @@
 # Victoria Script Testing
 
-This repository includes comprehensive tests for the `victoria.py` starter script to ensure it works correctly across different platforms and terminal environments.
+This repository includes comprehensive tests for the Victoria fleet to ensure they work correctly across different platforms and terminal environments.
 
 ## Test Coverage
 
