@@ -52,8 +52,6 @@ fi
 EOF
 chmod +x "$CONFIGURATOR_MACOS/VictoriaConfigurator"
 
-# Zip the app
-(cd dist && zip -r "../VictoriaConfigurator-${VERSION}.app.zip" VictoriaConfigurator.app)
 echo "--- Finished Victoria Configurator ---"
 
 # Clean up build artifacts before the next run
@@ -99,13 +97,11 @@ END
 fi
 EOF
 chmod +x "$TERMINAL_MACOS/VictoriaTerminal"
-
-# Zip the app
-(cd dist && zip -r "../VictoriaTerminal-${VERSION}.app.zip" VictoriaTerminal.app)
 echo "--- Finished Victoria Terminal ---"
 
 # Final cleanup
 rm -rf build VictoriaTerminal.spec
+
 
 # --- Build Victoria Browser ---
 echo "--- Building Victoria Browser ---"
@@ -114,10 +110,13 @@ uvx --with-requirements "$REQ_FILE" pyinstaller --noconfirm --windowed --name Vi
   --icon assets/VictoriaBrowser.icns \
   --osx-bundle-identifier "$BROWSER_BUNDLE_ID" \
   VictoriaBrowser.py
-
-# Zip the app
-(cd dist && zip -r "../VictoriaBrowser-${VERSION}.app.zip" VictoriaBrowser.app)
 echo "--- Finished Victoria Browser ---"
 
 # Final cleanup
 rm -rf build VictoriaBrowser.spec
+
+
+# --- Create final consolidated archive ---
+echo "--- Creating consolidated macOS archive ---"
+(cd dist && zip -r "../Victoria-${VERSION}-macos.zip" .)
+echo "--- macOS build complete ---"

@@ -142,3 +142,10 @@ echo ">>> Browser AppImage created: $DEST_APPIMAGE_BROWSER"
 
 
 echo ">>> All AppImages created successfully."
+
+# --- Create final consolidated archive ---
+echo "--- Creating consolidated Linux archive ---"
+ARCHIVE_NAME="Victoria-${VERSION}-linux-${ARCH}.tar.gz"
+tar -czf "$ARCHIVE_NAME" Victoria*-*-$ARCH.AppImage
+rm Victoria*-*-$ARCH.AppImage
+echo "--- Linux build complete: $ARCHIVE_NAME created ---"
