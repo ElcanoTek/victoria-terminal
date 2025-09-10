@@ -65,6 +65,13 @@ jobs:
         if: matrix.platform.os == 'windows-latest'
         run: |
           choco install -y innosetup
+      - name: Generate .ico files
+        if: matrix.platform.os == 'windows-latest'
+        run: |
+          choco install imagemagick.app -y
+          magick convert assets\VictoriaBrowser.png -define icon:auto-resize="256,128,64,48,32,16" assets\VictoriaBrowser.ico
+          magick convert assets\VictoriaTerminal.png -define icon:auto-resize="256,128,64,48,32,16" assets\VictoriaTerminal.ico
+          magick convert assets\Victoria.png -define icon:auto-resize="256,128,64,48,32,16" assets\Victoria.ico
       - name: Build Windows executable
         if: matrix.platform.os == 'windows-latest'
         shell: cmd
@@ -75,6 +82,62 @@ jobs:
           name: build-version-${{ matrix.platform.os }}
           path: VERSION
           if-no-files-found: error
+      - name: Generate rounded .icns files
+        if: matrix.platform.os == 'macos-latest'
+        run: |
+          set -e
+
+          generate_icns() {
+            local app_name=$1
+            local source_png="assets/${app_name}.png"
+            local base_image_size=$(identify -format '%w' "${source_png}")
+            local rounded_png="assets/${app_name}_rounded.png"
+            local iconset_dir="${app_name}.iconset"
+            local icns_path="assets/${app_name}.icns"
+
+            echo "--- Generating icon for ${app_name} ---"
+
+            # 1. Create a rounded mask. The corner radius is ~22.2% of the image size.
+            echo "Creating rounded mask..."
+            local corner_radius=$(echo "$base_image_size * 0.222" | bc)
+            convert -size "${base_image_size}x${base_image_size}" xc:none -draw "roundrectangle 0,0,${base_image_size},${base_image_size},${corner_radius},${corner_radius}" mask.png
+
+            # 2. Apply the mask to the source image
+            echo "Applying mask to ${source_png}..."
+            convert "${source_png}" -matte -bordercolor none -border 0 \( mask.png -alpha off \) -compose DstIn -composite "${rounded_png}"
+
+            # 3. Create the iconset directory
+            echo "Creating iconset directory: ${iconset_dir}"
+            mkdir -p "${iconset_dir}"
+
+            # 4. Generate different sizes for the iconset
+            echo "Generating image sizes..."
+            sips -z 16 16   "${rounded_png}" --out "${iconset_dir}/icon_16x16.png"
+            sips -z 32 32   "${rounded_png}" --out "${iconset_dir}/icon_16x16@2x.png"
+            sips -z 32 32   "${rounded_png}" --out "${iconset_dir}/icon_32x32.png"
+            sips -z 64 64   "${rounded_png}" --out "${iconset_dir}/icon_32x32@2x.png"
+            sips -z 128 128 "${rounded_png}" --out "${iconset_dir}/icon_128x128.png"
+            sips -z 256 256 "${rounded_png}" --out "${iconset_dir}/icon_128x128@2x.png"
+            sips -z 256 256 "${rounded_png}" --out "${iconset_dir}/icon_256x256.png"
+            sips -z 512 512 "${rounded_png}" --out "${iconset_dir}/icon_256x256@2x.png"
+            sips -z 512 512 "${rounded_png}" --out "${iconset_dir}/icon_512x512.png"
+            sips -z 1024 1024 "${rounded_png}" --out "${iconset_dir}/icon_512x512@2x.png"
+
+            # 5. Create the .icns file
+            echo "Creating .icns file: ${icns_path}"
+            iconutil -c icns "${iconset_dir}" -o "${icns_path}"
+
+            # 6. Clean up
+            echo "Cleaning up temporary files..."
+            rm -f mask.png "${rounded_png}"
+            rm -rf "${iconset_dir}"
+
+            echo "--- Finished ${app_name} ---"
+          }
+
+          generate_icns "VictoriaBrowser"
+          generate_icns "VictoriaTerminal"
+          generate_icns "Victoria"
       - name: Build macOS app
         if: matrix.platform.os == 'macos-latest'
         run: |
