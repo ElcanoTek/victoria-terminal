@@ -20,6 +20,13 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
+rem --- Create Installer Icon ---
+set INSTALLER_ICON=assets\VictoriaFleet.ico
+if not exist %INSTALLER_ICON% (
+    echo "--- Creating ICO for Installer ---"
+    convert assets\VictoriaFleet.png -define icon:auto-resize=256,128,64,48,32,16 %INSTALLER_ICON%
+)
+
 rem --- Build Victoria Configurator ---
 echo "--- Building Victoria Configurator ---"
 set REQ_FILE=%~dp0..\requirements.txt
