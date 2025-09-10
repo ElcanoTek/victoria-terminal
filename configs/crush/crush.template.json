@@ -17,9 +17,37 @@
       "name": "OpenRouter",
       "models": [
         {
+          "id": "openai/chatgpt-5",
+          "name": "ChatGPT 5",
+          "context_window": 256000,
+          "default_max_tokens": 4096,
+          "supports_tools": true
+        },
+        {
+          "id": "openai/chatgpt-5-mini",
+          "name": "ChatGPT 5 Mini",
+          "context_window": 128000,
+          "default_max_tokens": 2048,
+          "supports_tools": true
+        },
+        {
+          "id": "xai/grok-code-fast-1",
+          "name": "xAI Grok Code Fast 1",
+          "context_window": 131072,
+          "default_max_tokens": 4096,
+          "supports_tools": true
+        },
+        {
           "id": "google/gemini-2.5-pro",
           "name": "Google Gemini 2.5 Pro",
-          "context_window": 131072,
+          "context_window": 1000000,
+          "default_max_tokens": 4096,
+          "supports_tools": true
+        },
+        {
+          "id": "google/gemini-2.5-flash",
+          "name": "Google Gemini 2.5 Flash",
+          "context_window": 128000,
           "default_max_tokens": 4096,
           "supports_tools": true
         }
@@ -27,9 +55,7 @@
     }
   },
   "options": {
-    "context_paths": [
-      "VICTORIA.md"
-    ],
+    "context_paths": ["VICTORIA.md"],
     "tui": {
       "compact_mode": true
     }
