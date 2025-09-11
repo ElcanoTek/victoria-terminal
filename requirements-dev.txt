@@ -1,7 +1,6 @@
 -r requirements.txt
 pytest
 pytest-mock
-pytest-snapshot
 pytest-cov
 pytest-timeout
 black
