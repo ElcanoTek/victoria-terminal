@@ -19,7 +19,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.prompt import Prompt
 
 from common import (APP_HOME, CONFIGS_DIR, SETUP_SENTINEL, VICTORIA_FILE,
-                    __version__, banner, console, err, good, info,
+                    __version__, banner, console, err, good, handle_error, info,
                     resource_path, section, warn)
 
 
@@ -413,3 +413,5 @@ if __name__ == "__main__":
     except KeyboardInterrupt:  # pragma: no cover - user interaction
         console.print("\n[yellow]Voyage cancelled. Fair winds!")
         sys.exit(130)
+    except Exception as e:
+        handle_error(e)

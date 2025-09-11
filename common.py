@@ -87,6 +87,13 @@ def err(msg: str) -> None:  # pragma: no cover - simple wrapper
     console.print(f"[red]{ICONS['bad']} {msg}")
 
 
+def handle_error(exc: Exception) -> None:
+    """Prints an error message and waits for user input to exit."""
+    err(f"An unexpected error occurred: {exc}")
+    console.input("[red]Press Enter to exit...")
+    sys.exit(1)
+
+
 def section(title: str) -> None:
     console.rule(f"[bold yellow]{title}")
 

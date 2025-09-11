@@ -11,8 +11,8 @@ from typing import Callable
 
 from rich.prompt import Prompt
 
-from common import (APP_HOME, SETUP_SENTINEL, banner, console, err, good, info,
-                    resource_path, section, warn)
+from common import (APP_HOME, SETUP_SENTINEL, banner, console, err, good,
+                    handle_error, info, resource_path, section, warn)
 
 
 def update_path_from_install(
@@ -159,3 +159,5 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         console.print("\n[yellow]Setup cancelled.")
         sys.exit(130)
+    except Exception as e:
+        handle_error(e)

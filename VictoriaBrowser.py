@@ -3,7 +3,7 @@
 
 import webbrowser
 
-from common import console
+from common import console, handle_error
 
 
 def main():
@@ -13,4 +13,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        handle_error(e)
