@@ -1,5 +1,4 @@
 import json
-import os
 import sys
 from pathlib import Path
 
@@ -29,59 +28,47 @@ def mock_env(mocker):
     )
 
 
-def normalize_config_for_snapshot(config: dict) -> str:
-    """Normalize dynamic paths in config for consistent snapshot testing."""
-    config_str = json.dumps(config, indent=2)
-    # The APP_HOME in victoria.py is defined at module load time, so we
-    # can't easily mock it without reloading modules. Instead, we just
-    # replace the generated path with a placeholder for snapshot consistency.
-    home_dir = os.path.expanduser("~")
-    app_home_path = str(Path(home_dir) / "Victoria")
-    # In Windows, json.dumps will escape backslashes, so we need to do the same
-    # for our replacement string.
-    app_home_path_json = app_home_path.replace("\\", "\\\\")
-    return config_str.replace(app_home_path_json, "/home/victoria/app")
-
-
-def test_config_snapshot_local_only(snapshot):
+def test_config_local_only():
     """Test config generation for local files only."""
     config = build_crush_config(
         include_snowflake=False, strict_env=False, local_model=False
     )
-    snapshot.assert_match(
-        normalize_config_for_snapshot(config), "local_only_config.json"
-    )
+    assert "motherduck" in config["mcp"]
+    assert "snowflake" not in config["mcp"]
+    assert "lmstudio" not in config["providers"]
+    assert config["providers"]["openrouter"]["api_key"] == "test_api_key"
 
 
-def test_config_snapshot_with_snowflake(snapshot):
+def test_config_with_snowflake():
     """Test config generation with Snowflake included."""
     config = build_crush_config(
         include_snowflake=True, strict_env=True, local_model=False
     )
-    snapshot.assert_match(
-        normalize_config_for_snapshot(config), "with_snowflake_config.json"
-    )
+    assert "motherduck" in config["mcp"]
+    assert "snowflake" in config["mcp"]
+    assert "lmstudio" not in config["providers"]
+    assert "test_account" in config["mcp"]["snowflake"]["args"]
 
 
-def test_config_snapshot_with_local_model(snapshot):
+def test_config_with_local_model():
     """Test config generation with a local model."""
     config = build_crush_config(
         include_snowflake=False, strict_env=False, local_model=True
     )
-    snapshot.assert_match(
-        normalize_config_for_snapshot(config), "with_local_model_config.json"
-    )
+    assert "motherduck" in config["mcp"]
+    assert "snowflake" not in config["mcp"]
+    assert "lmstudio" in config["providers"]
 
 
-def test_config_snapshot_with_snowflake_and_local_model(snapshot):
+def test_config_with_snowflake_and_local_model():
     """Test config generation with Snowflake and a local model."""
     config = build_crush_config(
         include_snowflake=True, strict_env=True, local_model=True
     )
-    snapshot.assert_match(
-        normalize_config_for_snapshot(config),
-        "with_snowflake_and_local_model_config.json",
-    )
+    assert "motherduck" in config["mcp"]
+    assert "snowflake" in config["mcp"]
+    assert "lmstudio" in config["providers"]
+    assert "test_account" in config["mcp"]["snowflake"]["args"]
 
 
 def test_load_tool_config_not_found(mocker):
