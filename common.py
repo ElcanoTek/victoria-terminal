@@ -59,16 +59,28 @@ console = Console()
 # Messaging
 # ---------------------------------------------------------------------------
 
-ICONS = {
-    "info": "ℹ️",
-    "good": "✅",
-    "warn": "⚠️",
-    "bad": "❌",
-    "rocket": "🚀",
-    "wave": "🌊",
-    "anchor": "⚓",
-    "folder": "📁",
-}
+if os.name == "nt":
+    ICONS = {
+        "info": "[*]",
+        "good": "[v]",
+        "warn": "[!]",
+        "bad": "[x]",
+        "rocket": "->",
+        "wave": "~",
+        "anchor": "#",
+        "folder": "[]",
+    }
+else:
+    ICONS = {
+        "info": "ℹ️",
+        "good": "✅",
+        "warn": "⚠️",
+        "bad": "❌",
+        "rocket": "🚀",
+        "wave": "🌊",
+        "anchor": "⚓",
+        "folder": "📁",
+    }
 
 
 def info(msg: str) -> None:  # pragma: no cover - simple wrapper
