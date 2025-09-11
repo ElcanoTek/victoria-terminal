@@ -1,6 +1,6 @@
 # Manual Installer Testing
 
-This section is for manual testing of Victoria installers. The installers are packaged for Mac OS, Linux, and Windows and can be found in the [releases](https://github.com/ElcanoTek/victoria-fleet/releases/) page. 
+This section is for manual testing of Victoria installers and desktop apps. The apps are packaged for Mac OS, Linux, and Windows and can be found in the [releases](https://github.com/ElcanoTek/victoria-fleet/releases/) page. 
 
 ---
 
