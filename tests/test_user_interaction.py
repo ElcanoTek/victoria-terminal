@@ -32,38 +32,27 @@ def test_course_menu_two(mocker):
     assert course_menu() == "2"
 
 
-def test_first_run_check_sentinel_exists(mocker):
-    """Test first_run_check returns False if sentinel file exists."""
-    mock_sentinel = mocker.Mock()
-    mock_sentinel.exists.return_value = True
-    mock_ask = mocker.Mock()
-    mock_info = mocker.Mock()
-
-    result = first_run_check(
-        use_local_model=False,
-        _SETUP_SENTINEL=mock_sentinel,
-        _Prompt_ask=mock_ask,
-        _info=mock_info,
-    )
-    assert result is False
-    mock_ask.assert_not_called()
-    mock_info.assert_called_once()
-
-
-def test_first_run_check_user_says_no(mocker):
-    """Test first_run_check returns False if user says no to setup."""
+def test_first_run_check_sentinel_exists_user_declines_rerun(mocker):
+    """Test first_run_check returns False if sentinel exists and user says no."""
     mock_run_setup = mocker.Mock()
     mock_sentinel = mocker.Mock()
-    mock_sentinel.exists.return_value = False
+    mock_sentinel.exists.return_value = True
     mock_prompt_ask = mocker.Mock(return_value="n")
+    mock_info = mocker.Mock()
+    mock_warn = mocker.Mock()
 
     result = first_run_check(
         use_local_model=False,
         _run_setup_scripts=mock_run_setup,
         _SETUP_SENTINEL=mock_sentinel,
         _Prompt_ask=mock_prompt_ask,
+        _info=mock_info,
+        _warn=mock_warn,
     )
     assert result is False
+    mock_warn.assert_called_once_with("Setup has already been completed.")
+    mock_prompt_ask.assert_called_once()
+    mock_info.assert_called_once()
     mock_run_setup.assert_not_called()
 
 

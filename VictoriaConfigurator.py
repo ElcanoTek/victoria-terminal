@@ -107,23 +107,35 @@ def first_run_check(
     _update_path_from_install: Callable[[], None] = update_path_from_install,
     _info: Callable[[str], None] = info,
     _good: Callable[[str], None] = good,
+    _warn: Callable[[str], None] = warn,
 ) -> bool:
+    """Check if this is the first run and execute setup if needed."""
+    setup_needed = True
     if _SETUP_SENTINEL.exists():
-        _info(
-            "Setup has already been completed. You can run the Crush Launcher directly."
-        )
+        _warn("Setup has already been completed.")
+        if (
+            _Prompt_ask(
+                "Do you want to run the setup again?",
+                choices=["y", "n"],
+                default="n",
+            )
+            == "n"
+        ):
+            setup_needed = False
+
+    if not setup_needed:
+        _info("Exiting configurator. You can run the Crush Launcher directly.")
         return False
-    _section("First-time setup")
-    if _Prompt_ask("Run first-time setup?", choices=["y", "n"], default="y") == "y":
-        _run_setup_scripts(use_local_model)
-        _update_path_from_install()
-        try:
-            _SETUP_SENTINEL.write_text("done")
-            _good("Setup complete. You can now run the Crush Launcher.")
-        except Exception:
-            pass
-        return True
-    return False
+
+    _section("System Prerequisite Installation")
+    _run_setup_scripts(use_local_model)
+    _update_path_from_install()
+    try:
+        _SETUP_SENTINEL.write_text("done")
+        _good("Configuration complete. You can now run the Crush Launcher.")
+    except Exception:
+        pass
+    return True
 
 
 def main() -> None:
