@@ -32,4 +32,4 @@ Name: "{commondesktop}\Victoria Terminal"; Filename: "{app}\{#MyTerminalExeName}
 Name: "{commondesktop}\Victoria Browser"; Filename: "{app}\{#MyBrowserExeName}";
 
 [Run]
-Filename: "{app}\{#MyTerminalExeName}"; Description: "Launch Victoria Terminal"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\{#MyConfiguratorExeName}"; Description: "Launch Victoria Configurator"; Flags: nowait postinstall skipifsilent

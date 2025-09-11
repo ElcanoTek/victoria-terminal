@@ -2,8 +2,14 @@
 # This script installs the required dependencies for the project
 # Run this script in PowerShell as Administrator for best results
 
-# Set execution policy for current session
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
+# Set execution policy for current session, but don't fail if it's already set by a more specific policy
+try {
+    Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force -ErrorAction Stop
+}
+catch {
+    Write-Warning "Could not set execution policy. This is usually not a problem if the script continues to run."
+    Write-Warning "Details: $($_.Exception.Message)"
+}
 
 # Colors for output
 $Red = "Red"
@@ -348,6 +354,16 @@ function Main {
     $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 }
 
-# Run main function
-Main
+# Run main function with global error handling
+try {
+    Main
+}
+catch {
+    Write-Error "An unexpected error occurred during the installation."
+    Write-Error "Details: $($_.Exception.Message)"
+    Write-Host ""
+    Write-Status "The script will now exit. Press any key to continue..."
+    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    exit 1
+}
 
