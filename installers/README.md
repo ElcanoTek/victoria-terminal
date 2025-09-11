@@ -27,7 +27,7 @@ Place the downloaded installer file into the `installers/` directory in the root
 
 **Step 2: Launch the Virtual Machine**
 
-Open a terminal in the project's root directory and run one of the following commands:
+Open a terminal in the project's `installers/` directory and run one of the following commands:
 
 -   **To test on Windows 11:**
     ```bash
@@ -101,15 +101,15 @@ Before you can run a test, you need to create a "base" macOS virtual machine. Th
 
 **Step 1: Place Files in Shared Directory**
 
-1.  **Installer**: Download the macOS installer, `Victoria-*.app.zip`, from the GitHub Releases page. Place it in a subdirectory named `installers` inside your main shared directory.
-2.  **Provisioning Script**: Find the `provision_macos.sh` script in the `tests/` directory of this repository. Place this script in your main shared directory (not the `installers` subdirectory).
+1.  **Installer**: Download the macOS installer, `Victoria-***.zip`, from the GitHub Releases page. Place it in a subdirectory named `installers` inside your main shared directory.
+2.  **Provisioning Script**: Find the `provision_macos.sh` script in the `installers/` directory of this repository. Place this script in your main shared directory (not the `installers` subdirectory).
 
 **Step 2: Run the Test Script**
 
-Open a terminal on your host Mac, navigate to the root of this project, and run:
+Open a terminal on your host Mac, navigate to the `installers/` directory of this project, and run:
 
 ```bash
-bash tests/run_utm_test.sh
+bash run_utm_test.sh
 ```
 
 The script will:
