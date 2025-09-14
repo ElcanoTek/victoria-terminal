@@ -74,6 +74,38 @@ Once you have finished testing, you can completely remove the virtual machine an
 
 ---
 
+## Quick Testing on Windows with Windows Sandbox
+
+For users on Windows 10/11 Pro, Enterprise, or Education, **Windows Sandbox** provides an extremely fast and lightweight environment for testing the installer. The sandbox is a temporary, disposable desktop that is completely isolated from your main system.
+
+### Prerequisites
+
+You must have the Windows Sandbox feature enabled on your system.
+
+1.  Open **Turn Windows features on or off**.
+2.  Find and check the **Windows Sandbox** option.
+3.  Click **OK** and restart your computer if prompted.
+
+### Testing Workflow
+
+**Step 1: Start Windows Sandbox**
+
+Launch "Windows Sandbox" from the Start Menu. A clean Windows desktop will appear in a new window within a few seconds.
+
+**Step 2: Copy the Installer**
+
+Simply drag and drop the `VictoriaSetup.exe` installer file from your host machine directly into the sandbox window.
+
+**Step 3: Run and Test**
+
+Double-click the installer inside the sandbox, run through the installation, and test the application as needed.
+
+**Step 4: Clean Up**
+
+To clean up, just close the Windows Sandbox window. The entire sandbox environment, along with the application and any other files, will be permanently deleted.
+
+---
+
 ## Manual Installer Testing with UTM on Apple Silicon
 
 For users on Apple Silicon Macs, this project provides a semi-automated way to test the macOS installer using [UTM](https://mac.getutm.app/). This approach uses a script to manage a temporary test VM, but requires some manual steps inside the VM.
