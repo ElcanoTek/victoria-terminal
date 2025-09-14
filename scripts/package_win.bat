@@ -26,11 +26,6 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-rem Check for signtool
-if not exist %SIGNTOOL% (
-    echo SignTool not found. Please install Windows SDK.
-    exit /b 1
-)
 
 rem --- Create Installer Icon ---
 set INSTALLER_ICON=assets\VictoriaFleet.ico
@@ -71,12 +66,16 @@ rem --- Code Signing Executables ---
 echo "--- Signing Windows Executables ---"
 
 if exist %CERT_PATH% (
-    for %%f in (dist\*.exe) do (
-        echo Signing %%f
-        %SIGNTOOL% sign /f %CERT_PATH% /p "%CERT_PASS%" /tr %TIMESTAMP_SERVER% /td sha256 /fd sha256 /v "%%f"
-        if %errorlevel% neq 0 (
-            echo Failed to sign %%f
-            exit /b 1
+    if not exist %SIGNTOOL% (
+        echo SignTool not found at %SIGNTOOL%. Skipping code signing.
+        echo Please install the Windows SDK to enable signing.
+    ) else (
+        for %%f in (dist\*.exe) do (
+            echo Signing %%f
+            %SIGNTOOL% sign /f %CERT_PATH% /p "%CERT_PASS%" /tr %TIMESTAMP_SERVER% /td sha256 /fd sha256 /v "%%f"
+            if %errorlevel% neq 0 (
+                echo WARNING: Failed to sign %%f. The executable will be unsigned.
+            )
         )
     )
 ) else (
@@ -92,11 +91,12 @@ iscc %~dp0installer_win.iss
 
 rem --- Sign the Installer ---
 if exist %CERT_PATH% (
-    echo "--- Signing the installer ---"
-    %SIGNTOOL% sign /f %CERT_PATH% /p "%CERT_PASS%" /tr %TIMESTAMP_SERVER% /td sha256 /fd sha256 /v "dist\VictoriaSetup.exe"
-    if %errorlevel% neq 0 (
-        echo Failed to sign installer
-        exit /b 1
+    if exist %SIGNTOOL% (
+        echo "--- Signing the installer ---"
+        %SIGNTOOL% sign /f %CERT_PATH% /p "%CERT_PASS%" /tr %TIMESTAMP_SERVER% /td sha256 /fd sha256 /v "dist\VictoriaSetup.exe"
+        if %errorlevel% neq 0 (
+            echo WARNING: Failed to sign the installer. The installer will be unsigned.
+        )
     )
 ) else (
     echo Certificate file not found. Installer not signed.
