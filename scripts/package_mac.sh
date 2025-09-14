@@ -156,7 +156,7 @@ for app in dist/*.app; do
     done
     
     # Sign all executables
-    find "$app" -type f -perm +111 | while read -r file; do
+    find "$app" -type f -perm -111 | while read -r file; do
         if file "$file" | grep -q "Mach-O"; then
             echo "  Signing executable $file"
             codesign --force --verify --verbose --timestamp --options=runtime --entitlements entitlements.plist --sign "$DEVELOPER_ID_CERT" "$file"
