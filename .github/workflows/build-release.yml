@@ -65,6 +65,11 @@ jobs:
         if: matrix.platform.os == 'windows-latest'
         run: |
           choco install -y innosetup
+      - name: Setup Windows Code Signing
+        if: matrix.platform.os == 'windows-latest' && secrets.WINDOWS_CERTIFICATE != ''
+        run: |
+          echo "${{ secrets.WINDOWS_CERTIFICATE }}" | base64 --decode > certificate.pfx
+        shell: bash
       - name: Generate .ico files
         if: matrix.platform.os == 'windows-latest'
         run: |
@@ -77,6 +82,8 @@ jobs:
         if: matrix.platform.os == 'windows-latest'
         shell: cmd
         run: scripts\package_win.bat
+        env:
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
       - name: Upload build version
         uses: actions/upload-artifact@v4
         with:
@@ -86,6 +93,30 @@ jobs:
       - name: Install ImageMagick
         if: matrix.platform.os == 'macos-latest'
         run: brew install imagemagick
+      - name: Setup macOS Code Signing
+        if: matrix.platform.os == 'macos-latest' && secrets.MACOS_CERTIFICATE != ''
+        run: |
+          # Decode and import certificate
+          echo "${{ secrets.MACOS_CERTIFICATE }}" | base64 --decode > certificate.p12
+          
+          # Create temporary keychain
+          security create-keychain -p "${{ secrets.MACOS_CERTIFICATE_PASSWORD }}" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "${{ secrets.MACOS_CERTIFICATE_PASSWORD }}" build.keychain
+          security set-keychain-settings -t 3600 -u build.keychain
+          
+          # Import certificate
+          security import certificate.p12 -k build.keychain -P "${{ secrets.MACOS_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "${{ secrets.MACOS_CERTIFICATE_PASSWORD }}" build.keychain
+          
+          # Setup notarization profile using API key
+          echo "${{ secrets.API_KEY }}" | base64 --decode > AuthKey.p8
+          xcrun notarytool store-credentials "notarization-profile" \
+            --key AuthKey.p8 \
+            --key-id "${{ secrets.API_KEY_ID }}" \
+            --issuer-id "${{ secrets.API_ISSUER_ID }}"
+        env:
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
       - name: Generate rounded .icns files
         if: matrix.platform.os == 'macos-latest'
         run: |
@@ -147,6 +178,9 @@ jobs:
         if: matrix.platform.os == 'macos-latest'
         run: |
           bash scripts/package_mac.sh
+        env:
+          MACOS_CERTIFICATE_NAME: "Developer ID Application: ${{ secrets.DEVELOPER_NAME }} (${{ secrets.TEAM_ID }})"
+          KEYCHAIN_PROFILE: "notarization-profile"
       - name: Build Linux AppImage
         if: contains(matrix.platform.os, 'ubuntu')
         run: |
