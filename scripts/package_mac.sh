@@ -127,10 +127,11 @@ echo "--- Finished Victoria Browser ---"
 rm -rf build VictoriaBrowser.spec
 
 # --- Code Signing and Notarization ---
-echo "--- Signing and Notarizing macOS Apps ---"
+if [[ -n "${MACOS_CERTIFICATE_NAME}" && "${MACOS_CERTIFICATE_NAME}" != "Developer ID Application: Your Name (TEAM_ID)" ]]; then
+    echo "--- Signing and Notarizing macOS Apps ---"
 
-# Create entitlements file
-cat > entitlements.plist <<EOF
+    # Create entitlements file
+    cat > entitlements.plist <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -145,57 +146,63 @@ cat > entitlements.plist <<EOF
 </plist>
 EOF
 
-# Sign all executables and frameworks within each app bundle
-for app in dist/*.app; do
-    echo "Signing all binaries in $app"
-    
-    # Sign all frameworks and dylibs first
-    find "$app" -name "*.framework" -o -name "*.dylib" -o -name "*.so" | while read -r file; do
-        echo "  Signing $file"
-        codesign --force --verify --verbose --timestamp --options=runtime --sign "$DEVELOPER_ID_CERT" "$file" || true
+    # Sign all executables and frameworks within each app bundle
+    for app in dist/*.app; do
+        echo "Signing all binaries in $app"
+
+        # Sign all frameworks and dylibs first
+        find "$app" -name "*.framework" -o -name "*.dylib" -o -name "*.so" | while read -r file; do
+            echo "  Signing $file"
+            codesign --force --verify --verbose --timestamp --options=runtime --sign "$DEVELOPER_ID_CERT" "$file" || true
+        done
+
+        # Sign all executables
+        find "$app" -type f -perm -111 | while read -r file; do
+            if file "$file" | grep -q "Mach-O"; then
+                echo "  Signing executable $file"
+                codesign --force --verify --verbose --timestamp --options=runtime --entitlements entitlements.plist --sign "$DEVELOPER_ID_CERT" "$file"
+            fi
+        done
+
+        # Finally, sign the app bundle itself
+        echo "Signing app bundle $app"
+        codesign --force --verify --verbose --timestamp --options=runtime --entitlements entitlements.plist --sign "$DEVELOPER_ID_CERT" "$app"
+
+        # Verify the signature
+        echo "Verifying signature for $app"
+        codesign --verify --deep --strict --verbose=2 "$app"
+        spctl --assess --type exec --verbose "$app"
     done
-    
-    # Sign all executables
-    find "$app" -type f -perm -111 | while read -r file; do
-        if file "$file" | grep -q "Mach-O"; then
-            echo "  Signing executable $file"
-            codesign --force --verify --verbose --timestamp --options=runtime --entitlements entitlements.plist --sign "$DEVELOPER_ID_CERT" "$file"
-        fi
+
+    # Create a zip archive for notarization
+    echo "Creating archive for notarization..."
+    (cd dist && zip -r "../Victoria-${VERSION}-macos.zip" .)
+
+    # Notarize the application
+    echo "Notarizing the application..."
+    xcrun notarytool submit "Victoria-${VERSION}-macos.zip" --keychain-profile "$KEYCHAIN_PROFILE" --wait
+
+    # Extract and staple each app
+    echo "Stapling notarization tickets..."
+    rm -rf temp_extract
+    mkdir temp_extract
+    (cd temp_extract && unzip "../Victoria-${VERSION}-macos.zip")
+
+    for app in temp_extract/*.app; do
+        echo "Stapling $app"
+        xcrun stapler staple "$app"
     done
-    
-    # Finally, sign the app bundle itself
-    echo "Signing app bundle $app"
-    codesign --force --verify --verbose --timestamp --options=runtime --entitlements entitlements.plist --sign "$DEVELOPER_ID_CERT" "$app"
-    
-    # Verify the signature
-    echo "Verifying signature for $app"
-    codesign --verify --deep --strict --verbose=2 "$app"
-    spctl --assess --type exec --verbose "$app"
-done
 
-# Create a zip archive for notarization
-echo "Creating archive for notarization..."
-(cd dist && zip -r "../Victoria-${VERSION}-macos.zip" .)
+    # Recreate the final archive with stapled apps
+    rm "Victoria-${VERSION}-macos.zip"
+    (cd temp_extract && zip -r "../Victoria-${VERSION}-macos.zip" .)
+    rm -rf temp_extract
 
-# Notarize the application
-echo "Notarizing the application..."
-xcrun notarytool submit "Victoria-${VERSION}-macos.zip" --keychain-profile "$KEYCHAIN_PROFILE" --wait
-
-# Extract and staple each app
-echo "Stapling notarization tickets..."
-rm -rf temp_extract
-mkdir temp_extract
-(cd temp_extract && unzip "../Victoria-${VERSION}-macos.zip")
-
-for app in temp_extract/*.app; do
-    echo "Stapling $app"
-    xcrun stapler staple "$app"
-done
-
-# Recreate the final archive with stapled apps
-rm "Victoria-${VERSION}-macos.zip"
-(cd temp_extract && zip -r "../Victoria-${VERSION}-macos.zip" .)
-rm -rf temp_extract
-
-echo "--- macOS build complete ---"
+    echo "--- macOS build complete (Signed) ---"
+else
+    echo "--- Skipping Code Signing and Notarization ---"
+    echo "MACOS_CERTIFICATE_NAME not set or is default. Creating unsigned apps."
+    (cd dist && zip -r "../Victoria-${VERSION}-macos.zip" ./*.app)
+    echo "--- macOS build complete (Unsigned) ---"
+fi
 
