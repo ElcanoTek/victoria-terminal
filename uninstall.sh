@@ -3,6 +3,7 @@ set -e
 
 # --- Configuration ---
 INSTALL_DIR="$HOME/.victoria"
+CONFIG_DIR="$HOME/Victoria"
 BIN_DIR="/usr/local/bin"
 WRAPPERS=("victoria-configurator" "victoria-terminal" "victoria-browser")
 
@@ -47,6 +48,15 @@ if [ -d "$INSTALL_DIR" ]; then
     print_success "Victoria installation directory removed."
 else
     print_info "Installation directory $INSTALL_DIR does not exist, skipping."
+fi
+
+# 3. Remove configuration directory
+if [ -d "$CONFIG_DIR" ]; then
+    print_info "Removing configuration directory at $CONFIG_DIR..."
+    rm -rf "$CONFIG_DIR"
+    print_success "Victoria configuration directory removed."
+else
+    print_info "Configuration directory $CONFIG_DIR does not exist, skipping."
 fi
 
 print_success "Victoria has been uninstalled successfully!"
