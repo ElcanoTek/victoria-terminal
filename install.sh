@@ -119,12 +119,72 @@ EOF
     echo "  - victoria-terminal"
     echo "  - victoria-browser"
 
-    if [[ ":$PATH:" != *":$BIN_DIR:"* ]]; then
-        print_warning "The directory $BIN_DIR is not in your PATH. You may need to add it."
-        print_info "You can do this by adding the following line to your shell profile (e.g., ~/.bashrc, ~/.zshrc):"
-        echo "  export PATH=\"\$PATH:$BIN_DIR\""
+    # 7. Update shell configuration
+    update_shell_config
+}
+
+# --- Shell Configuration Logic ---
+update_shell_config() {
+    print_info "Checking if $BIN_DIR is in your PATH..."
+
+    if [[ ":$PATH:" == *":$BIN_DIR:"* ]]; then
+        print_info "$BIN_DIR is already in your PATH. No changes needed."
+        return
+    fi
+
+    read -p "The directory $BIN_DIR is not in your PATH. Add it now? [Y/n] " -r answer
+    # Default to 'yes' if no answer is given
+    if [[ -z "$answer" || "$answer" =~ ^[Yy]$ ]]; then
+        local shell_config_file
+        local current_shell=$(basename "$SHELL")
+
+        if [[ "$current_shell" == "zsh" ]]; then
+            shell_config_file="$HOME/.zshrc"
+        elif [[ "$current_shell" == "bash" ]]; then
+            # Check for standard bash config files
+            if [[ -f "$HOME/.bashrc" ]]; then
+                shell_config_file="$HOME/.bashrc"
+            elif [[ -f "$HOME/.bash_profile" ]]; then
+                shell_config_file="$HOME/.bash_profile"
+            else
+                # Fallback for non-standard setups
+                shell_config_file="$HOME/.profile"
+                if [[ ! -f "$shell_config_file" ]]; then
+                    print_warning "Could not find a standard shell profile file. Creating $shell_config_file."
+                    touch "$shell_config_file"
+                fi
+            fi
+        else
+            print_warning "Unsupported shell: $current_shell. Please add $BIN_DIR to your PATH manually."
+            return
+        fi
+
+        print_info "Adding $BIN_DIR to PATH in $shell_config_file..."
+        # Use a comment to identify the line for future reference or uninstallation
+        echo -e "\n# Added by Victoria installer" >> "$shell_config_file"
+        echo "export PATH=\"\$PATH:$BIN_DIR\"" >> "$shell_config_file"
+
+        print_success "$BIN_DIR has been added to your PATH."
+        print_info "Attempting to apply changes to the current session..."
+
+        # Try to source the file for the current session
+        # This may not work depending on how the script is executed
+        if [ -f "$shell_config_file" ]; then
+            source "$shell_config_file"
+            # Check if the PATH was updated in the current script's environment
+            if [[ ":$PATH:" == *":$BIN_DIR:"* ]]; then
+                print_success "PATH updated for the current session."
+            else
+                print_warning "Could not automatically update PATH for the current session."
+                print_info "Please run the following command to apply changes:"
+                echo "  source $shell_config_file"
+            fi
+        fi
+    else
+        print_warning "You chose not to update your PATH. You will need to add $BIN_DIR to your PATH manually to run Victoria commands."
     fi
 }
+
 
 # --- Script Entry Point ---
 # Pass all script arguments to the main function

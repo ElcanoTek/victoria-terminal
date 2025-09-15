@@ -178,16 +178,32 @@ function Main {
     Write-Success "Wrapper scripts created."
 
     # 7. Add bin directory to user's PATH
-    Write-Status "Adding $BinDir to your PATH..."
     $UserPath = [System.Environment]::GetEnvironmentVariable("PATH", "User")
-    if ($UserPath -notlike "*$BinDir*") {
-        $NewPath = "$UserPath;$BinDir"
-        [System.Environment]::SetEnvironmentVariable("PATH", $NewPath, "User")
-        $env:PATH = "$env:PATH;$BinDir" # Update for current session
-        Write-Success "$BinDir has been added to your PATH."
-        Write-Warning "You may need to restart your terminal for the changes to take full effect."
-    } else {
-        Write-Status "$BinDir is already in your PATH."
+    if ($UserPath -like "*$BinDir*") {
+        Write-Status "$BinDir is already in your PATH. No changes needed."
+    }
+    else {
+        $Title = "Update PATH"
+        $Message = "Add the Victoria bin directory to your user PATH to run Victoria commands from anywhere. This is recommended. Add to PATH?"
+        $Choices = [System.Management.Automation.Host.ChoiceDescription[]]@("&Yes", "&No")
+        $DefaultChoice = 0 # Yes
+        $Choice = $Host.UI.PromptForChoice($Title, $Message, $Choices, $DefaultChoice)
+
+        if ($Choice -eq 0) { # User selected Yes
+            Write-Status "Adding $BinDir to your PATH..."
+            $NewPath = if ([string]::IsNullOrEmpty($UserPath)) {
+                $BinDir
+            } else {
+                "$UserPath;$BinDir"
+            }
+            [System.Environment]::SetEnvironmentVariable("PATH", $NewPath, "User")
+            $env:PATH += ";$BinDir" # Update for current session
+            Write-Success "$BinDir has been added to your PATH."
+            Write-Warning "The new PATH will be available in new terminal sessions. This session has been updated."
+        }
+        else {
+            Write-Warning "You chose not to update your PATH. You will need to add $BinDir to your PATH manually."
+        }
     }
 
     Write-Host ""
