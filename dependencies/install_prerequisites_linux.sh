@@ -102,108 +102,117 @@ install_python() {
 
 # Function to install/upgrade uv
 install_uv() {
-    if ! command_exists uv || [ "$UPGRADE" = true ]; then
-        if [ "$UPGRADE" = true ] && command_exists uv; then
-            print_status "Checking for uv upgrade..."
-        else
-            print_status "Installing uv (Python package manager)..."
-        fi
-        
-        # Try distribution-specific packages first
-        case $DISTRO in
-            arch|manjaro)
-                if command_exists yay; then
-                    yay -S --noconfirm uv
-                    print_success "uv installed/upgraded via AUR"
-                    return 0
-                fi
-                ;;
-        esac
-        
-        # Fallback to standalone installer
-        print_status "Installing/upgrading uv via standalone installer..."
-        curl -LsSf https://astral.sh/uv/install.sh | sh
-        
-        # Add to PATH for this script's execution
-        export PATH="$HOME/.local/bin:$PATH"
-        
-        print_success "uv installation/upgrade complete."
+    if [ "$UPGRADE" = true ]; then
+        print_status "Upgrading uv (Python package manager)..."
     else
-        print_success "uv is already installed ($(uv --version))"
+        print_status "Installing uv (Python package manager)..."
     fi
+
+    # Try distribution-specific packages first
+    case $DISTRO in
+        arch|manjaro)
+            if command_exists yay; then
+                yay -S --noconfirm uv
+                print_success "uv installed/upgraded via AUR"
+                return 0
+            fi
+            ;;
+    esac
+
+    # Fallback to standalone installer
+    print_status "Installing/upgrading uv via standalone installer..."
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+
+    # Add to PATH for this script's execution
+    export PATH="$HOME/.local/bin:$PATH"
+
+    print_success "uv installation/upgrade complete."
 }
 
 # Function to install/upgrade crush
 install_crush() {
-    if ! command_exists crush || [ "$UPGRADE" = true ]; then
-        if [ "$UPGRADE" = true ] && command_exists crush; then
-            print_status "Checking for crush upgrade..."
-        else
-            print_status "Installing crush (AI coding agent)..."
-        fi
-        
-        # Try distribution-specific packages first
-        case $DISTRO in
-            ubuntu|debian)
-                print_status "Adding Charm repository and installing/upgrading crush..."
-                sudo mkdir -p /etc/apt/keyrings
-                curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg
-                echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
-                sudo apt update
-                sudo apt install -y crush
-                print_success "crush installed/upgraded via Charm repository"
-                return 0
-                ;;
-            fedora|rhel|centos|rocky|almalinux)
-                print_status "Adding Charm repository and installing/upgrading crush..."
-                echo '[charm]
+    if [ "$UPGRADE" = true ]; then
+        print_status "Upgrading crush (AI coding agent)..."
+    else
+        print_status "Installing crush (AI coding agent)..."
+    fi
+
+    # Try distribution-specific packages first
+    case $DISTRO in
+        ubuntu|debian)
+            print_status "Adding Charm repository and installing/upgrading crush..."
+            sudo mkdir -p /etc/apt/keyrings
+            curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg
+            echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
+            sudo apt update
+            sudo apt install -y crush
+            print_success "crush installed/upgraded via Charm repository"
+            return 0
+            ;;
+        fedora|rhel|centos|rocky|almalinux)
+            print_status "Adding Charm repository and installing/upgrading crush..."
+            echo '[charm]
 name=Charm
 baseurl=https://repo.charm.sh/yum/
 enabled=1
 gpgcheck=1
 gpgkey=https://repo.charm.sh/yum/gpg.key' | sudo tee /etc/yum.repos.d/charm.repo
-                if command_exists dnf; then
-                    sudo dnf install -y crush
-                else
-                    sudo yum install -y crush
-                fi
-                print_success "crush installed/upgraded via Charm repository"
+            if command_exists dnf; then
+                sudo dnf install -y crush
+            else
+                sudo yum install -y crush
+            fi
+            print_success "crush installed/upgraded via Charm repository"
+            return 0
+            ;;
+        arch|manjaro)
+            if command_exists yay; then
+                yay -S --noconfirm crush-bin
+                print_success "crush installed/upgraded via AUR"
                 return 0
-                ;;
-            arch|manjaro)
-                if command_exists yay; then
-                    yay -S --noconfirm crush-bin
-                    print_success "crush installed/upgraded via AUR"
-                    return 0
-                fi
-                ;;
-        esac
-        
-        # Fallback to Go installation
-        print_warning "Distribution-specific package not available. Trying Go installation..."
-        if command_exists go; then
-            go install github.com/charmbracelet/crush@latest
-            
-            # Add GOPATH/bin to PATH for this script's execution
-            GOPATH=$(go env GOPATH)
-            export PATH="$GOPATH/bin:$PATH"
-            
-            print_success "crush installed/upgraded via Go"
-        else
-            print_error "Go is not installed and no distribution package available."
-            print_status "Please install Go first or install crush manually."
-            print_status "Go can be installed from: https://golang.org/dl/"
-            return 1
-        fi
+            fi
+            ;;
+    esac
+
+    # Fallback to Go installation
+    print_warning "Distribution-specific package not available. Trying Go installation..."
+    if command_exists go; then
+        go install github.com/charmbracelet/crush@latest
+
+        # Add GOPATH/bin to PATH for this script's execution
+        GOPATH=$(go env GOPATH)
+        export PATH="$GOPATH/bin:$PATH"
+
+        print_success "crush installed/upgraded via Go"
     else
-        print_success "crush is already installed"
+        print_error "Go is not installed and no distribution package available."
+        print_status "Please install Go first or install crush manually."
+        print_status "Go can be installed from: https://golang.org/dl/"
+        return 1
     fi
 }
 
 # Function to install Go (if needed for crush)
 install_go() {
-    # Only install Go if crush isn't installed and we're not upgrading via package manager
-    if ! command_exists go && ! command_exists crush; then
+    # Only install Go if we have to fall back to it
+    if ! command_exists go; then
+        # Check if we need it
+        local needs_go=true
+        case $DISTRO in
+            ubuntu|debian|fedora|rhel|centos|rocky|almalinux)
+                needs_go=false # Handled by package manager
+                ;;
+            arch|manjaro)
+                if command_exists yay; then
+                    needs_go=false # Handled by AUR
+                fi
+                ;;
+        esac
+
+        if [ "$needs_go" = false ]; then
+            return 0
+        fi
+
         print_status "Go is needed to install crush. Installing Go..."
         case $DISTRO in
             ubuntu|debian)

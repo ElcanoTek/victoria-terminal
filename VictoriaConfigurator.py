@@ -3,17 +3,41 @@
 
 from __future__ import annotations
 
+import argparse
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
 from typing import Callable
 
-from rich.prompt import Prompt
+from rich.prompt import Confirm, Prompt
 
 from common import (APP_HOME, SETUP_SENTINEL, banner, console, err, good,
                     handle_error, info, initialize_colorama, resource_path,
                     section, warn)
+
+
+def check_for_existing_tools(
+    _shutil_which: Callable[[str], str | None] = shutil.which,
+    _Confirm_ask: Callable[..., bool] = Confirm.ask,
+    _info: Callable[[str], None] = info,
+    _good: Callable[[str], None] = good,
+) -> bool:
+    """Check if crush and uv are already installed and ask user what to do."""
+    crush_path = _shutil_which("crush")
+    uv_path = _shutil_which("uv")
+
+    if crush_path and uv_path:
+        _good("Found existing installations of 'crush' and 'uv'.")
+        _info(f"  - crush: {crush_path}")
+        _info(f"  - uv: {uv_path}")
+        return _Confirm_ask(
+            "Do you want Victoria to manage these dependencies for you? "
+            "Choose [b]Yes[/b] for the recommended setup.",
+            default=True,
+        )
+    return True
 
 
 def update_path_from_install(
@@ -158,6 +182,7 @@ def upgrade_dependencies(
 
 def first_run_check(
     use_local_model: bool,
+    force_install_deps: bool,
     _run_setup_scripts: Callable[[bool], None] = run_setup_scripts,
     _upgrade_dependencies: Callable[[], None] = upgrade_dependencies,
     _SETUP_SENTINEL: Path = SETUP_SENTINEL,
@@ -167,6 +192,7 @@ def first_run_check(
     _info: Callable[[str], None] = info,
     _good: Callable[[str], None] = good,
     _warn: Callable[[str], None] = warn,
+    _check_for_existing_tools: Callable[[], bool] = check_for_existing_tools,
 ) -> bool:
     """Check if this is the first run and execute setup if needed."""
     setup_needed = True
@@ -191,8 +217,19 @@ def first_run_check(
         return False
 
     _section("System Prerequisite Installation")
-    _run_setup_scripts(use_local_model)
-    _update_path_from_install()
+
+    install_deps = True
+    if not force_install_deps:
+        install_deps = _check_for_existing_tools()
+
+    if install_deps:
+        _run_setup_scripts(use_local_model)
+        _update_path_from_install()
+        _good("Prerequisite installation process finished.")
+    else:
+        _info("Skipping automatic dependency installation.")
+        _info("Please ensure 'crush' and 'uv' are correctly installed and in your PATH.")
+
     try:
         _SETUP_SENTINEL.write_text("done")
         _good("Configuration complete. You can now run the Crush Launcher.")
@@ -205,6 +242,18 @@ def main() -> None:
     """Main entry point for the Victoria Configurator."""
     initialize_colorama()
     console.clear()
+
+    parser = argparse.ArgumentParser(
+        description="Victoria Configurator - Setup and manage dependencies."
+    )
+    parser.add_argument(
+        "--force-install-deps",
+        action="store_true",
+        help="Force the installation of system dependencies (crush, uv), "
+        "bypassing checks for existing installations.",
+    )
+    args = parser.parse_args()
+
     banner()
     section("Model provider selection")
     choice = Prompt.ask(
@@ -214,7 +263,7 @@ def main() -> None:
         default="n",
     )
     use_local_model = choice == "y"
-    first_run_check(use_local_model)
+    first_run_check(use_local_model, args.force_install_deps)
 
 
 if __name__ == "__main__":

@@ -50,62 +50,51 @@ install_python() {
 
 # Function to install/upgrade uv
 install_uv() {
-    if [ "$UPGRADE" = true ] && command_exists uv; then
-        print_status "Checking for uv upgrade..."
-        if command_exists brew; then
-            brew upgrade uv
-        else
-            curl -LsSf https://astral.sh/uv/install.sh | sh
-        fi
-        print_success "uv upgrade check complete."
-    elif ! command_exists uv; then
-        print_status "Installing uv (Python package manager)..."
-        if command_exists brew; then
-            brew install uv
-        else
-            # Fallback to standalone installer
-            curl -LsSf https://astral.sh/uv/install.sh | sh
-            # Add to PATH for this script's execution
-            export PATH="$HOME/.local/bin:$PATH"
-        fi
-        print_success "uv installed successfully"
+    local action="install"
+    if [ "$UPGRADE" = true ]; then
+        action="upgrade"
+        print_status "Upgrading uv (Python package manager)..."
     else
-        print_success "uv is already installed ($(uv --version))"
+        print_status "Installing uv (Python package manager)..."
     fi
+
+    if command_exists brew; then
+        brew "$action" uv
+    else
+        # The standalone installer handles both install and upgrade
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        export PATH="$HOME/.local/bin:$PATH"
+    fi
+    print_success "uv installation/upgrade complete."
 }
 
 # Function to install/upgrade crush
 install_crush() {
-    if [ "$UPGRADE" = true ] && command_exists crush; then
-        print_status "Checking for crush upgrade..."
-        if command_exists brew; then
-            brew upgrade charmbracelet/tap/crush
-        elif command_exists go; then
-            go install github.com/charmbracelet/crush@latest
-        fi
-        print_success "crush upgrade check complete."
-    elif ! command_exists crush; then
-        print_status "Installing crush (AI coding agent)..."
-        if command_exists brew; then
-            brew install charmbracelet/tap/crush
-        else
-            print_warning "Homebrew not available. Installing crush via Go..."
-            if command_exists go; then
-                go install github.com/charmbracelet/crush@latest
-                # Add GOPATH/bin to PATH if not already there
-                if [[ ":$PATH:" != *":$HOME/go/bin:"* ]]; then
-                    export PATH="$HOME/go/bin:$PATH"
-                fi
-            else
-                print_error "Go is not installed. Please install Go first or use Homebrew."
-                print_status "You can download Go from: https://golang.org/dl/"
-                return 1
-            fi
-        fi
-        print_success "crush installed successfully"
+    local action="install"
+    if [ "$UPGRADE" = true ]; then
+        action="upgrade"
+        print_status "Upgrading crush (AI coding agent)..."
     else
-        print_success "crush is already installed"
+        print_status "Installing crush (AI coding agent)..."
     fi
+
+    if command_exists brew; then
+        brew "$action" charmbracelet/tap/crush
+    else
+        print_warning "Homebrew not available. Attempting to install/upgrade crush via Go..."
+        if command_exists go; then
+            go install github.com/charmbracelet/crush@latest
+            # Add GOPATH/bin to PATH if not already there
+            if [[ ":$PATH:" != *":$HOME/go/bin:"* ]]; then
+                export PATH="$HOME/go/bin:$PATH"
+            fi
+        else
+            print_error "Go is not installed, and Homebrew is not available. Cannot install crush."
+            print_status "Please install Go (https://golang.org/dl/) or Homebrew first."
+            return 1
+        fi
+    fi
+    print_success "crush installation/upgrade complete."
 }
 
 

@@ -43,6 +43,7 @@ def test_first_run_check_sentinel_exists_user_declines_rerun(mocker):
 
     result = first_run_check(
         use_local_model=False,
+        force_install_deps=False,
         _run_setup_scripts=mock_run_setup,
         _SETUP_SENTINEL=mock_sentinel,
         _Prompt_ask=mock_prompt_ask,
@@ -61,21 +62,23 @@ def test_first_run_check_user_says_yes(mocker):
     mock_run_setup = mocker.Mock()
     mock_sentinel = mocker.Mock()
     mock_sentinel.exists.return_value = False
-    mock_prompt_ask = mocker.Mock(return_value="y")
+    mock_check_existing = mocker.Mock(return_value=True)
     mock_update_path = mocker.Mock()
     mock_good = mocker.Mock()
 
     result = first_run_check(
         use_local_model=True,
+        force_install_deps=False,
         _run_setup_scripts=mock_run_setup,
         _SETUP_SENTINEL=mock_sentinel,
-        _Prompt_ask=mock_prompt_ask,
+        _check_for_existing_tools=mock_check_existing,
         _update_path_from_install=mock_update_path,
         _good=mock_good,
     )
 
     assert result is True
+    mock_check_existing.assert_called_once()
     mock_run_setup.assert_called_once_with(True)
     mock_sentinel.write_text.assert_called_once_with("done")
     mock_update_path.assert_called_once()
-    mock_good.assert_called_once()
+    mock_good.assert_called()

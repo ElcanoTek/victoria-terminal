@@ -2,9 +2,22 @@
 #
 # This script installs and configures Victoria on a Windows system.
 # It should be run from a PowerShell terminal.
+#
+# To run this script, use one of the following commands in PowerShell:
+#
+# # Install stable version (default)
+# irm https://raw.githubusercontent.com/elcanotek/victoria/main/install.ps1 | iex
+#
+# # Install latest version
+# & ([scriptblock]::Create((irm https://raw.githubusercontent.com/elcanotek/victoria/main/install.ps1))) "latest"
+#
+# # Install specific version
+# & ([scriptblock]::Create((irm https://raw.githubusercontent.com/elcanotek/victoria/main/install.ps1))) "v1.2.3"
+#
 
 # --- Configuration ---
 $RepoUrl = "https://github.com/elcanotek/victoria.git"
+$DefaultBranch = "main" # 'stable' version
 $InstallDir = "$env:USERPROFILE\.victoria"
 $VenvDir = "$InstallDir\venv"
 $BinDir = "$InstallDir\bin"
@@ -45,6 +58,23 @@ function Test-CommandExists {
 
 # --- Main Installation Logic ---
 function Main {
+    param([string]$Version)
+
+    # Determine version to install
+    $BranchToCheckout = $DefaultBranch
+    if ([string]::IsNullOrEmpty($Version) -or $Version -eq "stable") {
+        Write-Status "Installing stable version of Victoria."
+        $BranchToCheckout = $DefaultBranch
+    }
+    elseif ($Version -eq "latest") {
+        Write-Status "Installing latest version (from 'dev' branch) of Victoria."
+        $BranchToCheckout = "dev"
+    }
+    else {
+        Write-Status "Installing specific version: $Version"
+        $BranchToCheckout = $Version
+    }
+
     Write-Host "==============================================" -ForegroundColor $ColorBlue
     Write-Host "         Victoria Installer for Windows" -ForegroundColor $ColorBlue
     Write-Host "==============================================" -ForegroundColor $ColorBlue
@@ -70,19 +100,21 @@ function Main {
 
     # 3. Clone or update the repository
     if (Test-Path "$InstallDir\.git") {
-        Write-Status "Victoria is already installed. Updating..."
+        Write-Status "Victoria is already installed. Updating to version '$BranchToCheckout'..."
         Set-Location $InstallDir
         try {
-            git pull
+            git fetch --all --prune
+            git checkout $BranchToCheckout
+            git pull origin $BranchToCheckout
         }
         catch {
-            Write-Error "Failed to update the repository. Please check your internet connection or git configuration."
+            Write-Error "Failed to update the repository to version '$BranchToCheckout'. Does it exist?"
         }
     }
     else {
-        Write-Status "Cloning Victoria repository..."
+        Write-Status "Cloning Victoria repository (version: $BranchToCheckout)..."
         try {
-            git clone $RepoUrl $InstallDir
+            git clone --branch $BranchToCheckout $RepoUrl $InstallDir
         }
         catch {
             Write-Error "Failed to clone the repository. Please check the URL and your internet connection."
@@ -171,7 +203,9 @@ function Main {
 # --- Script Entry Point ---
 # Use a try/catch block for global error handling
 try {
-    Main
+    # The '$args' automatic variable contains command-line arguments when not defining params
+    # This makes it work with the scriptblock invocation method
+    Main -Version $args[0]
 }
 catch {
     Write-Error "An unexpected error occurred during installation."
