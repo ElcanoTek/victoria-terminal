@@ -142,6 +142,30 @@ If you want to contribute to Victoria, you can set up a development environment 
     ```
 
 ---
+
+## Approved Models for Victoria (Terminal Testing Guide)
+
+When testing **Victoria** in the terminal, only the following models are approved for use.  
+These models have been vetted for **compatibility, reliability, and cost considerations**.  
+We will keep this list updated as new models become approved, tested, and vetted.  
+
+Even though Crush will display many additional models from Catwalk, you should ignore those.  
+Use only the models listed here.
+
+| **Approved Model Name** | **How It Appears in Crush (Catwalk)** |
+|--------------------------|----------------------------------------|
+| ChatGPT 5               | `openai/chatgpt-5`                     |
+| ChatGPT 5 Mini          | `openai/chatgpt-5-mini`                |
+| xAI Grok Codefast 1     | `xai/grok-code-fast-1`                  |
+| Google Gemini 2.5 Pro   | `google/gemini-2.5-pro`                 |
+| Google Gemini 2.5 Flash | `google/gemini-2.5-flash`               |
+
+### Important Notes
+- These five models are the **only** ones approved for Victoria at this time.  
+- If you see other providers/models in the Crush UI, they are coming from Catwalk and are **not approved**.  
+- Selecting any model outside this list is unsupported and may produce unreliable results.  
+- As additional models are vetted, this table will be updated to reflect the approved set.
+
 ## 🤝 Contributing
 
 We welcome contributions to Victoria! If you're interested in fixing bugs or adding new features, please see our [**Contributing Guidelines**](CONTRIBUTING.md) to get started.
