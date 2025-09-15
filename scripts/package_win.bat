@@ -11,15 +11,22 @@ if not defined VERSION (
 rem --- Locate SignTool ---
 set SIGNTOOL=
 set SIGNTOOL_PATH=
+
+call :find_signtool
+goto :after_find_signtool
+
+:find_signtool
 if exist "%ProgramFiles(x86)%\Windows Kits\10\bin\" (
     for /r "%ProgramFiles(x86)%\Windows Kits\10\bin\" %%f in (signtool.exe) do (
         if exist "%%f" (
             set SIGNTOOL_PATH="%%f"
-            goto found_signtool
+            exit /b
         )
     )
 )
-:found_signtool
+exit /b
+
+:after_find_signtool
 if not defined SIGNTOOL_PATH (
     echo "SignTool.exe not found. Signing will be skipped."
 ) else (
