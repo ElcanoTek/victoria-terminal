@@ -199,9 +199,8 @@ def first_run_check(
     if _SETUP_SENTINEL.exists():
         _warn("Setup has already been completed.")
         choice = _Prompt_ask(
-            "What would you like to do?",
+            "[r]e-run setup, [u]pgrade dependencies, or [n]othing?",
             choices=["r", "u", "n"],
-            prompt="[r]e-run setup, [u]pgrade dependencies, or [n]othing?",
             default="n",
         )
         if choice == "n":
