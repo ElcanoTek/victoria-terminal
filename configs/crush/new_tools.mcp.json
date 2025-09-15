@@ -1,0 +1,15 @@
+{
+  "mcp": {
+    "new_tools": {
+      "type": "stdio",
+      "command": "python",
+      "args": ["mcp_servers/mcp_server.py"]
+    }
+  },
+  "permissions": {
+    "allowed_tools": [
+      "excel_query",
+      "python_exec"
+    ]
+  }
+}

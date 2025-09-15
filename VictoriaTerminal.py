@@ -254,16 +254,26 @@ def build_crush_config(
     include_snowflake: bool, strict_env: bool, local_model: bool
 ) -> Dict[str, Any]:
     base = load_tool_config("crush", "crush.template.json")
+
+    # Merge the new tools config
+    frag = load_tool_config("crush", "new_tools.mcp.json")
+    base.setdefault("mcp", {})
+    deep_merge(base["mcp"], frag.get("mcp", frag))
+    base.setdefault("permissions", {}).setdefault("allowed_tools", []).extend(frag.get("permissions", {}).get("allowed_tools", []))
+
     if include_snowflake:
         frag = load_tool_config("crush", "snowflake.mcp.json")
         base.setdefault("mcp", {})
         deep_merge(base["mcp"], frag.get("mcp", frag))
+        base.setdefault("permissions", {}).setdefault("allowed_tools", []).append("snowflake_query")
+
     if local_model:
         frag = load_tool_config("crush", "local.providers.json")
         providers = frag.get("providers")
         if providers:
             base.setdefault("providers", {})
             deep_merge(base["providers"], providers)
+
     return substitute_env(base, strict=strict_env)
 
 

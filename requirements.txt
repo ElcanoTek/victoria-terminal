@@ -1,2 +1,11 @@
 colorama
 rich
+pandas
+openpyxl
+snowflake-connector-python
+snowflake-sqlalchemy
+duckdb
+scipy
+scikit-learn
+matplotlib
+seaborn
