@@ -1,0 +1,106 @@
+{
+  "$schema": "https://charm.land/crush.json",
+  "permissions": {
+    "allowed_tools": [
+      "view",
+      "ls",
+      "grep",
+      "edit",
+      "motherduck_query",
+      "python_exec",
+      "venv_init",
+      "venv_sync",
+      "venv_add_package",
+      "venv_add_packages",
+      "venv_remove_package",
+      "venv_run_in_venv",
+      "excel_create_workbook",
+      "excel_read_workbook",
+      "excel_write_data",
+      "excel_format_cells",
+      "excel_create_chart",
+      "excel_create_pivot_table",
+      "data_visualize",
+      "ml_analyze"
+    ]
+  },
+  "providers": {
+    "openrouter": {
+      "type": "openai",
+      "base_url": "https://openrouter.ai/api/v1",
+      "api_key": "${OPENROUTER_API_KEY}",
+      "name": "OpenRouter",
+      "models": [
+        {
+          "id": "openai/chatgpt-5",
+          "name": "ChatGPT 5",
+          "context_window": 256000,
+          "default_max_tokens": 4096,
+          "supports_tools": true
+        },
+        {
+          "id": "openai/chatgpt-5-mini",
+          "name": "ChatGPT 5 Mini",
+          "context_window": 128000,
+          "default_max_tokens": 2048,
+          "supports_tools": true
+        },
+        {
+          "id": "xai/grok-code-fast-1",
+          "name": "xAI Grok Code Fast 1",
+          "context_window": 131072,
+          "default_max_tokens": 4096,
+          "supports_tools": true
+        },
+        {
+          "id": "google/gemini-2.5-pro",
+          "name": "Google Gemini 2.5 Pro",
+          "context_window": 1000000,
+          "default_max_tokens": 4096,
+          "supports_tools": true
+        },
+        {
+          "id": "google/gemini-2.5-flash",
+          "name": "Google Gemini 2.5 Flash",
+          "context_window": 128000,
+          "default_max_tokens": 4096,
+          "supports_tools": true
+        }
+      ]
+    }
+  },
+  "options": {
+    "context_paths": ["VICTORIA.md"],
+    "tui": {
+      "compact_mode": true
+    }
+  },
+  "mcp": {
+    "motherduck": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "mcp-server-motherduck",
+        "--db-path",
+        "${VICTORIA_HOME}/adtech.duckdb"
+      ]
+    },
+    "venv_manager": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "--from=git+https://github.com/sparfenyuk/venv-mcp-server.git",
+        "venv-mcp-server"
+      ]
+    },
+    "excel": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "excel-mcp-server",
+        "stdio"
+      ]
+    }
+  }
+}
+

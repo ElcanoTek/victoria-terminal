@@ -1,0 +1,57 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "victoria-python-mcp"
+version = "1.0.0"
+description = "Victoria Python MCP Server - AI agent-managed Python virtual environments"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [
+    { name = "Elcano Technologies", email = "victoria@elcano.tech" }
+]
+keywords = ["mcp", "python", "virtual-environment", "ai", "agent", "adtech"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "fastmcp>=0.1.0",
+    "mcp>=1.0.0",
+    "pandas>=1.5.0",
+    "numpy>=1.21.0",
+    "matplotlib>=3.5.0",
+    "seaborn>=0.11.0",
+    "plotly>=5.0.0",
+    "openpyxl>=3.0.0",
+    "xlsxwriter>=3.0.0",
+    "xlrd>=2.0.0",
+    "scikit-learn>=1.1.0",
+    "scipy>=1.9.0",
+    "statsmodels>=0.13.0",
+    "jupyter>=1.0.0",
+    "ipython>=8.0.0",
+    "requests>=2.28.0",
+    "beautifulsoup4>=4.11.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/ElcanoTek/victoria-fleet"
+Repository = "https://github.com/ElcanoTek/victoria-fleet"
+Issues = "https://github.com/ElcanoTek/victoria-fleet/issues"
+
+[project.scripts]
+victoria-python-mcp = "victoria_python_mcp:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["victoria_python_mcp.py"]
+
