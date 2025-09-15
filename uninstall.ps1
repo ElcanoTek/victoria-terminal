@@ -5,6 +5,7 @@
 
 # --- Configuration ---
 $InstallDir = "$env:USERPROFILE\.victoria"
+$ConfigDir = "$env:USERPROFILE\Victoria"
 $BinDir = "$InstallDir\bin"
 
 # --- Helper Functions ---
@@ -72,6 +73,24 @@ function Main {
         }
     } else {
         Write-Status "Installation directory $InstallDir does not exist, skipping."
+    }
+
+    # 3. Remove configuration directory
+    if (Test-Path $ConfigDir) {
+        Write-Warning "The directory $ConfigDir contains your Victoria configuration and secrets."
+        $Choice = Read-Host "Do you want to permanently delete it? [y/N]"
+        if ($Choice -eq 'y' -or $Choice -eq 'Y') {
+            Write-Status "Removing configuration directory at $ConfigDir..."
+            try {
+                Remove-Item -Recurse -Force -Path $ConfigDir
+                Write-Success "Victoria configuration directory removed."
+            }
+            catch {
+                Write-Warning "Could not remove '$ConfigDir'. You may need to remove it manually."
+            }
+        } else {
+            Write-Status "Skipping removal of configuration directory."
+        }
     }
 
     Write-Host ""

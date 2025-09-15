@@ -52,9 +52,16 @@ fi
 
 # 3. Remove configuration directory
 if [ -d "$CONFIG_DIR" ]; then
-    print_info "Removing configuration directory at $CONFIG_DIR..."
-    rm -rf "$CONFIG_DIR"
-    print_success "Victoria configuration directory removed."
+    print_warning "The directory $CONFIG_DIR contains your Victoria configuration and secrets."
+    read -p "Do you want to permanently delete it? [y/N] " -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        print_info "Removing configuration directory at $CONFIG_DIR..."
+        rm -rf "$CONFIG_DIR"
+        print_success "Victoria configuration directory removed."
+    else
+        print_info "Skipping removal of configuration directory."
+    fi
 else
     print_info "Configuration directory $CONFIG_DIR does not exist, skipping."
 fi
