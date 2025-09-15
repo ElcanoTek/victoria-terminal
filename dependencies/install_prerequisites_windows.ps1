@@ -2,6 +2,10 @@
 # This script installs the required dependencies for the project
 # Run this script in PowerShell as Administrator for best results
 
+param(
+    [switch]$Upgrade
+)
+
 # Set execution policy for current session, but don't fail if it's already set by a more specific policy
 try {
     Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force -ErrorAction Stop
@@ -188,8 +192,12 @@ function Install-Python {
 }
 
 function Install-UV {
-    if (-not (Test-CommandExists "uv")) {
-        Write-Status "Installing uv (Python package manager)..."
+    if (($Upgrade.IsPresent -and (Test-CommandExists "uv")) -or (-not (Test-CommandExists "uv"))) {
+        if ($Upgrade.IsPresent -and (Test-CommandExists "uv")) {
+            Write-Status "Checking for uv upgrade..."
+        } else {
+            Write-Status "Installing uv (Python package manager)..."
+        }
         
         $installed = $false
         
@@ -198,33 +206,37 @@ function Install-UV {
             try {
                 winget install --id=astral-sh.uv -e --accept-source-agreements --accept-package-agreements
                 $installed = $true
-                Write-Success "uv installed via WinGet"
+                Write-Success "uv installed/upgraded via WinGet"
             }
             catch {
-                Write-Warning "WinGet installation failed"
+                Write-Warning "WinGet command failed"
             }
         }
         
         # Try Scoop
         if (-not $installed -and (Test-CommandExists "scoop")) {
             try {
-                scoop install main/uv
+                if ($Upgrade.IsPresent) {
+                    scoop update main/uv
+                } else {
+                    scoop install main/uv
+                }
                 $installed = $true
-                Write-Success "uv installed via Scoop"
+                Write-Success "uv installed/upgraded via Scoop"
             }
             catch {
-                Write-Warning "Scoop installation failed"
+                Write-Warning "Scoop command failed"
             }
         }
         
         # Try standalone installer
         if (-not $installed) {
             try {
-                Write-Status "Installing uv via standalone installer..."
+                Write-Status "Installing/upgrading uv via standalone installer..."
                 $progressPreference = 'silentlyContinue'
                 Invoke-RestMethod https://astral.sh/uv/install.ps1 | Invoke-Expression
                 $installed = $true
-                Write-Success "uv installed via standalone installer"
+                Write-Success "uv installed/upgraded via standalone installer"
             }
             catch {
                 Write-Error "Failed to install uv via standalone installer"
@@ -240,8 +252,12 @@ function Install-UV {
 }
 
 function Install-Crush {
-    if (-not (Test-CommandExists "crush")) {
-        Write-Status "Installing crush (AI coding agent)..."
+    if (($Upgrade.IsPresent -and (Test-CommandExists "crush")) -or (-not (Test-CommandExists "crush"))) {
+        if ($Upgrade.IsPresent -and (Test-CommandExists "crush")) {
+            Write-Status "Checking for crush upgrade..."
+        } else {
+            Write-Status "Installing crush (AI coding agent)..."
+        }
         
         $installed = $false
         
@@ -250,10 +266,10 @@ function Install-Crush {
             try {
                 winget install --id=charmbracelet.crush -e --accept-source-agreements --accept-package-agreements
                 $installed = $true
-                Write-Success "crush installed via WinGet"
+                Write-Success "crush installed/upgraded via WinGet"
             }
             catch {
-                Write-Warning "WinGet installation failed"
+                Write-Warning "WinGet command failed"
             }
         }
         
@@ -261,13 +277,19 @@ function Install-Crush {
         if (-not $installed -and (Test-CommandExists "scoop")) {
             try {
                 # Add charm bucket if not already added
-                scoop bucket add charm https://github.com/charmbracelet/scoop-bucket.git
-                scoop install crush
+                if ((scoop bucket list) -notcontains "charm") {
+                    scoop bucket add charm https://github.com/charmbracelet/scoop-bucket.git
+                }
+                if ($Upgrade.IsPresent) {
+                    scoop update crush
+                } else {
+                    scoop install crush
+                }
                 $installed = $true
-                Write-Success "crush installed via Scoop"
+                Write-Success "crush installed/upgraded via Scoop"
             }
             catch {
-                Write-Warning "Scoop installation failed"
+                Write-Warning "Scoop command failed"
             }
         }
         
@@ -276,7 +298,7 @@ function Install-Crush {
             try {
                 npm install -g @charmland/crush
                 $installed = $true
-                Write-Success "crush installed via npm"
+                Write-Success "crush installed/upgraded via npm"
             }
             catch {
                 Write-Warning "npm installation failed"
@@ -284,7 +306,7 @@ function Install-Crush {
         }
         
         # Manual fallback
-        if (-not $installed) {
+        if (-not $installed -and -not $Upgrade.IsPresent) {
             Write-Status "Please download crush manually from:"
             Write-Status "https://github.com/charmbracelet/crush/releases"
             Start-Process "https://github.com/charmbracelet/crush/releases"
@@ -300,12 +322,19 @@ function Install-Crush {
 }
 
 function Main {
-    Write-Host "==================================================" -ForegroundColor Blue
-    Write-Host "    Prerequisites Installer for Windows" -ForegroundColor Blue
-    Write-Host "==================================================" -ForegroundColor Blue
-    Write-Host ""
-    
-    Write-Status "Starting installation of prerequisites..."
+    if ($Upgrade.IsPresent) {
+        Write-Host "==================================================" -ForegroundColor Blue
+        Write-Host "    Prerequisites Upgrader for Windows" -ForegroundColor Blue
+        Write-Host "==================================================" -ForegroundColor Blue
+        Write-Host ""
+        Write-Status "Starting upgrade of prerequisites..."
+    } else {
+        Write-Host "==================================================" -ForegroundColor Blue
+        Write-Host "    Prerequisites Installer for Windows" -ForegroundColor Blue
+        Write-Host "==================================================" -ForegroundColor Blue
+        Write-Host ""
+        Write-Status "Starting installation of prerequisites..."
+    }
     Write-Host ""
     
     # Check if running as administrator
@@ -327,6 +356,21 @@ function Main {
         Write-Host ""
     }
     
+    if ($Upgrade.IsPresent) {
+        if (Test-CommandExists "winget") {
+            Write-Status "Updating winget sources..."
+            winget source update
+        }
+        if (Test-CommandExists "scoop") {
+            Write-Status "Updating scoop..."
+            scoop update
+        }
+        if (Test-CommandExists "choco") {
+            Write-Status "Updating choco..."
+            choco upgrade chocolatey -y
+        }
+    }
+
     # Install Windows Terminal
     Install-WindowsTerminal
     Write-Host ""
@@ -341,7 +385,12 @@ function Main {
     Install-Crush
     Write-Host ""
     
-    Write-Success "All prerequisites have been installed successfully!"
+    if ($Upgrade.IsPresent) {
+        Write-Success "All prerequisites have been checked for upgrades!"
+    } else {
+        Write-Success "All prerequisites have been installed successfully!"
+    }
+
     Write-Host ""
     Write-Status "You may need to restart your terminal or PowerShell session."
     Write-Host ""
@@ -372,4 +421,3 @@ catch {
     }
     exit 1
 }
-

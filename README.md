@@ -73,6 +73,36 @@ victoria-terminal
 
 ---
 
+## 🧹 Uninstalling Victoria
+
+If you wish to remove Victoria from your system, you can use the provided uninstaller scripts.
+
+### macOS and Linux
+
+Run the `uninstall.sh` script from the repository directory, or download and run it directly:
+
+```bash
+curl -sL https://raw.githubusercontent.com/elcanotek/victoria/main/uninstall.sh | bash
+```
+
+This script will:
+- Remove the command-line wrappers from `/usr/local/bin`.
+- Delete the Victoria installation directory at `~/.victoria`.
+
+### Windows
+
+Run the `uninstall.ps1` script from the repository directory, or download and run it directly in PowerShell:
+
+```powershell
+iwr https://raw.githubusercontent.com/elcanotek/victoria/main/uninstall.ps1 -useb | iex
+```
+
+This script will:
+- Remove the Victoria installation directory from `%USERPROFILE%\.victoria`.
+- Remove the `bin` directory from your user `PATH` environment variable.
+
+---
+
 ## 🚀 For Developers
 
 If you want to contribute to Victoria, you can set up a development environment by following these steps.

@@ -9,6 +9,9 @@ set -e  # Exit on any error
 # Source common utility functions
 source "$(dirname "$0")/common.sh"
 
+# --- Global Variables ---
+UPGRADE=false
+
 # Function to detect Linux distribution
 detect_distro() {
     if [ -f /etc/os-release ]; then
@@ -34,13 +37,13 @@ update_package_manager() {
             sudo apt update
             ;;
         fedora)
-            sudo dnf update -y
+            sudo dnf check-update || true # DNF exits with 100 if updates are available
             ;;
         rhel|centos|rocky|almalinux)
             if command_exists dnf; then
-                sudo dnf update -y
+                sudo dnf check-update || true
             else
-                sudo yum update -y
+                sudo yum check-update || true
             fi
             ;;
         arch|manjaro)
@@ -97,54 +100,62 @@ install_python() {
     fi
 }
 
-# Function to install uv
+# Function to install/upgrade uv
 install_uv() {
-    if ! command_exists uv; then
-        print_status "Installing uv (Python package manager)..."
+    if ! command_exists uv || [ "$UPGRADE" = true ]; then
+        if [ "$UPGRADE" = true ] && command_exists uv; then
+            print_status "Checking for uv upgrade..."
+        else
+            print_status "Installing uv (Python package manager)..."
+        fi
         
         # Try distribution-specific packages first
         case $DISTRO in
             arch|manjaro)
                 if command_exists yay; then
                     yay -S --noconfirm uv
-                    print_success "uv installed via AUR"
+                    print_success "uv installed/upgraded via AUR"
                     return 0
                 fi
                 ;;
         esac
         
         # Fallback to standalone installer
-        print_status "Installing uv via standalone installer..."
+        print_status "Installing/upgrading uv via standalone installer..."
         curl -LsSf https://astral.sh/uv/install.sh | sh
         
         # Add to PATH for this script's execution
         export PATH="$HOME/.local/bin:$PATH"
         
-        print_success "uv installed successfully"
+        print_success "uv installation/upgrade complete."
     else
         print_success "uv is already installed ($(uv --version))"
     fi
 }
 
-# Function to install crush
+# Function to install/upgrade crush
 install_crush() {
-    if ! command_exists crush; then
-        print_status "Installing crush (AI coding agent)..."
+    if ! command_exists crush || [ "$UPGRADE" = true ]; then
+        if [ "$UPGRADE" = true ] && command_exists crush; then
+            print_status "Checking for crush upgrade..."
+        else
+            print_status "Installing crush (AI coding agent)..."
+        fi
         
         # Try distribution-specific packages first
         case $DISTRO in
             ubuntu|debian)
-                print_status "Adding Charm repository..."
+                print_status "Adding Charm repository and installing/upgrading crush..."
                 sudo mkdir -p /etc/apt/keyrings
                 curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg
                 echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
                 sudo apt update
                 sudo apt install -y crush
-                print_success "crush installed via Charm repository"
+                print_success "crush installed/upgraded via Charm repository"
                 return 0
                 ;;
             fedora|rhel|centos|rocky|almalinux)
-                print_status "Adding Charm repository..."
+                print_status "Adding Charm repository and installing/upgrading crush..."
                 echo '[charm]
 name=Charm
 baseurl=https://repo.charm.sh/yum/
@@ -156,13 +167,13 @@ gpgkey=https://repo.charm.sh/yum/gpg.key' | sudo tee /etc/yum.repos.d/charm.repo
                 else
                     sudo yum install -y crush
                 fi
-                print_success "crush installed via Charm repository"
+                print_success "crush installed/upgraded via Charm repository"
                 return 0
                 ;;
             arch|manjaro)
                 if command_exists yay; then
                     yay -S --noconfirm crush-bin
-                    print_success "crush installed via AUR"
+                    print_success "crush installed/upgraded via AUR"
                     return 0
                 fi
                 ;;
@@ -177,7 +188,7 @@ gpgkey=https://repo.charm.sh/yum/gpg.key' | sudo tee /etc/yum.repos.d/charm.repo
             GOPATH=$(go env GOPATH)
             export PATH="$GOPATH/bin:$PATH"
             
-            print_success "crush installed via Go"
+            print_success "crush installed/upgraded via Go"
         else
             print_error "Go is not installed and no distribution package available."
             print_status "Please install Go first or install crush manually."
@@ -191,6 +202,7 @@ gpgkey=https://repo.charm.sh/yum/gpg.key' | sudo tee /etc/yum.repos.d/charm.repo
 
 # Function to install Go (if needed for crush)
 install_go() {
+    # Only install Go if crush isn't installed and we're not upgrading via package manager
     if ! command_exists go && ! command_exists crush; then
         print_status "Go is needed to install crush. Installing Go..."
         case $DISTRO in
@@ -233,30 +245,42 @@ install_go() {
 
 # Main installation function
 main() {
-    echo "=================================================="
-    echo "    Prerequisites Installer for Linux"
-    echo "=================================================="
-    echo
-    
-    print_status "Starting installation of prerequisites..."
+    if [ "$1" == "--upgrade" ]; then
+        UPGRADE=true
+    fi
+
+    if [ "$UPGRADE" = true ]; then
+        echo "=================================================="
+        echo "    Prerequisites Upgrader for Linux"
+        echo "=================================================="
+        echo
+        print_status "Starting upgrade of prerequisites..."
+    else
+        echo "=================================================="
+        echo "    Prerequisites Installer for Linux"
+        echo "=================================================="
+        echo
+        print_status "Starting installation of prerequisites..."
+    fi
     echo
     
     # Detect distribution
     detect_distro
     echo
     
-    # Update package manager
+    # Update package manager repositories
     update_package_manager
     echo
     
-    # Install core dependencies
+    # Install core dependencies. Python is not upgraded automatically.
     install_python
     echo
 
+    # Install or upgrade uv and crush
     install_uv
     echo
     
-    # Install Go if needed for crush
+    # Install Go if needed for crush (only on first install)
     install_go
     echo
     
@@ -264,12 +288,18 @@ main() {
     echo
     
     # Save the path to the crush executable
-    VICTORIA_HOME="$HOME/Victoria"
-    mkdir -p "$VICTORIA_HOME"
-    save_command_path "crush" "$VICTORIA_HOME/.crush_path"
-    echo
+    if ! [ "$UPGRADE" = true ]; then
+        VICTORIA_HOME="$HOME/Victoria"
+        mkdir -p "$VICTORIA_HOME"
+        save_command_path "crush" "$VICTORIA_HOME/.crush_path"
+        echo
+    fi
 
-    print_success "All prerequisites have been installed successfully!"
+    if [ "$UPGRADE" = true ]; then
+        print_success "All prerequisites have been checked for upgrades!"
+    else
+        print_success "All prerequisites have been installed successfully!"
+    fi
     echo
     print_status "To verify installations, you may run:"
     print_status "python3 --version"
@@ -286,4 +316,3 @@ fi
 
 # Run main function
 main "$@"
-

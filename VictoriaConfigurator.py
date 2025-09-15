@@ -99,9 +99,67 @@ def run_setup_scripts(
         return
 
 
+def upgrade_dependencies(
+    _subprocess_run: Callable[..., subprocess.CompletedProcess] = subprocess.run,
+    _err: Callable[[str], None] = err,
+    _info: Callable[[str], None] = info,
+    _good: Callable[[str], None] = good,
+    _warn: Callable[[str], None] = warn,
+    _os_name: str = os.name,
+    _sys_platform: str = sys.platform,
+    _APP_HOME: Path = APP_HOME,
+) -> None:
+    """Run dependency upgrade scripts."""
+    info("Upgrading dependencies...")
+    deps = _APP_HOME / "dependencies"
+
+    # Upgrade system prerequisites (crush, uv)
+    if _os_name == "nt":
+        script = deps / "install_prerequisites_windows.ps1"
+        cmd = [
+            "powershell",
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-Command",
+            f"Unblock-File -Path '{script}' -ErrorAction SilentlyContinue; & '{script}' -Upgrade",
+        ]
+        try:
+            _subprocess_run(cmd, check=True)
+        except Exception as exc:
+            _err(f"Prerequisite upgrade script failed: {exc}")
+    elif _sys_platform == "darwin" or _sys_platform.startswith("linux"):
+        is_macos = _sys_platform == "darwin"
+        install_script = (
+            "install_prerequisites_macos.sh"
+            if is_macos
+            else "install_prerequisites_linux.sh"
+        )
+        script_path = deps / install_script
+        try:
+            cmd = ["bash", str(script_path), "--upgrade"]
+            _subprocess_run(cmd, check=True)
+        except Exception as exc:
+            _err(f"Prerequisite upgrade script failed: {exc}")
+    else:
+        _warn("Unsupported platform for automatic upgrade.")
+
+    # Upgrade Python packages
+    info("Upgrading Python packages...")
+    venv_python = _APP_HOME / "venv" / ("Scripts" if _os_name == "nt" else "bin") / "python"
+    requirements_file = _APP_HOME / "requirements.txt"
+    try:
+        cmd = [str(venv_python), "-m", "pip", "install", "--upgrade", "-r", str(requirements_file)]
+        _subprocess_run(cmd, check=True)
+        good("Python packages upgraded successfully.")
+    except Exception as exc:
+        _err(f"Python package upgrade failed: {exc}")
+
+
 def first_run_check(
     use_local_model: bool,
     _run_setup_scripts: Callable[[bool], None] = run_setup_scripts,
+    _upgrade_dependencies: Callable[[], None] = upgrade_dependencies,
     _SETUP_SENTINEL: Path = SETUP_SENTINEL,
     _Prompt_ask: Callable[..., str] = Prompt.ask,
     _section: Callable[[str], None] = section,
@@ -114,15 +172,19 @@ def first_run_check(
     setup_needed = True
     if _SETUP_SENTINEL.exists():
         _warn("Setup has already been completed.")
-        if (
-            _Prompt_ask(
-                "Do you want to run the setup again?",
-                choices=["y", "n"],
-                default="n",
-            )
-            == "n"
-        ):
+        choice = _Prompt_ask(
+            "What would you like to do?",
+            choices=["r", "u", "n"],
+            prompt="[r]e-run setup, [u]pgrade dependencies, or [n]othing?",
+            default="n",
+        )
+        if choice == "n":
             setup_needed = False
+        elif choice == "u":
+            _section("Upgrading Dependencies")
+            _upgrade_dependencies()
+            _good("Upgrade process finished.")
+            return False  # Exit after upgrade.
 
     if not setup_needed:
         _info("Exiting configurator. You can run the Crush Launcher directly.")

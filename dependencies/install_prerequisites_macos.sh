@@ -8,6 +8,9 @@ set -e  # Exit on any error
 # Source common utility functions
 source "$(dirname "$0")/common.sh"
 
+# --- Global Variables ---
+UPGRADE=false
+
 # Function to install Homebrew if not present
 install_homebrew() {
     if ! command_exists brew; then
@@ -45,9 +48,17 @@ install_python() {
     fi
 }
 
-# Function to install uv
+# Function to install/upgrade uv
 install_uv() {
-    if ! command_exists uv; then
+    if [ "$UPGRADE" = true ] && command_exists uv; then
+        print_status "Checking for uv upgrade..."
+        if command_exists brew; then
+            brew upgrade uv
+        else
+            curl -LsSf https://astral.sh/uv/install.sh | sh
+        fi
+        print_success "uv upgrade check complete."
+    elif ! command_exists uv; then
         print_status "Installing uv (Python package manager)..."
         if command_exists brew; then
             brew install uv
@@ -63,9 +74,17 @@ install_uv() {
     fi
 }
 
-# Function to install crush
+# Function to install/upgrade crush
 install_crush() {
-    if ! command_exists crush; then
+    if [ "$UPGRADE" = true ] && command_exists crush; then
+        print_status "Checking for crush upgrade..."
+        if command_exists brew; then
+            brew upgrade charmbracelet/tap/crush
+        elif command_exists go; then
+            go install github.com/charmbracelet/crush@latest
+        fi
+        print_success "crush upgrade check complete."
+    elif ! command_exists crush; then
         print_status "Installing crush (AI coding agent)..."
         if command_exists brew; then
             brew install charmbracelet/tap/crush
@@ -92,12 +111,27 @@ install_crush() {
 
 # Main installation function
 main() {
-    echo "=================================================="
-    echo "    Prerequisites Installer for macOS"
-    echo "=================================================="
-    echo
-    
-    print_status "Starting installation of prerequisites..."
+    if [ "$1" == "--upgrade" ]; then
+        UPGRADE=true
+    fi
+
+    if [ "$UPGRADE" = true ]; then
+        echo "=================================================="
+        echo "    Prerequisites Upgrader for macOS"
+        echo "=================================================="
+        echo
+        print_status "Starting upgrade of prerequisites..."
+        if command_exists brew; then
+            print_status "Updating Homebrew..."
+            brew update
+        fi
+    else
+        echo "=================================================="
+        echo "    Prerequisites Installer for macOS"
+        echo "=================================================="
+        echo
+        print_status "Starting installation of prerequisites..."
+    fi
     echo
     
     # Install Homebrew first (makes everything else easier)
@@ -115,12 +149,18 @@ main() {
     echo
 
     # Save the path to the crush executable
-    VICTORIA_HOME="$HOME/Victoria"
-    mkdir -p "$VICTORIA_HOME"
-    save_command_path "crush" "$VICTORIA_HOME/.crush_path"
-    echo
+    if ! [ "$UPGRADE" = true ]; then
+        VICTORIA_HOME="$HOME/Victoria"
+        mkdir -p "$VICTORIA_HOME"
+        save_command_path "crush" "$VICTORIA_HOME/.crush_path"
+        echo
+    fi
 
-    print_success "All prerequisites have been installed successfully!"
+    if [ "$UPGRADE" = true ]; then
+        print_success "All prerequisites have been checked for upgrades!"
+    else
+        print_success "All prerequisites have been installed successfully!"
+    fi
     echo
     print_status "To verify installations, you may run:"
     print_status "python3 --version"
@@ -130,4 +170,3 @@ main() {
 
 # Run main function
 main "$@"
-
