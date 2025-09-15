@@ -70,57 +70,21 @@ def run_setup_scripts(
     _subprocess_run: Callable[..., subprocess.CompletedProcess] = subprocess.run,
     _err: Callable[[str], None] = err,
     _info: Callable[[str], None] = info,
-    _warn: Callable[[str], None] = warn,
-    _os_name: str = os.name,
-    _sys_platform: str = sys.platform,
 ) -> None:
     deps = _resource_path("dependencies")
     if use_local_model:
         _info("Running setup without OpenRouter API key")
-    if _os_name == "nt":
-        scripts = ["install_prerequisites_windows.ps1", "set_env_windows.ps1"]
-        for s in scripts:
-            script = deps / s
-            cmd = [
-                "powershell",
-                "-NoProfile",
-                "-ExecutionPolicy",
-                "Bypass",
-                "-Command",
-                (
-                    f"Unblock-File -Path '{script}' -ErrorAction SilentlyContinue; "
-                    f"& '{script}'"
-                    f"{' -SkipOpenRouter' if use_local_model and s.startswith('set_env') else ''}"  # noqa: E501
-                ),
-            ]
-            try:
-                _subprocess_run(cmd, check=True)
-            except Exception as exc:
-                _err(f"Setup script failed: {exc}")
-                break
-    elif _sys_platform == "darwin" or _sys_platform.startswith("linux"):
-        is_macos = _sys_platform == "darwin"
-        install_script = (
-            "install_prerequisites_macos.sh"
-            if is_macos
-            else "install_prerequisites_linux.sh"
-        )
-        scripts = [install_script, "set_env_macos_linux.sh"]
-        for s in scripts:
-            try:
-                cmd = ["bash", str(deps / s)]
-                if use_local_model and s.startswith("set_env"):
-                    cmd.append("--skip-openrouter")
-                _subprocess_run(cmd, check=True)
-            except Exception as exc:
-                _err(f"Setup script failed: {exc}")
-                break
-    else:
-        _warn(
-            "Unsupported platform; run setup scripts manually "
-            "from the dependencies folder."
-        )
-        return
+
+    scripts = ["install_prerequisites_linux.sh", "set_env_linux.sh"]
+    for s in scripts:
+        try:
+            cmd = ["bash", str(deps / s)]
+            if use_local_model and s.startswith("set_env"):
+                cmd.append("--skip-openrouter")
+            _subprocess_run(cmd, check=True)
+        except Exception as exc:
+            _err(f"Setup script failed: {exc}")
+            break
 
 
 def upgrade_dependencies(
@@ -128,9 +92,6 @@ def upgrade_dependencies(
     _err: Callable[[str], None] = err,
     _info: Callable[[str], None] = info,
     _good: Callable[[str], None] = good,
-    _warn: Callable[[str], None] = warn,
-    _os_name: str = os.name,
-    _sys_platform: str = sys.platform,
     _APP_HOME: Path = APP_HOME,
 ) -> None:
     """Run dependency upgrade scripts."""
@@ -138,39 +99,16 @@ def upgrade_dependencies(
     deps = _APP_HOME / "dependencies"
 
     # Upgrade system prerequisites (crush, uv)
-    if _os_name == "nt":
-        script = deps / "install_prerequisites_windows.ps1"
-        cmd = [
-            "powershell",
-            "-NoProfile",
-            "-ExecutionPolicy",
-            "Bypass",
-            "-Command",
-            f"Unblock-File -Path '{script}' -ErrorAction SilentlyContinue; & '{script}' -Upgrade",
-        ]
-        try:
-            _subprocess_run(cmd, check=True)
-        except Exception as exc:
-            _err(f"Prerequisite upgrade script failed: {exc}")
-    elif _sys_platform == "darwin" or _sys_platform.startswith("linux"):
-        is_macos = _sys_platform == "darwin"
-        install_script = (
-            "install_prerequisites_macos.sh"
-            if is_macos
-            else "install_prerequisites_linux.sh"
-        )
-        script_path = deps / install_script
-        try:
-            cmd = ["bash", str(script_path), "--upgrade"]
-            _subprocess_run(cmd, check=True)
-        except Exception as exc:
-            _err(f"Prerequisite upgrade script failed: {exc}")
-    else:
-        _warn("Unsupported platform for automatic upgrade.")
+    script_path = deps / "install_prerequisites_linux.sh"
+    try:
+        cmd = ["bash", str(script_path), "--upgrade"]
+        _subprocess_run(cmd, check=True)
+    except Exception as exc:
+        _err(f"Prerequisite upgrade script failed: {exc}")
 
     # Upgrade Python packages
     info("Upgrading Python packages...")
-    venv_python = _APP_HOME / "venv" / ("Scripts" if _os_name == "nt" else "bin") / "python"
+    venv_python = _APP_HOME / "venv" / "bin" / "python"
     requirements_file = _APP_HOME / "requirements.txt"
     try:
         cmd = [str(venv_python), "-m", "pip", "install", "--upgrade", "-r", str(requirements_file)]

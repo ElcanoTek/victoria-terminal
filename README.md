@@ -10,11 +10,11 @@ Victoria is not a single application, but a **fleet of apps** designed to work t
 
 ## ⚙️ Installation & Setup
 
-Victoria can be installed on macOS, Linux, and Windows.
+Victoria can be installed on Fedora Linux.
 
-### macOS and Linux
+### Fedora Linux
 
-The recommended way to install Victoria on macOS and Linux is with the `install.sh` script. This will install the Victoria fleet as command-line tools on your system.
+The recommended way to install Victoria on Fedora Linux is with the `install.sh` script. This will install the Victoria fleet as command-line tools on your system.
 
 ```bash
 curl -sL https://raw.githubusercontent.com/ElcanoTek/victoria-fleet/main/install.sh | bash
@@ -25,34 +25,6 @@ This script will:
 - Set up a Python virtual environment.
 - Install all necessary dependencies.
 - Create command-line wrappers in `/usr/local/bin`.
-
-### Windows
-
-On Windows, you can install Victoria using the `install.ps1` PowerShell script.
-
-1.  **Open PowerShell:** Open a PowerShell terminal. You may need to run it as an administrator for the script to correctly modify the `PATH`.
-
-2.  **Set Execution Policy (if needed):** You might need to allow script execution. You can do this for the current session by running:
-    ```powershell
-    Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
-    ```
-
-3.  **Download and Run the Installer:** Run the following command to download and execute the installation script.
-    ```powershell
-    iwr https://raw.githubusercontent.com/ElcanoTek/victoria-fleet/main/install.ps1 -useb | iex
-    ```
-
-This script will:
-- Clone the repository to `%USERPROFILE%\.victoria`.
-- Set up a Python virtual environment.
-- Install all necessary dependencies.
-- Create command-line wrappers (`.bat` files) in `%USERPROFILE%\.victoria\bin`.
-- Add the wrapper directory to your user `PATH`.
-
-After installation, you will have access to the following commands:
-- `victoria-configurator`
-- `victoria-terminal`
-- `victoria-browser`
 
 ### First-Time Setup
 
@@ -77,7 +49,7 @@ victoria-terminal
 
 If you wish to remove Victoria from your system, you can use the provided uninstaller scripts.
 
-### macOS and Linux
+### Fedora Linux
 
 Run the `uninstall.sh` script from the repository directory, or download and run it directly:
 
@@ -88,18 +60,6 @@ curl -sL https://raw.githubusercontent.com/ElcanoTek/victoria-fleet/main/uninsta
 This script will:
 - Remove the command-line wrappers from `/usr/local/bin`.
 - Delete the Victoria installation directory at `~/.victoria`.
-
-### Windows
-
-Run the `uninstall.ps1` script from the repository directory, or download and run it directly in PowerShell:
-
-```powershell
-iwr https://raw.githubusercontent.com/ElcanoTek/victoria-fleet/main/uninstall.ps1 -useb | iex
-```
-
-This script will:
-- Remove the Victoria installation directory from `%USERPROFILE%\.victoria`.
-- Remove the `bin` directory from your user `PATH` environment variable.
 
 ---
 
