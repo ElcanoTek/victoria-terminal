@@ -37,10 +37,10 @@ install_python() {
         if command_exists brew; then
             brew install python
         else
-            print_status "Please install Xcode Command Line Tools to get Python:"
-            print_status "Run: xcode-select --install"
-            print_status "Or download Python from: https://www.python.org/downloads/"
-            read -p "Press Enter after installing Python..."
+            print_error "Python is not installed and Homebrew is not available."
+            print_error "Please install Python manually."
+            print_error "You can install Xcode Command Line Tools (xcode-select --install) or download from https://www.python.org/downloads/"
+            exit 1
         fi
         print_success "Python installation completed"
     else
