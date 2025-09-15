@@ -72,6 +72,30 @@ Victoria uses environment variables for configuration, particularly for secrets 
 The application will automatically load variables from this file at startup.
 
 ---
+## 📦 Building from Source
+
+If you want to build the packaged executables (`.exe`, `.app`) yourself, you will need some additional tools. These are not required for running the application from source in development mode.
+
+### Build-time Dependencies
+
+*   **For Windows & macOS:**
+    *   **ImageMagick**: Used to create the application icons from the source PNG files.
+    *   You can download it from the [official ImageMagick website](https://imagemagick.org/script/download.php). On macOS, you can also install it via Homebrew: `brew install imagemagick`.
+
+*   **For macOS only:**
+    *   **bc**: A command-line calculator used for creating the rounded corners on the macOS icons.
+    *   It can be installed via Homebrew: `brew install bc`.
+
+Once these dependencies are installed, you can use the packaging scripts located in the `scripts/` directory:
+```bash
+# To build for macOS
+bash scripts/package_mac.sh
+
+# To build for Windows (from a Windows environment)
+.\scripts\package_win.bat
+```
+
+---
 
 ## 🚀 The Victoria Fleet
 
