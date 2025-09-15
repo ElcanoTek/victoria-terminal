@@ -28,10 +28,10 @@ generate_icns_if_needed() {
     echo "--- Generating rounded icon for ${app_name} ---"
 
     # Check for dependencies
-    for cmd in convert identify sips iconutil bc; do
+    for cmd in magick identify sips iconutil bc; do
         if ! command -v "$cmd" &> /dev/null; then
             echo "ERROR: Command '$cmd' not found. Please install it to proceed."
-            echo "On macOS, 'convert' and 'identify' are part of ImageMagick ('brew install imagemagick')."
+            echo "On macOS, 'magick' and 'identify' are part of ImageMagick ('brew install imagemagick')."
             echo "'bc' can be installed with 'brew install bc'."
             exit 1
         fi
@@ -46,11 +46,11 @@ generate_icns_if_needed() {
     echo "Creating rounded mask..."
     local corner_radius
     corner_radius=$(echo "$base_image_size * 0.222" | bc)
-    convert -size "${base_image_size}x${base_image_size}" xc:none -draw "roundrectangle 0,0,${base_image_size},${base_image_size},${corner_radius},${corner_radius}" mask.png
+    magick -size "${base_image_size}x${base_image_size}" xc:none -draw "roundrectangle 0,0,${base_image_size},${base_image_size},${corner_radius},${corner_radius}" mask.png
 
     # 2. Apply the mask to the source image
     echo "Applying mask to ${source_png}..."
-    convert "${source_png}" -matte -bordercolor none -border 0 \( mask.png -alpha off \) -compose DstIn -composite "${rounded_png}"
+    magick "${source_png}" -alpha on -compose copyopacity mask.png "${rounded_png}"
 
     # 3. Create the iconset directory
     echo "Creating iconset directory: ${iconset_dir}"
@@ -208,73 +208,62 @@ if [[ -n "${MACOS_CERTIFICATE_NAME}" && "${MACOS_CERTIFICATE_NAME}" != "Develope
 </plist>
 EOF
 
-    # Sign all executables and frameworks within each app bundle
     for app in dist/*.app; do
-        echo "--- Signing $app ---"
+        echo "--- Processing $app ---"
+        APP_NAME=$(basename "$app")
+        APP_ZIP="${APP_NAME%.app}.zip"
 
-        # Sign from the inside out: all bundled frameworks and libraries first
-        find "$app/Contents" -type f \( -name "*.dylib" -o -name "*.so" \) -print0 | while IFS= read -r -d $'\0' file; do
-            echo "Signing library: $file"
-            codesign --force --verify --verbose --timestamp --options=runtime \
-                --sign "$DEVELOPER_ID_CERT" "$file"
-        done
+        # 1. Codesign the app
+        echo "Signing $app with Hardened Runtime and timestamp..."
+        codesign --force --deep --options runtime --timestamp \
+            --entitlements "$ENTITLEMENTS" \
+            --sign "$DEVELOPER_ID_CERT" "$app"
 
-        # Sign the main executables with entitlements
-        find "$app/Contents/MacOS" -type f -perm +111 -print0 | while IFS= read -r -d $'\0' file; do
-            echo "Signing executable: $file"
-            codesign --force --verify --verbose --timestamp --options=runtime \
-                --entitlements "$ENTITLEMENTS" --sign "$DEVELOPER_ID_CERT" "$file"
-        done
+        # 2. Create a zip for submission
+        echo "Creating archive $APP_ZIP for notarization..."
+        ditto -c -k --keepParent "$app" "$APP_ZIP"
 
-        # Sign the app bundle itself
-        echo "Signing app bundle: $app"
-        codesign --force --verify --verbose --timestamp --options=runtime \
-            --entitlements "$ENTITLEMENTS" --sign "$DEVELOPER_ID_CERT" "$app"
+        # 3. Notarize the app
+        echo "Submitting $APP_ZIP for notarization..."
+        if [[ -n "${APPLE_ID}" && -n "${APP_SPECIFIC_PASSWORD}" && -n "${TEAM_ID}" ]]; then
+            xcrun notarytool submit "$APP_ZIP" \
+                --apple-id "$APPLE_ID" \
+                --password "$APP_SPECIFIC_PASSWORD" \
+                --team-id "$TEAM_ID" \
+                --wait
+        elif [[ -n "${KEYCHAIN_PROFILE}" ]]; then
+            xcrun notarytool submit "$APP_ZIP" \
+                --keychain-profile "$KEYCHAIN_PROFILE" \
+                --wait
+        else
+            echo "Error: Notarization credentials not found."
+            echo "Set APPLE_ID, APP_SPECIFIC_PASSWORD, and TEAM_ID, or set KEYCHAIN_PROFILE."
+            exit 1
+        fi
 
-        # Verify signature
-        echo "Verifying signature for $app"
-        codesign --verify --deep --strict --verbose=2 "$app"
-        spctl --assess --type exec --verbose "$app"
-    done
-
-    # Create a zip archive for notarization
-    ARCHIVE_NAME="Victoria-${VERSION}-macos.zip"
-    echo "Creating archive for notarization: $ARCHIVE_NAME"
-    (cd dist && zip -r "../$ARCHIVE_NAME" .)
-
-    # Notarize the application
-    echo "Notarizing the application..."
-    if [[ -n "${APPLE_ID}" && -n "${APP_SPECIFIC_PASSWORD}" && -n "${TEAM_ID}" ]]; then
-        xcrun notarytool submit "$ARCHIVE_NAME" --apple-id "$APPLE_ID" --password "$APP_SPECIFIC_PASSWORD" --team-id "$TEAM_ID" --wait
-    elif [[ -n "${KEYCHAIN_PROFILE}" ]]; then
-        xcrun notarytool submit "$ARCHIVE_NAME" --keychain-profile "$KEYCHAIN_PROFILE" --wait
-    else
-        echo "Error: Either set APPLE_ID, APP_SPECIFIC_PASSWORD, and TEAM_ID for app-specific password auth,"
-        echo "       or set KEYCHAIN_PROFILE for API key auth"
-        exit 1
-    fi
-
-    # Unzip, staple, and re-zip to include the notarization ticket
-    echo "Unzipping archive to staple individual apps..."
-    STAPLE_DIR="notarized_dist"
-    rm -rf "$STAPLE_DIR"
-    mkdir "$STAPLE_DIR"
-    unzip "$ARCHIVE_NAME" -d "$STAPLE_DIR"
-
-    for app in "$STAPLE_DIR"/*.app; do
-        echo "Stapling ticket to $app"
+        # 4. Staple the ticket to the app
+        echo "Stapling notarization ticket to $app..."
         xcrun stapler staple "$app"
+
+        # 5. Verify the app's signature and notarization
+        echo "Verifying signature and notarization for $app..."
+        codesign --verify --deep --strict --verbose=2 "$app"
+        spctl -a -vvv --type exec "$app"
+
+        # 6. Clean up the temporary zip
+        rm "$APP_ZIP"
+        echo "--- Finished processing $app ---"
     done
 
-    echo "Re-packaging stapled apps into final archive..."
-    rm "$ARCHIVE_NAME"
-    (cd "$STAPLE_DIR" && zip -r "../$ARCHIVE_NAME" .)
-    rm -rf "$STAPLE_DIR"
+    # Create the final distributable archive
+    ARCHIVE_NAME="Victoria-${VERSION}-macos.zip"
+    echo "Creating final distributable archive: $ARCHIVE_NAME"
+    (cd dist && zip -r "../$ARCHIVE_NAME" ./*.app)
 
     # Clean up entitlements file
     rm "$ENTITLEMENTS"
 
-    echo "--- macOS build complete (Signed) ---"
+    echo "--- macOS build complete (Signed and Notarized) ---"
 else
     echo "--- Skipping Code Signing and Notarization ---"
     echo "MACOS_CERTIFICATE_NAME not set or is default. Creating unsigned apps."
