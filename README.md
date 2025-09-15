@@ -10,20 +10,49 @@ Victoria is not a single application, but a **fleet of apps** designed to work t
 
 ## ⚙️ Installation & Setup
 
-The recommended way to install Victoria is with the `install.sh` script. This will install the Victoria fleet as command-line tools on your system.
+Victoria can be installed on macOS, Linux, and Windows.
+
+### macOS and Linux
+
+The recommended way to install Victoria on macOS and Linux is with the `install.sh` script. This will install the Victoria fleet as command-line tools on your system.
 
 ```bash
 curl -sL https://raw.githubusercontent.com/elcanotek/victoria/main/install.sh | bash
 ```
 
-This will:
+This script will:
 - Clone the repository to `~/.victoria`.
 - Set up a Python virtual environment.
 - Install all necessary dependencies.
-- Create command-line wrappers in `/usr/local/bin` for the following commands:
-  - `victoria-configurator`
-  - `victoria-terminal`
-  - `victoria-browser`
+- Create command-line wrappers in `/usr/local/bin`.
+
+### Windows
+
+On Windows, you can install Victoria using the `install.ps1` PowerShell script.
+
+1.  **Open PowerShell:** Open a PowerShell terminal. You may need to run it as an administrator for the script to correctly modify the `PATH`.
+
+2.  **Set Execution Policy (if needed):** You might need to allow script execution. You can do this for the current session by running:
+    ```powershell
+    Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
+    ```
+
+3.  **Download and Run the Installer:** Run the following command to download and execute the installation script.
+    ```powershell
+    iwr https://raw.githubusercontent.com/elcanotek/victoria/main/install.ps1 -useb | iex
+    ```
+
+This script will:
+- Clone the repository to `%USERPROFILE%\.victoria`.
+- Set up a Python virtual environment.
+- Install all necessary dependencies.
+- Create command-line wrappers (`.bat` files) in `%USERPROFILE%\.victoria\bin`.
+- Add the wrapper directory to your user `PATH`.
+
+After installation, you will have access to the following commands:
+- `victoria-configurator`
+- `victoria-terminal`
+- `victoria-browser`
 
 ### First-Time Setup
 
