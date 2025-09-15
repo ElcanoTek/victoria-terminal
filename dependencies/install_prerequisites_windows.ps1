@@ -177,10 +177,9 @@ function Install-Python {
         
         # Manual fallback
         if (-not $installed) {
-            Write-Status "Please download and install Python manually:"
-            Write-Status "https://www.python.org/downloads/windows/"
-            Start-Process "https://www.python.org/downloads/windows/"
-            Read-Host "Press Enter after installing Python"
+            Write-Error "Could not install Python automatically."
+            Write-Error "Please install it manually from https://www.python.org/downloads/windows/"
+            exit 1
         }
         
         # Refresh PATH
@@ -304,10 +303,9 @@ function Install-Crush {
 
     # Manual fallback
     if (-not $installed -and -not $Upgrade.IsPresent) {
-        Write-Status "Please download crush manually from:"
-        Write-Status "https://github.com/charmbracelet/crush/releases"
-        Start-Process "https://github.com/charmbracelet/crush/releases"
-        Read-Host "Press Enter after installing crush"
+        Write-Error "Could not install crush automatically."
+        Write-Error "Please install it manually from https://github.com/charmbracelet/crush/releases"
+        exit 1
     }
 
     # Refresh PATH
@@ -394,10 +392,6 @@ function Main {
     Write-Status "crush --version"
     Write-Host ""
     Write-Status "Installation complete!"
-    if ([Environment]::UserInteractive) {
-        Write-Status "Press any key to exit..."
-        $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-    }
 }
 
 # Run main function with global error handling
@@ -409,9 +403,5 @@ catch {
     Write-Error "Details: $($_.Exception.Message)"
     Write-Host ""
     Write-Status "The script will now exit."
-    if ([Environment]::UserInteractive) {
-        Write-Status "Press any key to continue..."
-        $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-    }
     exit 1
 }

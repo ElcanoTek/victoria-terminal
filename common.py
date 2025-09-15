@@ -105,9 +105,8 @@ def err(msg: str) -> None:  # pragma: no cover - simple wrapper
 
 
 def handle_error(exc: Exception) -> None:
-    """Prints an error message and waits for user input to exit."""
+    """Prints an error message and exits."""
     err(f"An unexpected error occurred: {exc}")
-    console.input("[red]Press Enter to exit...")
     sys.exit(1)
 
 
