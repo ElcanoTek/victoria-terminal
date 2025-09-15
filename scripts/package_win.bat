@@ -16,9 +16,13 @@ call :find_signtool
 goto :after_find_signtool
 
 :find_signtool
+rem Set local variables to avoid parentheses issues
+set "PGMX86=%ProgramFiles(x86)%"
+set "PGMFILES=%ProgramFiles%"
+
 rem Search in Program Files (x86) first
-if exist "%ProgramFiles(x86)%\Windows Kits\10\bin\" (
-    for /r "%ProgramFiles(x86)%\Windows Kits\10\bin\" %%f in (signtool.exe) do (
+if exist "%PGMX86%\Windows Kits\10\bin\" (
+    for /r "%PGMX86%\Windows Kits\10\bin\" %%f in (signtool.exe) do (
         if exist "%%f" (
             set SIGNTOOL_PATH="%%f"
             exit /b
@@ -27,8 +31,8 @@ if exist "%ProgramFiles(x86)%\Windows Kits\10\bin\" (
 )
 
 rem If not found, search in Program Files
-if exist "%ProgramFiles%\Windows Kits\10\bin\" (
-    for /r "%ProgramFiles%\Windows Kits\10\bin\" %%f in (signtool.exe) do (
+if exist "%PGMFILES%\Windows Kits\10\bin\" (
+    for /r "%PGMFILES%\Windows Kits\10\bin\" %%f in (signtool.exe) do (
         if exist "%%f" (
             set SIGNTOOL_PATH="%%f"
             exit /b
