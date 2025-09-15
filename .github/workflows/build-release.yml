@@ -70,7 +70,7 @@ jobs:
         run: |
           echo "${{ secrets.WINDOWS_CERTIFICATE }}" | base64 --decode > certificate.pfx
         shell: bash
-      - name: Install ImageMagick
+        name: Install ImageMagick
         if: matrix.platform.os == 'windows-latest'
         run: choco install imagemagick.app -y
       - name: Build Windows executable
@@ -103,13 +103,6 @@ jobs:
           # Import certificate
           security import certificate.p12 -k build.keychain -P "${{ secrets.MACOS_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple: -s -k "${{ secrets.MACOS_CERTIFICATE_PASSWORD }}" build.keychain
-          
-          # Setup notarization profile using API key
-          echo "${{ secrets.API_KEY }}" | base64 --decode > AuthKey.p8
-          xcrun notarytool store-credentials "notarization-profile" \
-            --key AuthKey.p8 \
-            --key-id "${{ secrets.API_KEY_ID }}" \
-            --issuer-id "${{ secrets.API_ISSUER_ID }}"
         env:
           MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
       - name: Install bc
@@ -121,7 +114,9 @@ jobs:
           bash scripts/package_mac.sh
         env:
           MACOS_CERTIFICATE_NAME: "Developer ID Application: ${{ secrets.DEVELOPER_NAME }} (${{ secrets.TEAM_ID }})"
-          KEYCHAIN_PROFILE: "notarization-profile"
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APP_SPECIFIC_PASSWORD: ${{ secrets.APP_SPECIFIC_PASSWORD }}
+          TEAM_ID: ${{ secrets.TEAM_ID }}
       - name: Build Linux AppImage
         if: contains(matrix.platform.os, 'ubuntu')
         run: |
@@ -140,11 +135,6 @@ jobs:
           name: victoria-macos
           path: Victoria-${{ env.VERSION }}-macos.zip
           if-no-files-found: error
-      - name: Clean up macOS keychain
-        if: always() && matrix.platform.os == 'macos-latest' && secrets.MACOS_CERTIFICATE != ''
-        run: |
-          security delete-keychain build.keychain
-          rm -f certificate.p12 AuthKey.p8
       - name: Upload Linux artifact
         if: contains(matrix.platform.os, 'ubuntu')
         uses: actions/upload-artifact@v4
