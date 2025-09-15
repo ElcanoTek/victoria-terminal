@@ -70,7 +70,7 @@ jobs:
         run: |
           echo "${{ secrets.WINDOWS_CERTIFICATE }}" | base64 --decode > certificate.pfx
         shell: bash
-        name: Install ImageMagick
+      - name: Install ImageMagick
         if: matrix.platform.os == 'windows-latest'
         run: choco install imagemagick.app -y
       - name: Build Windows executable
