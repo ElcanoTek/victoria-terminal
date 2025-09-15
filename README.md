@@ -10,30 +10,55 @@ Victoria is not a single application, but a **fleet of apps** designed to work t
 
 ## ⚙️ Installation & Setup
 
-This section covers how to run Victoria from source. For information on the packaged releases, see the project's [GitHub Releases](https://github.com/ElcanoTek/victoria-fleet/releases) page.
+The recommended way to install Victoria is with the `install.sh` script. This will install the Victoria fleet as command-line tools on your system.
+
+```bash
+curl -sL https://raw.githubusercontent.com/elcanotek/victoria/main/install.sh | bash
+```
+
+This will:
+- Clone the repository to `~/.victoria`.
+- Set up a Python virtual environment.
+- Install all necessary dependencies.
+- Create command-line wrappers in `/usr/local/bin` for the following commands:
+  - `victoria-configurator`
+  - `victoria-terminal`
+  - `victoria-browser`
+
+### First-Time Setup
+
+After installation, you must run the configurator to set up your environment.
+
+```bash
+victoria-configurator
+```
+This will guide you through the necessary setup steps, including creating a `.env` file for your API keys and other secrets in `~/Victoria/.env`.
+
+### Running the Terminal
+
+Once setup is complete, you can run the Victoria Terminal for your data analysis work.
+
+```bash
+victoria-terminal
+```
+
+---
+
+## 🚀 For Developers
+
+If you want to contribute to Victoria, you can set up a development environment by following these steps.
 
 ### Prerequisites
 
-Before you begin, you will need the following tools installed and available on your system's `PATH`:
-
 *   **Python 3.8+**
 *   **uv**: A fast Python package installer. ([Installation guide](https://docs.astral.sh/uv/getting-started/installation/))
-*   **crush**: The AI coding agent used by Victoria. ([Installation guide](https://github.com/charmbracelet/crush))
-
-You can verify your installations by running:
-```bash
-python3 --version
-uv --version
-crush --version
-```
-> **Note:** If `crush` is not installed, the application will attempt to install it for you on the first run.
 
 ### Development Setup
 
 1.  **Clone the Repository:**
     ```bash
-    git clone git@github.com:ElcanoTek/victoria-fleet.git
-    cd victoria-fleet
+    git clone https://github.com/elcanotek/victoria.git
+    cd victoria
     ```
 
 2.  **Create a Virtual Environment:**
@@ -49,116 +74,13 @@ crush --version
     uv pip install -r requirements-dev.txt
     ```
 
-### Environment Variables & Secrets
-
-Victoria uses environment variables for configuration, particularly for secrets like API keys. The recommended way to manage these during development is with a `.env` file.
-
-1.  Create a file named `.env` inside the `~/Victoria` directory (the script will create this directory on first run if it doesn't exist).
+4.  **Running the tools:**
+    You can run the tools directly from the command line:
     ```bash
-    mkdir -p ~/Victoria
-    touch ~/Victoria/.env
+    python3 VictoriaConfigurator.py
+    python3 VictoriaTerminal.py
+    python3 VictoriaBrowser.py
     ```
-
-2.  Add your secrets to this file in `KEY="VALUE"` format. For example:
-    ```
-    # ~/Victoria/.env
-
-    OPENROUTER_API_KEY="sk-or-v1-..."
-    SNOWFLAKE_ACCOUNT="your_account"
-    SNOWFLAKE_USER="your_user"
-    SNOWFLAKE_PASSWORD="your_password"
-    # ... etc.
-    ```
-The application will automatically load variables from this file at startup.
-
----
-## 📦 Building from Source
-
-If you want to build the packaged executables (`.exe`, `.app`) yourself, you will need some additional tools. These are not required for running the application from source in development mode.
-
-### Build-time Dependencies
-
-*   **For Windows & macOS:**
-    *   **ImageMagick**: Used to create the application icons from the source PNG files.
-    *   You can download it from the [official ImageMagick website](https://imagemagick.org/script/download.php). On macOS, you can also install it via Homebrew: `brew install imagemagick`.
-
-*   **For macOS only:**
-    *   **bc**: A command-line calculator used for creating the rounded corners on the macOS icons.
-    *   It can be installed via Homebrew: `brew install bc`.
-
-Once these dependencies are installed, you can use the packaging scripts located in the `scripts/` directory:
-```bash
-# To build for macOS
-bash scripts/package_mac.sh
-
-# To build for Windows (from a Windows environment)
-.\scripts\package_win.bat
-```
-
----
-
-## 🚀 The Victoria Fleet
-
-The Victoria project is a **fleet of applications**, each with a specific purpose. The initial fleet consists of three main components:
-
-*   **Victoria Configurator**: The starting point for all new users. This is a one-time setup tool that installs prerequisites (`crush`) and configures your environment variables.
-*   **Victoria Terminal**: The flagship application for launching data analysis sessions with the `crush` AI agent.
-*   **Victoria Browser**: A simple utility that opens your default web browser to the ElcanoTek website.
-
-### First-Time Setup
-
-Before launching the terminal for the first time, you must run the configurator.
-
-```bash
-source .venv/bin/activate
-python3 VictoriaConfigurator.py
-```
-This will guide you through the necessary setup steps.
-
-### Running the Terminal
-
-Once setup is complete, you can run the Victoria Terminal for your data analysis work.
-
-#### Interactive Mode
-
-To launch in interactive mode, run:
-```bash
-source .venv/bin/activate
-python3 VictoriaTerminal.py
-```
-This will present you with menus to select the model and data source.
-
-#### Non-Interactive Mode (for scripting)
-
-The terminal can also be launched non-interactively using command-line arguments.
-
-```bash
-python3 VictoriaTerminal.py [OPTIONS]
-```
-
-**Options:**
-
-*   `--course INTEGER`: The course to select (1 for Snowflake, 2 for local files).
-*   `--local-model`: Use a local model.
-*   `--quiet`: Suppress informational messages.
-*   `--version`: Show the version and exit.
-*   `--help`: Show the help message and exit.
-
-**Example:**
-
-```bash
-python3 VictoriaTerminal.py --course 2 --local-model
-```
-
-### Platform Notes
-
-All modes store configuration and data in `~/Victoria` (or `%USERPROFILE%\Victoria` on Windows).
-
-On Windows, PowerShell's security policy can sometimes prevent scripts from running. The `VictoriaConfigurator.py` script handles this for you, so **no manual steps are typically needed.**
-
-### Model Notes
-
-Victoria's supported models are defined in template JSON files. Check the [Crush template](configs/crush/crush.template.json) and the [Local Providers template](configs/crush/local.providers.json) to see the current models.
 
 ---
 ## 🤝 Contributing
