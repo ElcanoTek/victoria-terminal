@@ -192,133 +192,127 @@ function Install-Python {
 }
 
 function Install-UV {
-    if (($Upgrade.IsPresent -and (Test-CommandExists "uv")) -or (-not (Test-CommandExists "uv"))) {
-        if ($Upgrade.IsPresent -and (Test-CommandExists "uv")) {
-            Write-Status "Checking for uv upgrade..."
-        } else {
-            Write-Status "Installing uv (Python package manager)..."
-        }
-        
-        $installed = $false
-        
-        # Try WinGet first
-        if (Test-CommandExists "winget") {
-            try {
-                winget install --id=astral-sh.uv -e --accept-source-agreements --accept-package-agreements
-                $installed = $true
-                Write-Success "uv installed/upgraded via WinGet"
-            }
-            catch {
-                Write-Warning "WinGet command failed"
-            }
-        }
-        
-        # Try Scoop
-        if (-not $installed -and (Test-CommandExists "scoop")) {
-            try {
-                if ($Upgrade.IsPresent) {
-                    scoop update main/uv
-                } else {
-                    scoop install main/uv
-                }
-                $installed = $true
-                Write-Success "uv installed/upgraded via Scoop"
-            }
-            catch {
-                Write-Warning "Scoop command failed"
-            }
-        }
-        
-        # Try standalone installer
-        if (-not $installed) {
-            try {
-                Write-Status "Installing/upgrading uv via standalone installer..."
-                $progressPreference = 'silentlyContinue'
-                Invoke-RestMethod https://astral.sh/uv/install.ps1 | Invoke-Expression
-                $installed = $true
-                Write-Success "uv installed/upgraded via standalone installer"
-            }
-            catch {
-                Write-Error "Failed to install uv via standalone installer"
-            }
-        }
-        
-        # Refresh PATH
-        $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+    if ($Upgrade.IsPresent) {
+        Write-Status "Upgrading uv (Python package manager)..."
+    } else {
+        Write-Status "Installing uv (Python package manager)..."
     }
-    else {
-        Write-Success "uv is already installed ($(uv --version))"
+
+    $installed = $false
+    $wingetCommand = if ($Upgrade.IsPresent) { "upgrade" } else { "install" }
+
+    # Try WinGet first
+    if (Test-CommandExists "winget") {
+        try {
+            winget $wingetCommand --id=astral-sh.uv -e --accept-source-agreements --accept-package-agreements
+            $installed = $true
+            Write-Success "uv $wingetCommand command sent via WinGet"
+        }
+        catch {
+            Write-Warning "WinGet command failed"
+        }
     }
+
+    # Try Scoop
+    if (-not $installed -and (Test-CommandExists "scoop")) {
+        try {
+            if ($Upgrade.IsPresent) {
+                scoop update main/uv
+            } else {
+                scoop install main/uv
+            }
+            $installed = $true
+            Write-Success "uv installed/upgraded via Scoop"
+        }
+        catch {
+            Write-Warning "Scoop command failed"
+        }
+    }
+
+    # Try standalone installer
+    if (-not $installed) {
+        try {
+            Write-Status "Installing/upgrading uv via standalone installer..."
+            $progressPreference = 'silentlyContinue'
+            Invoke-RestMethod https://astral.sh/uv/install.ps1 | Invoke-Expression
+            $installed = $true
+            Write-Success "uv installed/upgraded via standalone installer"
+        }
+        catch {
+            Write-Error "Failed to install uv via standalone installer"
+        }
+    }
+
+    # Refresh PATH
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+    Write-Success "uv installation/upgrade process complete."
 }
 
 function Install-Crush {
-    if (($Upgrade.IsPresent -and (Test-CommandExists "crush")) -or (-not (Test-CommandExists "crush"))) {
-        if ($Upgrade.IsPresent -and (Test-CommandExists "crush")) {
-            Write-Status "Checking for crush upgrade..."
-        } else {
-            Write-Status "Installing crush (AI coding agent)..."
-        }
-        
-        $installed = $false
-        
-        # Try WinGet first
-        if (Test-CommandExists "winget") {
-            try {
-                winget install --id=charmbracelet.crush -e --accept-source-agreements --accept-package-agreements
-                $installed = $true
-                Write-Success "crush installed/upgraded via WinGet"
-            }
-            catch {
-                Write-Warning "WinGet command failed"
-            }
-        }
-        
-        # Try Scoop
-        if (-not $installed -and (Test-CommandExists "scoop")) {
-            try {
-                # Add charm bucket if not already added
-                if ((scoop bucket list) -notcontains "charm") {
-                    scoop bucket add charm https://github.com/charmbracelet/scoop-bucket.git
-                }
-                if ($Upgrade.IsPresent) {
-                    scoop update crush
-                } else {
-                    scoop install crush
-                }
-                $installed = $true
-                Write-Success "crush installed/upgraded via Scoop"
-            }
-            catch {
-                Write-Warning "Scoop command failed"
-            }
-        }
-        
-        # Try npm
-        if (-not $installed -and (Test-CommandExists "npm")) {
-            try {
-                npm install -g @charmland/crush
-                $installed = $true
-                Write-Success "crush installed/upgraded via npm"
-            }
-            catch {
-                Write-Warning "npm installation failed"
-            }
-        }
-        
-        # Manual fallback
-        if (-not $installed -and -not $Upgrade.IsPresent) {
-            Write-Status "Please download crush manually from:"
-            Write-Status "https://github.com/charmbracelet/crush/releases"
-            Start-Process "https://github.com/charmbracelet/crush/releases"
-            Read-Host "Press Enter after installing crush"
-        }
-        
-        # Refresh PATH
-        $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+    if ($Upgrade.IsPresent) {
+        Write-Status "Upgrading crush (AI coding agent)..."
+    } else {
+        Write-Status "Installing crush (AI coding agent)..."
     }
-    else {
-        Write-Success "crush is already installed"
+
+    $installed = $false
+    $wingetCommand = if ($Upgrade.IsPresent) { "upgrade" } else { "install" }
+
+    # Try WinGet first
+    if (Test-CommandExists "winget") {
+        try {
+            winget $wingetCommand --id=charmbracelet.crush -e --accept-source-agreements --accept-package-agreements
+            $installed = $true
+            Write-Success "crush $wingetCommand command sent via WinGet"
+        }
+        catch {
+            Write-Warning "WinGet command failed"
+        }
     }
+
+    # Try Scoop
+    if (-not $installed -and (Test-CommandExists "scoop")) {
+        try {
+            # Add charm bucket if not already added
+            if ((scoop bucket list) -notcontains "charm") {
+                scoop bucket add charm https://github.com/charmbracelet/scoop-bucket.git
+            }
+            if ($Upgrade.IsPresent) {
+                scoop update crush
+            } else {
+                scoop install crush
+            }
+            $installed = $true
+            Write-Success "crush installed/upgraded via Scoop"
+        }
+        catch {
+            Write-Warning "Scoop command failed"
+        }
+    }
+
+    # Try npm
+    if (-not $installed -and (Test-CommandExists "npm")) {
+        try {
+            npm install -g @charmland/crush # npm install -g is idempotent
+            $installed = $true
+            Write-Success "crush installed/upgraded via npm"
+        }
+        catch {
+            Write-Warning "npm installation failed"
+        }
+    }
+
+    # Manual fallback
+    if (-not $installed -and -not $Upgrade.IsPresent) {
+        Write-Status "Please download crush manually from:"
+        Write-Status "https://github.com/charmbracelet/crush/releases"
+        Start-Process "https://github.com/charmbracelet/crush/releases"
+        Read-Host "Press Enter after installing crush"
+    }
+
+    # Refresh PATH
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+    Write-Success "crush installation/upgrade process complete."
 }
 
 function Main {
