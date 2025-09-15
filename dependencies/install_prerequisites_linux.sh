@@ -1,8 +1,7 @@
 #!/bin/bash
 
-# Prerequisites Installer for Linux
+# Prerequisites Installer for Fedora Linux
 # This script installs the required dependencies for the project
-# Supports: Ubuntu/Debian, Fedora/RHEL/CentOS, Arch Linux, openSUSE, Alpine
 
 set -e  # Exit on any error
 
@@ -12,88 +11,17 @@ source "$(dirname "$0")/common.sh"
 # --- Global Variables ---
 UPGRADE=false
 
-# Function to detect Linux distribution
-detect_distro() {
-    if [ -f /etc/os-release ]; then
-        . /etc/os-release
-        DISTRO=$ID
-        VERSION=$VERSION_ID
-    elif [ -f /etc/redhat-release ]; then
-        DISTRO="rhel"
-    elif [ -f /etc/debian_version ]; then
-        DISTRO="debian"
-    else
-        DISTRO="unknown"
-    fi
-    
-    print_status "Detected distribution: $DISTRO"
-}
-
 # Function to update package manager
 update_package_manager() {
     print_status "Updating package manager..."
-    case $DISTRO in
-        ubuntu|debian)
-            sudo apt update
-            ;;
-        fedora)
-            sudo dnf check-update || true # DNF exits with 100 if updates are available
-            ;;
-        rhel|centos|rocky|almalinux)
-            if command_exists dnf; then
-                sudo dnf check-update || true
-            else
-                sudo yum check-update || true
-            fi
-            ;;
-        arch|manjaro)
-            sudo pacman -Sy
-            ;;
-        opensuse*|sles)
-            sudo zypper refresh
-            ;;
-        alpine)
-            sudo apk update
-            ;;
-        *)
-            print_warning "Unknown distribution, skipping package manager update"
-            ;;
-    esac
+    sudo dnf check-update || true # DNF exits with 100 if updates are available
 }
 
 # Function to install Python
 install_python() {
     if ! command_exists python3; then
         print_status "Installing Python..."
-        case $DISTRO in
-            ubuntu|debian)
-                sudo apt install -y python3 python3-pip python3-venv
-                ;;
-            fedora)
-                sudo dnf install -y python3 python3-pip
-                ;;
-            rhel|centos|rocky|almalinux)
-                if command_exists dnf; then
-                    sudo dnf install -y python3 python3-pip
-                else
-                    sudo yum install -y python3 python3-pip
-                fi
-                ;;
-            arch|manjaro)
-                sudo pacman -S --noconfirm python python-pip
-                ;;
-            opensuse*|sles)
-                sudo zypper install -y python3 python3-pip
-                ;;
-            alpine)
-                sudo apk add python3 py3-pip
-                ;;
-            *)
-                print_error "Unsupported distribution for automatic Python installation"
-                print_status "Please install Python manually using your package manager"
-                return 1
-                ;;
-        esac
+        sudo dnf install -y python3 python3-pip
         print_success "Python installed successfully"
     else
         print_success "Python is already installed ($(python3 --version))"
@@ -107,17 +35,6 @@ install_uv() {
     else
         print_status "Installing uv (Python package manager)..."
     fi
-
-    # Try distribution-specific packages first
-    case $DISTRO in
-        arch|manjaro)
-            if command_exists yay; then
-                yay -S --noconfirm uv
-                print_success "uv installed/upgraded via AUR"
-                return 0
-            fi
-            ;;
-    esac
 
     # Fallback to standalone installer
     print_status "Installing/upgrading uv via standalone installer..."
@@ -137,120 +54,17 @@ install_crush() {
         print_status "Installing crush (AI coding agent)..."
     fi
 
-    # Try distribution-specific packages first
-    case $DISTRO in
-        ubuntu|debian)
-            print_status "Adding Charm repository and installing/upgrading crush..."
-            sudo mkdir -p /etc/apt/keyrings
-            curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg
-            echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
-            sudo apt update
-            sudo apt install -y crush
-            print_success "crush installed/upgraded via Charm repository"
-            return 0
-            ;;
-        fedora|rhel|centos|rocky|almalinux)
-            print_status "Adding Charm repository and installing/upgrading crush..."
-            echo '[charm]
+    print_status "Adding Charm repository and installing/upgrading crush..."
+    echo '[charm]
 name=Charm
 baseurl=https://repo.charm.sh/yum/
 enabled=1
 gpgcheck=1
 gpgkey=https://repo.charm.sh/yum/gpg.key' | sudo tee /etc/yum.repos.d/charm.repo
-            if command_exists dnf; then
-                sudo dnf install -y crush
-            else
-                sudo yum install -y crush
-            fi
-            print_success "crush installed/upgraded via Charm repository"
-            return 0
-            ;;
-        arch|manjaro)
-            if command_exists yay; then
-                yay -S --noconfirm crush-bin
-                print_success "crush installed/upgraded via AUR"
-                return 0
-            fi
-            ;;
-    esac
-
-    # Fallback to Go installation
-    print_warning "Distribution-specific package not available. Trying Go installation..."
-    if command_exists go; then
-        go install github.com/charmbracelet/crush@latest
-
-        # Add GOPATH/bin to PATH for this script's execution
-        GOPATH=$(go env GOPATH)
-        export PATH="$GOPATH/bin:$PATH"
-
-        print_success "crush installed/upgraded via Go"
-    else
-        print_error "Go is not installed and no distribution package available."
-        print_status "Please install Go first or install crush manually."
-        print_status "Go can be installed from: https://golang.org/dl/"
-        return 1
-    fi
+    sudo dnf install -y crush
+    print_success "crush installed/upgraded via Charm repository"
+    return 0
 }
-
-# Function to install Go (if needed for crush)
-install_go() {
-    # Only install Go if we have to fall back to it
-    if ! command_exists go; then
-        # Check if we need it
-        local needs_go=true
-        case $DISTRO in
-            ubuntu|debian|fedora|rhel|centos|rocky|almalinux)
-                needs_go=false # Handled by package manager
-                ;;
-            arch|manjaro)
-                if command_exists yay; then
-                    needs_go=false # Handled by AUR
-                fi
-                ;;
-        esac
-
-        if [ "$needs_go" = false ]; then
-            return 0
-        fi
-
-        print_status "Go is needed to install crush. Installing Go..."
-        case $DISTRO in
-            ubuntu|debian)
-                # Use snap for latest version
-                if command_exists snap; then
-                    sudo snap install go --classic
-                else
-                    sudo apt install -y golang-go
-                fi
-                ;;
-            fedora)
-                sudo dnf install -y golang
-                ;;
-            rhel|centos|rocky|almalinux)
-                if command_exists dnf; then
-                    sudo dnf install -y golang
-                else
-                    sudo yum install -y golang
-                fi
-                ;;
-            arch|manjaro)
-                sudo pacman -S --noconfirm go
-                ;;
-            opensuse*|sles)
-                sudo zypper install -y go
-                ;;
-            alpine)
-                sudo apk add go
-                ;;
-            *)
-                print_warning "Please install Go manually from: https://golang.org/dl/"
-                return 1
-                ;;
-        esac
-        print_success "Go installed successfully"
-    fi
-}
-
 
 # Main installation function
 main() {
@@ -260,21 +74,17 @@ main() {
 
     if [ "$UPGRADE" = true ]; then
         echo "=================================================="
-        echo "    Prerequisites Upgrader for Linux"
+        echo "    Prerequisites Upgrader for Fedora Linux"
         echo "=================================================="
         echo
         print_status "Starting upgrade of prerequisites..."
     else
         echo "=================================================="
-        echo "    Prerequisites Installer for Linux"
+        echo "    Prerequisites Installer for Fedora Linux"
         echo "=================================================="
         echo
         print_status "Starting installation of prerequisites..."
     fi
-    echo
-    
-    # Detect distribution
-    detect_distro
     echo
     
     # Update package manager repositories
@@ -287,10 +97,6 @@ main() {
 
     # Install or upgrade uv and crush
     install_uv
-    echo
-    
-    # Install Go if needed for crush (only on first install)
-    install_go
     echo
     
     install_crush

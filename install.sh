@@ -74,39 +74,39 @@ main() {
 
     # 4. Create and activate a virtual environment
     print_info "Setting up Python virtual environment..."
-if [ ! -d "$VENV_DIR" ]; then
-    python3 -m venv "$VENV_DIR"
-fi
-source "$VENV_DIR/bin/activate"
+    if [ ! -d "$VENV_DIR" ]; then
+        python3 -m venv "$VENV_DIR"
+    fi
+    source "$VENV_DIR/bin/activate"
 
-# 5. Install dependencies
-print_info "Installing dependencies..."
-pip install -r requirements.txt
+    # 5. Install dependencies
+    print_info "Installing dependencies..."
+    pip install -r requirements.txt
 
-# 6. Create wrapper scripts
-print_info "Creating wrapper scripts in $BIN_DIR..."
-if [ ! -w "$BIN_DIR" ]; then
-    print_warning "Cannot write to $BIN_DIR. You may need to run this script with sudo, or create the wrappers manually."
-    SUDO_CMD="sudo"
-else
-    SUDO_CMD=""
-fi
+    # 6. Create wrapper scripts
+    print_info "Creating wrapper scripts in $BIN_DIR..."
+    if [ ! -w "$BIN_DIR" ]; then
+        print_warning "Cannot write to $BIN_DIR. You may need to run this script with sudo, or create the wrappers manually."
+        SUDO_CMD="sudo"
+    else
+        SUDO_CMD=""
+    fi
 
-# Wrapper for Victoria Configurator
+    # Wrapper for Victoria Configurator
     $SUDO_CMD tee "$BIN_DIR/victoria-configurator" > /dev/null <<EOF
 #!/usr/bin/env bash
 exec "$VENV_DIR/bin/python" "$INSTALL_DIR/VictoriaConfigurator.py" "\$@"
 EOF
     $SUDO_CMD chmod +x "$BIN_DIR/victoria-configurator"
 
-# Wrapper for Victoria Terminal
+    # Wrapper for Victoria Terminal
     $SUDO_CMD tee "$BIN_DIR/victoria-terminal" > /dev/null <<EOF
 #!/usr/bin/env bash
 exec "$VENV_DIR/bin/python" "$INSTALL_DIR/VictoriaTerminal.py" "\$@"
 EOF
     $SUDO_CMD chmod +x "$BIN_DIR/victoria-terminal"
 
-# Wrapper for Victoria Browser
+    # Wrapper for Victoria Browser
     $SUDO_CMD tee "$BIN_DIR/victoria-browser" > /dev/null <<EOF
 #!/usr/bin/env bash
 exec "$VENV_DIR/bin/python" "$INSTALL_DIR/VictoriaBrowser.py" "\$@"
@@ -135,28 +135,11 @@ update_shell_config() {
     read -p "The directory $BIN_DIR is not in your PATH. Add it now? [Y/n] " -r answer
     # Default to 'yes' if no answer is given
     if [[ -z "$answer" || "$answer" =~ ^[Yy]$ ]]; then
-        local shell_config_file
-        local current_shell=$(basename "$SHELL")
+        local shell_config_file="$HOME/.bashrc"
 
-        if [[ "$current_shell" == "zsh" ]]; then
-            shell_config_file="$HOME/.zshrc"
-        elif [[ "$current_shell" == "bash" ]]; then
-            # Check for standard bash config files
-            if [[ -f "$HOME/.bashrc" ]]; then
-                shell_config_file="$HOME/.bashrc"
-            elif [[ -f "$HOME/.bash_profile" ]]; then
-                shell_config_file="$HOME/.bash_profile"
-            else
-                # Fallback for non-standard setups
-                shell_config_file="$HOME/.profile"
-                if [[ ! -f "$shell_config_file" ]]; then
-                    print_warning "Could not find a standard shell profile file. Creating $shell_config_file."
-                    touch "$shell_config_file"
-                fi
-            fi
-        else
-            print_warning "Unsupported shell: $current_shell. Please add $BIN_DIR to your PATH manually."
-            return
+        if [ ! -f "$shell_config_file" ]; then
+            print_warning "Could not find ~/.bashrc. Creating it."
+            touch "$shell_config_file"
         fi
 
         print_info "Adding $BIN_DIR to PATH in $shell_config_file..."

@@ -43,8 +43,7 @@ For local development, we strongly recommend using a virtual environment to isol
 
     # Create and activate a virtual environment
     uv venv
-    source .venv/bin/activate  # On macOS/Linux
-    # .venv\Scripts\activate  # On Windows
+    source .venv/bin/activate  # On Fedora Linux
 
     # Install development dependencies
     uv pip install -r requirements-dev.txt
@@ -63,8 +62,7 @@ For local development, we strongly recommend using a virtual environment to isol
 
     # Create and activate a virtual environment
     python -m venv .venv
-    source .venv/bin/activate  # On macOS/Linux
-    # .venv\Scripts\activate  # On Windows
+    source .venv/bin/activate  # On Fedora Linux
 
     # Install development dependencies
     pip install -r requirements-dev.txt
