@@ -350,8 +350,11 @@ function Main {
     Write-Status "uv --version"
     Write-Status "crush --version"
     Write-Host ""
-    Write-Status "Installation complete! Press any key to exit..."
-    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    Write-Status "Installation complete!"
+    if ([Environment]::UserInteractive) {
+        Write-Status "Press any key to exit..."
+        $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    }
 }
 
 # Run main function with global error handling
@@ -362,8 +365,11 @@ catch {
     Write-Error "An unexpected error occurred during the installation."
     Write-Error "Details: $($_.Exception.Message)"
     Write-Host ""
-    Write-Status "The script will now exit. Press any key to continue..."
-    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    Write-Status "The script will now exit."
+    if ([Environment]::UserInteractive) {
+        Write-Status "Press any key to continue..."
+        $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    }
     exit 1
 }
 
