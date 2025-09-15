@@ -5,7 +5,7 @@ set -e
 INSTALL_DIR="$HOME/.victoria"
 VENV_DIR="$INSTALL_DIR/venv"
 BIN_DIR="/usr/local/bin"
-REPO_URL="https://github.com/elcanotek/victoria.git"
+REPO_URL="https://github.com/ElcanoTek/victoria-fleet.git"
 DEFAULT_BRANCH="main" # 'stable' version
 
 # --- Helper Functions ---

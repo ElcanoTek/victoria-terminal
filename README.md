@@ -17,7 +17,7 @@ Victoria can be installed on macOS, Linux, and Windows.
 The recommended way to install Victoria on macOS and Linux is with the `install.sh` script. This will install the Victoria fleet as command-line tools on your system.
 
 ```bash
-curl -sL https://raw.githubusercontent.com/elcanotek/victoria/main/install.sh | bash
+curl -sL https://raw.githubusercontent.com/ElcanoTek/victoria-fleet/main/install.sh | bash
 ```
 
 This script will:
@@ -39,7 +39,7 @@ On Windows, you can install Victoria using the `install.ps1` PowerShell script.
 
 3.  **Download and Run the Installer:** Run the following command to download and execute the installation script.
     ```powershell
-    iwr https://raw.githubusercontent.com/elcanotek/victoria/main/install.ps1 -useb | iex
+    iwr https://raw.githubusercontent.com/ElcanoTek/victoria-fleet/main/install.ps1 -useb | iex
     ```
 
 This script will:
@@ -82,7 +82,7 @@ If you wish to remove Victoria from your system, you can use the provided uninst
 Run the `uninstall.sh` script from the repository directory, or download and run it directly:
 
 ```bash
-curl -sL https://raw.githubusercontent.com/elcanotek/victoria/main/uninstall.sh | bash
+curl -sL https://raw.githubusercontent.com/ElcanoTek/victoria-fleet/main/uninstall.sh | bash
 ```
 
 This script will:
@@ -94,7 +94,7 @@ This script will:
 Run the `uninstall.ps1` script from the repository directory, or download and run it directly in PowerShell:
 
 ```powershell
-iwr https://raw.githubusercontent.com/elcanotek/victoria/main/uninstall.ps1 -useb | iex
+iwr https://raw.githubusercontent.com/ElcanoTek/victoria-fleet/main/uninstall.ps1 -useb | iex
 ```
 
 This script will:
@@ -116,8 +116,8 @@ If you want to contribute to Victoria, you can set up a development environment 
 
 1.  **Clone the Repository:**
     ```bash
-    git clone https://github.com/elcanotek/victoria.git
-    cd victoria
+    git clone https://github.com/ElcanoTek/victoria-fleet.git
+    cd victoria-fleet
     ```
 
 2.  **Create a Virtual Environment:**

@@ -6,17 +6,17 @@
 # To run this script, use one of the following commands in PowerShell:
 #
 # # Install stable version (default)
-# irm https://raw.githubusercontent.com/elcanotek/victoria/main/install.ps1 | iex
+# irm https://raw.githubusercontent.com/ElcanoTek/victoria-fleet/main/install.ps1 | iex
 #
 # # Install latest version
-# & ([scriptblock]::Create((irm https://raw.githubusercontent.com/elcanotek/victoria/main/install.ps1))) "latest"
+# & ([scriptblock]::Create((irm https://raw.githubusercontent.com/ElcanoTek/victoria-fleet/main/install.ps1))) "latest"
 #
 # # Install specific version
-# & ([scriptblock]::Create((irm https://raw.githubusercontent.com/elcanotek/victoria/main/install.ps1))) "v1.2.3"
+# & ([scriptblock]::Create((irm https://raw.githubusercontent.com/ElcanoTek/victoria-fleet/main/install.ps1))) "v1.2.3"
 #
 
 # --- Configuration ---
-$RepoUrl = "https://github.com/elcanotek/victoria.git"
+$RepoUrl = "https://github.com/ElcanoTek/victoria-fleet.git"
 $DefaultBranch = "main" # 'stable' version
 $InstallDir = "$env:USERPROFILE\.victoria"
 $VenvDir = "$InstallDir\venv"
