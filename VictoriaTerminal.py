@@ -20,7 +20,7 @@ from rich.prompt import Prompt
 
 from common import (APP_HOME, CONFIGS_DIR, SETUP_SENTINEL, VICTORIA_FILE,
                     __version__, banner, console, err, good, handle_error, info,
-                    resource_path, section, warn)
+                    initialize_colorama, resource_path, section, warn)
 
 
 def which(cmd: str) -> str | None:
@@ -357,6 +357,7 @@ def main(
     _err: Callable[[str], None] = err,
     _info: Callable[[str], None] = info,
 ) -> None:
+    initialize_colorama()
     if not SETUP_SENTINEL.exists():
         _err(
             "First-time setup has not been completed. "
