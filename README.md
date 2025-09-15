@@ -142,6 +142,39 @@ If you want to contribute to Victoria, you can set up a development environment 
     ```
 
 ---
+
+## Recommended Models for Testing Victoria
+
+When testing **Victoria** in the terminal, we recommend and have tested the following models.  
+These models have been vetted for **compatibility, reliability, and cost considerations**.  
+We will keep this list updated as new models become approved, tested, and vetted.
+
+| **Model Name**           | **How It Appears in Crush (under ✅ Configured)** |
+|---------------------------|--------------------------------------------------|
+| ChatGPT 5                | `OpenAI: GPT-5`                                   |
+| ChatGPT 5 Mini           | `OpenAI: GPT-5 Mini`                              |
+| xAI Grok Code Fast 1     | `xAI: Grok Code Fast 1`                           |
+| Google Gemini 2.5 Pro    | `Google: Gemini 2.5 Pro`                          |
+| Google Gemini 2.5 Flash  | `Google: Gemini 2.5 Flash`                        |
+
+### How to Select a Model in Crush
+1. Launch Victoria in your terminal.  
+2. Press **`Ctrl+P`** to open the command menu.  
+3. Choose **“Select Model.”**  
+4. In the search bar, type part of the model name (e.g., `GPT-5` or `Gemini 2.5`) to narrow down the results.  
+5. Under the **✅ Configured** heading, select one of the recommended models from the table above.  
+
+<p align="left">
+  <img src="assets/select_model.png" alt="Select Model in Crush" width="300"/>
+</p>
+
+### Important Notes
+- These five models are the **only** ones approved for Victoria at this time.
+- Selecting any model outside this list is unsupported and may produce unreliable results.  
+- As additional models are vetted, this table will be updated to reflect the approved set.
+- Victoria remembers the **last model you selected** and will load it automatically the next time you start.
+- **Tip:** If you want to compare results across models, switch models, then **restart Victoria** before running your prompts. This gives each model a fresh context and makes results easier to compare.  
+
 ## 🤝 Contributing
 
 We welcome contributions to Victoria! If you're interested in fixing bugs or adding new features, please see our [**Contributing Guidelines**](CONTRIBUTING.md) to get started.
