@@ -3,11 +3,12 @@
 
 import webbrowser
 
-from common import console, handle_error
+from common import console, handle_error, initialize_colorama
 
 
 def main():
     """Opens the default web browser to the ElcanoTek website."""
+    initialize_colorama()
     console.print("[cyan]ℹ️ Opening the ElcanoTek website in your default browser...")
     webbrowser.open("https://www.elcanotek.com/")
 
