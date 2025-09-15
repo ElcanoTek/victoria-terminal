@@ -244,7 +244,15 @@ EOF
 
     # Notarize the application
     echo "Notarizing the application..."
-    xcrun notarytool submit "$ARCHIVE_NAME" --keychain-profile "$KEYCHAIN_PROFILE" --wait
+    if [[ -n "${APPLE_ID}" && -n "${APP_SPECIFIC_PASSWORD}" && -n "${TEAM_ID}" ]]; then
+        xcrun notarytool submit "$ARCHIVE_NAME" --apple-id "$APPLE_ID" --password "$APP_SPECIFIC_PASSWORD" --team-id "$TEAM_ID" --wait
+    elif [[ -n "${KEYCHAIN_PROFILE}" ]]; then
+        xcrun notarytool submit "$ARCHIVE_NAME" --keychain-profile "$KEYCHAIN_PROFILE" --wait
+    else
+        echo "Error: Either set APPLE_ID, APP_SPECIFIC_PASSWORD, and TEAM_ID for app-specific password auth,"
+        echo "       or set KEYCHAIN_PROFILE for API key auth"
+        exit 1
+    fi
 
     # Unzip, staple, and re-zip to include the notarization ticket
     echo "Unzipping archive to staple individual apps..."
