@@ -12,7 +12,8 @@ from typing import Callable
 from rich.prompt import Prompt
 
 from common import (APP_HOME, SETUP_SENTINEL, banner, console, err, good,
-                    handle_error, info, resource_path, section, warn)
+                    handle_error, info, initialize_colorama, resource_path,
+                    section, warn)
 
 
 def update_path_from_install(
@@ -140,6 +141,7 @@ def first_run_check(
 
 def main() -> None:
     """Main entry point for the Victoria Configurator."""
+    initialize_colorama()
     console.clear()
     banner()
     section("Model provider selection")

@@ -52,7 +52,12 @@ def load_dotenv(
 load_dotenv()
 
 
-colorama_init()  # Enable ANSI colors on Windows
+def initialize_colorama() -> None:
+    """Initializes colorama if not running under pytest."""
+    if "PYTEST_CURRENT_TEST" not in os.environ:
+        colorama_init()
+
+
 console = Console()
 
 # ---------------------------------------------------------------------------
