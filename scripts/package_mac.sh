@@ -2,10 +2,6 @@
 set -e
 
 # Common setup
-if ! command -v convert &> /dev/null; then
-    echo ">>> Installing ImageMagick..."
-    brew install imagemagick
-fi
 REQ_FILE="$(dirname "$0")/../requirements.txt"
 if [ -z "$VERSION" ]; then
   echo "VERSION environment variable not set; falling back to date"
@@ -19,14 +15,77 @@ KEYCHAIN_PROFILE="${KEYCHAIN_PROFILE:-notarization-profile}"
 # Clean previous builds
 rm -rf dist build *.spec
 
+# --- Helper function for icon generation ---
+generate_icns_if_needed() {
+    local app_name=$1
+    local source_png="assets/${app_name}.png"
+    local icns_path="assets/${app_name}.icns"
+
+    if [ -f "$icns_path" ]; then
+        return 0
+    fi
+
+    echo "--- Generating rounded icon for ${app_name} ---"
+
+    # Check for dependencies
+    for cmd in convert identify sips iconutil bc; do
+        if ! command -v "$cmd" &> /dev/null; then
+            echo "ERROR: Command '$cmd' not found. Please install it to proceed."
+            echo "On macOS, 'convert' and 'identify' are part of ImageMagick ('brew install imagemagick')."
+            echo "'bc' can be installed with 'brew install bc'."
+            exit 1
+        fi
+    done
+
+    local base_image_size
+    base_image_size=$(identify -format '%w' "${source_png}")
+    local rounded_png="assets/${app_name}_rounded.png"
+    local iconset_dir="${app_name}.iconset"
+
+    # 1. Create a rounded mask. The corner radius is ~22.2% of the image size.
+    echo "Creating rounded mask..."
+    local corner_radius
+    corner_radius=$(echo "$base_image_size * 0.222" | bc)
+    convert -size "${base_image_size}x${base_image_size}" xc:none -draw "roundrectangle 0,0,${base_image_size},${base_image_size},${corner_radius},${corner_radius}" mask.png
+
+    # 2. Apply the mask to the source image
+    echo "Applying mask to ${source_png}..."
+    convert "${source_png}" -matte -bordercolor none -border 0 \( mask.png -alpha off \) -compose DstIn -composite "${rounded_png}"
+
+    # 3. Create the iconset directory
+    echo "Creating iconset directory: ${iconset_dir}"
+    mkdir -p "${iconset_dir}"
+
+    # 4. Generate different sizes for the iconset
+    echo "Generating image sizes..."
+    sips -z 16 16   "${rounded_png}" --out "${iconset_dir}/icon_16x16.png"
+    sips -z 32 32   "${rounded_png}" --out "${iconset_dir}/icon_16x16@2x.png"
+    sips -z 32 32   "${rounded_png}" --out "${iconset_dir}/icon_32x32.png"
+    sips -z 64 64   "${rounded_png}" --out "${iconset_dir}/icon_32x32@2x.png"
+    sips -z 128 128 "${rounded_png}" --out "${iconset_dir}/icon_128x128.png"
+    sips -z 256 256 "${rounded_png}" --out "${iconset_dir}/icon_128x128@2x.png"
+    sips -z 256 256 "${rounded_png}" --out "${iconset_dir}/icon_256x256.png"
+    sips -z 512 512 "${rounded_png}" --out "${iconset_dir}/icon_256x256@2x.png"
+    sips -z 512 512 "${rounded_png}" --out "${iconset_dir}/icon_512x512.png"
+    sips -z 1024 1024 "${rounded_png}" --out "${iconset_dir}/icon_512x512@2x.png"
+
+    # 5. Create the .icns file
+    echo "Creating .icns file: ${icns_path}"
+    iconutil -c icns "${iconset_dir}" -o "${icns_path}"
+
+    # 6. Clean up
+    echo "Cleaning up temporary files..."
+    rm -f mask.png "${rounded_png}"
+    rm -rf "${iconset_dir}"
+
+    echo "--- Finished ${app_name} icon ---"
+}
+
 # --- Build Victoria Configurator ---
 echo "--- Building Victoria Configurator ---"
+generate_icns_if_needed "VictoriaConfigurator"
 CONFIGURATOR_BUNDLE_ID=${CONFIGURATOR_BUNDLE_ID:-com.elcanotek.victoriaconfigurator}
 CONFIGURATOR_ICON="assets/VictoriaConfigurator.icns"
-if [ ! -f "$CONFIGURATOR_ICON" ]; then
-  echo ">>> Creating ICNS for Configurator..."
-  convert "assets/VictoriaConfigurator.png" -define icon:auto-resize=256,128,64,48,32,16 "$CONFIGURATOR_ICON"
-fi
 uvx --with-requirements "$REQ_FILE" pyinstaller --noconfirm --windowed --name VictoriaConfigurator \
   --hidden-import colorama --hidden-import rich \
   --icon "$CONFIGURATOR_ICON" \
@@ -72,6 +131,7 @@ rm -rf build VictoriaConfigurator.spec
 
 # --- Build Victoria Terminal ---
 echo "--- Building Victoria Terminal ---"
+generate_icns_if_needed "VictoriaTerminal"
 TERMINAL_BUNDLE_ID=${TERMINAL_BUNDLE_ID:-com.elcanotek.victoriaterminal}
 uvx --with-requirements "$REQ_FILE" pyinstaller --noconfirm --windowed --name VictoriaTerminal \
   --hidden-import colorama --hidden-import rich \
@@ -116,6 +176,7 @@ rm -rf build VictoriaTerminal.spec
 
 # --- Build Victoria Browser ---
 echo "--- Building Victoria Browser ---"
+generate_icns_if_needed "VictoriaBrowser"
 BROWSER_BUNDLE_ID=${BROWSER_BUNDLE_ID:-com.elcanotek.victoriabrowser}
 uvx --with-requirements "$REQ_FILE" pyinstaller --noconfirm --windowed --name VictoriaBrowser \
   --icon assets/VictoriaBrowser.icns \
@@ -131,7 +192,8 @@ if [[ -n "${MACOS_CERTIFICATE_NAME}" && "${MACOS_CERTIFICATE_NAME}" != "Develope
     echo "--- Signing and Notarizing macOS Apps ---"
 
     # Create entitlements file
-    cat > entitlements.plist <<EOF
+    ENTITLEMENTS="entitlements.plist"
+    cat > "$ENTITLEMENTS" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -148,55 +210,61 @@ EOF
 
     # Sign all executables and frameworks within each app bundle
     for app in dist/*.app; do
-        echo "Signing all binaries in $app"
+        echo "--- Signing $app ---"
 
-        # Sign all frameworks and dylibs first
-        find "$app" -name "*.framework" -o -name "*.dylib" -o -name "*.so" | while read -r file; do
-            echo "  Signing $file"
-            codesign --force --verify --verbose --timestamp --options=runtime --sign "$DEVELOPER_ID_CERT" "$file" || true
+        # Sign from the inside out: all bundled frameworks and libraries first
+        find "$app/Contents" -type f \( -name "*.dylib" -o -name "*.so" \) -print0 | while IFS= read -r -d $'\0' file; do
+            echo "Signing library: $file"
+            codesign --force --verify --verbose --timestamp --options=runtime \
+                --sign "$DEVELOPER_ID_CERT" "$file"
         done
 
-        # Sign all executables
-        find "$app" -type f -perm -111 | while read -r file; do
-            if file "$file" | grep -q "Mach-O"; then
-                echo "  Signing executable $file"
-                codesign --force --verify --verbose --timestamp --options=runtime --entitlements entitlements.plist --sign "$DEVELOPER_ID_CERT" "$file"
-            fi
+        # Sign the main executables with entitlements
+        find "$app/Contents/MacOS" -type f -perm +111 -print0 | while IFS= read -r -d $'\0' file; do
+            echo "Signing executable: $file"
+            codesign --force --verify --verbose --timestamp --options=runtime \
+                --entitlements "$ENTITLEMENTS" --sign "$DEVELOPER_ID_CERT" "$file"
         done
 
-        # Finally, sign the app bundle itself
-        echo "Signing app bundle $app"
-        codesign --force --verify --verbose --timestamp --options=runtime --entitlements entitlements.plist --sign "$DEVELOPER_ID_CERT" "$app"
+        # Sign the app bundle itself
+        echo "Signing app bundle: $app"
+        codesign --force --verify --verbose --timestamp --options=runtime \
+            --entitlements "$ENTITLEMENTS" --sign "$DEVELOPER_ID_CERT" "$app"
 
-        # Verify the signature
+        # Verify signature
         echo "Verifying signature for $app"
         codesign --verify --deep --strict --verbose=2 "$app"
         spctl --assess --type exec --verbose "$app"
     done
 
     # Create a zip archive for notarization
-    echo "Creating archive for notarization..."
-    (cd dist && zip -r "../Victoria-${VERSION}-macos.zip" .)
+    ARCHIVE_NAME="Victoria-${VERSION}-macos.zip"
+    echo "Creating archive for notarization: $ARCHIVE_NAME"
+    (cd dist && zip -r "../$ARCHIVE_NAME" .)
 
     # Notarize the application
     echo "Notarizing the application..."
-    xcrun notarytool submit "Victoria-${VERSION}-macos.zip" --keychain-profile "$KEYCHAIN_PROFILE" --wait
+    xcrun notarytool submit "$ARCHIVE_NAME" --keychain-profile "$KEYCHAIN_PROFILE" --wait
 
-    # Extract and staple each app
-    echo "Stapling notarization tickets..."
-    rm -rf temp_extract
-    mkdir temp_extract
-    (cd temp_extract && unzip "../Victoria-${VERSION}-macos.zip")
+    # Unzip, staple, and re-zip to include the notarization ticket
+    echo "Unzipping archive to staple individual apps..."
+    STAPLE_DIR="notarized_dist"
+    rm -rf "$STAPLE_DIR"
+    mkdir "$STAPLE_DIR"
+    unzip "$ARCHIVE_NAME" -d "$STAPLE_DIR"
 
-    for app in temp_extract/*.app; do
-        echo "Stapling $app"
+    for app in "$STAPLE_DIR"/*.app; do
+        echo "Stapling ticket to $app"
         xcrun stapler staple "$app"
     done
 
-    # Recreate the final archive with stapled apps
-    rm "Victoria-${VERSION}-macos.zip"
-    (cd temp_extract && zip -r "../Victoria-${VERSION}-macos.zip" .)
-    rm -rf temp_extract
+    echo "Re-packaging stapled apps into final archive..."
+    rm "$ARCHIVE_NAME"
+    (cd "$STAPLE_DIR" && zip -r "../$ARCHIVE_NAME" .)
+    rm -rf "$STAPLE_DIR"
+
+    # Clean up entitlements file
+    rm "$ENTITLEMENTS"
 
     echo "--- macOS build complete (Signed) ---"
 else
