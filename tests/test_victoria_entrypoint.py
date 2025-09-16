@@ -86,11 +86,12 @@ def test_generate_crush_config_substitutes_env(tmp_path: Path) -> None:
     data = json.loads(output.read_text(encoding="utf-8"))
     assert data["providers"]["openrouter"]["api_key"] == "test-key"
 
-    motherduck_args = data["mcp"]["motherduck"]["args"]
-    assert motherduck_args[-1] == str(tmp_path / "adtech.duckdb")
+    motherduck_cmd = data["mcp"]["motherduck"]["command"]
+    assert motherduck_cmd[-1] == str(tmp_path / "adtech.duckdb")
 
-    snowflake_args = data["mcp"]["snowflake"]["args"]
-    assert snowflake_args == [
+    snowflake_cmd = data["mcp"]["snowflake"]["command"]
+    assert snowflake_cmd == [
+        "python",
         "-m",
         "mcp_snowflake_server",
         "--account",
