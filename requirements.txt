@@ -16,6 +16,7 @@ plotly
 polars
 pyarrow
 pylsp-mypy
+python-dotenv
 python-lsp-ruff
 python-lsp-server
 pytest
