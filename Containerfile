@@ -2,7 +2,8 @@ FROM registry.fedoraproject.org/fedora:latest
 
 ENV PATH="/root/.local/bin:${PATH}" \
     PYTHONUNBUFFERED="1" \
-    GOTOOLCHAIN="auto"
+    GOTOOLCHAIN="auto" \
+    GOSUMDB="sum.golang.org"
 
 RUN dnf -y upgrade && \
     dnf -y install python3 python3-pip git curl golang && \
