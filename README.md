@@ -23,6 +23,14 @@ Follow these steps if you primarily want to run Victoria to analyze advertising 
 
 Victoria relies on Podman for containerized execution. Install it from [podman.io](https://podman.io) or your system's package manager before proceeding.
 
+> [!IMPORTANT]
+> Windows users should make sure the Podman machine is running before continuing. After installation, run the following from PowerShell:
+> ```powershell
+> podman machine init   # first run only
+> podman machine start
+> ```
+> Podman Desktop performs these steps automatically the first time it launches.
+
 ### 2. Prepare the shared workspace
 
 Create the directory that the container will use to share configuration and project files with your host operating system:
@@ -40,24 +48,33 @@ Create the directory that the container will use to share configuration and proj
   mkdir %USERPROFILE%\Victoria
   ```
 
-### 3. Launch Victoria Terminal
+### 3. Pull the correct image for your platform
 
-Run the latest published container, mounting the shared directory you created above:
+Victoria publishes multi-architecture tags. If you're unsure which CPU architecture your Podman host is using, check it with:
+
+```bash
+podman info --format '{{.Host.Arch}}'
+```
+
+Use the table below to pull (or update) the matching image and run it. Re-running the `podman pull` command keeps you on the latest release.
+
+| Platform | CPU architecture | Pull / update | Run |
+| --- | --- | --- | --- |
+| Linux or macOS (Intel/AMD) | `x86_64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest` | `podman run --rm -it -v ~/Victoria:/root/Victoria ghcr.io/elcanotek/victoria-terminal:latest` |
+| macOS (Apple silicon) | `arm64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest-arm64` | `podman run --rm -it -v ~/Victoria:/root/Victoria ghcr.io/elcanotek/victoria-terminal:latest-arm64` |
+| Windows PowerShell (Intel/AMD) | `x86_64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest` | `podman run --rm -it -v "$env:USERPROFILE/Victoria:/root/Victoria" ghcr.io/elcanotek/victoria-terminal:latest` |
+| Windows PowerShell (Arm64) | `arm64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest-arm64` | `podman run --rm -it -v "$env:USERPROFILE/Victoria:/root/Victoria" ghcr.io/elcanotek/victoria-terminal:latest-arm64` |
+
+> [!NOTE]
+> The run commands are shown on a single line to work in PowerShell and other shells without additional escaping. On macOS and Linux you can add `\` line continuations if you prefer.
+
+On macOS and Linux you can split the run command across multiple lines for readability (the example below shows the `x86_64` tag; swap in the tag from the table above if you are on Arm64):
 
 ```bash
 podman run --rm -it \
   -v ~/Victoria:/root/Victoria \
   ghcr.io/elcanotek/victoria-terminal:latest
 ```
-
-> [!TIP]
-> On Arm64 hardware (for example, Apple silicon Macs), pull the architecture-specific image:
-> ```bash
-> podman run --rm -it \
->   -v ~/Victoria:/root/Victoria \
->   ghcr.io/elcanotek/victoria-terminal:latest-arm64
-> ```
-> Commit-specific tags with the `-arm64` suffix are also published if you need to pin to an exact build.
 
 To pass command-line options directly to the entry point script (`victoria_entrypoint.py`), append them after a `--` separator:
 
@@ -66,6 +83,8 @@ podman run --rm -it \
   -v ~/Victoria:/root/Victoria \
   ghcr.io/elcanotek/victoria-terminal:latest -- --course 2
 ```
+
+Windows users should keep the commands on a single line and use `$env:USERPROFILE/Victoria` in place of `~/Victoria`.
 
 ### 4. Configure on first run
 
@@ -83,6 +102,9 @@ podman run --rm -it \
 ```
 
 You can also point the entry point at an alternate shared location with `--shared-home /path/to/shared/Victoria`.
+
+> [!TIP]
+> Swap in the image tag that matches your architecture (from the table above) and adjust the host path syntax for your platform. Windows PowerShell users should run the command on a single line with `$env:USERPROFILE/Victoria`.
 
 ### 5. Choose an AI model in Crush
 
