@@ -8,11 +8,10 @@ This document provides guidelines for developers who want to contribute to the p
 
 We recommend using a virtual environment to isolate project dependencies.
 
-### Using `uv` (Recommended)
+### Setup with `venv`
 
 1.  **Prerequisites**:
     - Python 3.8+
-    - `uv` installed (`pip install uv`)
 
 2.  **Setup**:
     ```bash
@@ -21,28 +20,12 @@ We recommend using a virtual environment to isolate project dependencies.
     cd victoria
 
     # Create and activate a virtual environment
-    uv venv
-    source .venv/bin/activate  # On macOS/Linux
-    # .venv\Scripts\activate  # On Windows
-
-    # Install development dependencies
-    uv pip install -r requirements-dev.txt
-    ```
-
-### Using `pip` and `venv`
-
-1.  **Prerequisites**:
-    - Python 3.8+
-
-2.  **Setup**:
-    ```bash
-    # Create and activate a virtual environment
     python -m venv .venv
     source .venv/bin/activate  # On macOS/Linux
     # .venv\Scripts\activate  # On Windows
 
     # Install development dependencies
-    pip install -r requirements-dev.txt
+    pip install -r requirements.txt
     ```
 
 ## Code Quality & Linting
@@ -83,7 +66,7 @@ The test suite is located in the `tests/` directory and uses `pytest`.
 
 To run the tests:
 
-1.  **Set up your environment**: Ensure you have installed the development dependencies from `requirements-dev.txt`.
+1.  **Set up your environment**: Ensure you have installed the development dependencies from `requirements.txt`.
 2.  **Run `pytest`**: From the root of the repository, run the following command:
     ```bash
     pytest
