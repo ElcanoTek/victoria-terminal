@@ -4,15 +4,13 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from victoria_entrypoint import (
+from victoria_entrypoint import (  # noqa: E402
     CRUSH_TEMPLATE,
     ENV_FILENAME,
-    resource_path,
     generate_crush_config,
-    ensure_configuration,
+    load_environment,
     parse_env_file,
-    sync_shared_configuration,
-    write_env_file,
+    resource_path,
 )
 
 
@@ -33,22 +31,17 @@ def test_parse_env_file_handles_comments(tmp_path: Path) -> None:
     assert "MALFORMED" not in values
 
 
-def test_write_env_file_orders_keys(tmp_path: Path) -> None:
+def test_load_environment_preserves_existing_values(tmp_path: Path) -> None:
     env_path = tmp_path / ENV_FILENAME
-    values = {
-        "OPENROUTER_API_KEY": "abc123",
-        "SNOWFLAKE_ACCOUNT": "my-account",
-        "OTHER": "value",
-    }
+    env_path.write_text("FOO=bar\nSHARED=value\n", encoding="utf-8")
 
-    write_env_file(env_path, values)
+    custom_env = {"SHARED": "existing"}
 
-    content = env_path.read_text(encoding="utf-8").splitlines()
-    assert content[0] == "# Victoria environment configuration"
-    assert content[2] == 'OPENROUTER_API_KEY="abc123"'
-    assert content[3] == 'SNOWFLAKE_ACCOUNT="my-account"'
-    assert content[7] == "SNOWFLAKE_ROLE="
-    assert content[-1] == 'OTHER="value"'
+    values = load_environment(app_home=tmp_path, env=custom_env)
+
+    assert values == {"FOO": "bar", "SHARED": "value"}
+    assert custom_env["FOO"] == "bar"
+    assert custom_env["SHARED"] == "existing"
 
 
 def test_generate_crush_config_substitutes_env(tmp_path: Path) -> None:
@@ -77,28 +70,3 @@ def test_generate_crush_config_substitutes_env(tmp_path: Path) -> None:
     assert snowflake["args"][:2] == ["-m", "mcp_snowflake_server"]
     for value in ("acct", "user", "password", "warehouse", "role"):
         assert value in snowflake["args"]
-
-
-def test_ensure_configuration_requires_interactive(tmp_path: Path, mocker) -> None:
-    mock_warn = mocker.Mock()
-    home = tmp_path / "Victoria"
-    home.mkdir()
-
-    mocker.patch("victoria_entrypoint.warn", mock_warn)
-    configured = ensure_configuration(interactive=False, app_home=home)
-
-    assert configured is False
-    mock_warn.assert_called_once()
-    assert not (home / ENV_FILENAME).exists()
-
-
-def test_sync_shared_configuration_copies_files(tmp_path: Path) -> None:
-    shared = tmp_path / "shared"
-    shared.mkdir()
-    (shared / ENV_FILENAME).write_text("OPENROUTER_API_KEY=shared\n", encoding="utf-8")
-
-    local = tmp_path / "local"
-    copied = sync_shared_configuration(shared, local_home=local)
-
-    assert copied == [local / ENV_FILENAME]
-    assert (local / ENV_FILENAME).read_text(encoding="utf-8") == "OPENROUTER_API_KEY=shared\n"
