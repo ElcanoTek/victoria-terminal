@@ -97,8 +97,7 @@ podman run --rm -it \
 
 ## The Victoria Fleet
 
-- **Victoria Entry Point (`victoria_entrypoint.py`)**: Container-aware bootstrapper that synchronizes configuration from `~/Victoria`, guides first-run setup when needed, and launches the terminal.
-- **Victoria Terminal (`VictoriaTerminal.py`)**: The main application for launching data analysis sessions with `crush`.
+- **Victoria Entry Point (`victoria_entrypoint.py`)**: Container-aware bootstrapper that synchronizes configuration from `~/Victoria`, guides first-run setup when needed, and launches the terminal experience end-to-end.
 
 ## Testing Instructions
 

@@ -59,7 +59,7 @@ podman run --rm -it \
 > ```
 > Commit-specific tags with the `-arm64` suffix are also published if you need to pin to an exact build.
 
-To pass command-line options directly to `VictoriaTerminal.py`, append them after a `--` separator:
+To pass command-line options directly to the entry point script (`victoria_entrypoint.py`), append them after a `--` separator:
 
 ```bash
 podman run --rm -it \
