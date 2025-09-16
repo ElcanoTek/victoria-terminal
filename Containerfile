@@ -1,4 +1,4 @@
-FROM registry.fedoraproject.org/fedora:40
+FROM registry.fedoraproject.org/fedora:latest
 
 ENV PATH="/root/.local/bin:${PATH}" \
     PYTHONUNBUFFERED="1"
