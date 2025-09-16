@@ -7,11 +7,7 @@
   },
   "lsp": {
     "python": {
-      "command": [
-        "python",
-        "-m",
-        "pylsp"
-      ]
+      "command": "python -m pylsp"
     }
   },
   "providers": {
