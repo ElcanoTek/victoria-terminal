@@ -2,38 +2,47 @@
 
 <img src="assets/VictoriaTerminal.png" alt="Victoria Icon" width="200" />
 
-Victoria is Elcano's AI agent that connects to programmatic advertising reports via MCP, and helps navigate advertising datasets and platforms. Traders can ask powerful questions of CSVs, Excel files, and SQL-queryable datasets — making it easier to surface insights, spot trends, and optimize campaigns.
+Victoria is Elcano's AI agent for navigating programmatic advertising datasets. Traders can ask natural-language questions of CSVs, Excel workbooks, and SQL-queryable sources to surface insights, spot trends, and optimize campaigns without leaving the terminal.
 
 ---
 
-## ⚠️ Install Podman First!
+## 🔐 Security & Licensing at a Glance
 
-Before you start, make sure you have Podman installed on your local machine. Podman enables containerized applications, like the Victoria Terminal, to run seamlessly on any operating system, see more at [podman.io](https://podman.io).
+- **Container-first distribution.** Victoria ships as a Podman image that packages Python, `uv`, the `crush` CLI, and all dependencies. Running in a container isolates the agent from the host OS while still allowing controlled file sharing via `~/Victoria`.
+- **Secrets stay in your workspace.** Credentials are written to `~/Victoria/.env`, mounted into the container at runtime. The entry point can regenerate or update this file without embedding secrets in the image.
+- **Transparent builds.** GitHub Actions automatically builds and publishes the container to `ghcr.io/elcanotek/victoria-terminal`, ensuring every release is reproducible and verified in CI.
+- **Open, source-available code.** The repository is available for review and contribution under the [Elastic License 2.0](LICENSE), so teams can audit changes and collaborate while retaining commercial protections.
 
 ---
 
-## 🚢 Containerized Workflow
+## 🚀 Quick Start for Analysts & Traders
 
-Victoria now ships as a Podman container image that bundles Python, `uv`, the `crush` CLI, and all required Python dependencies. The container stores configuration files inside a shared `~/Victoria` directory so that traders can easily drop files into a shared folder, but the Victoria agent's environment is isolated from their operating system. 
+Follow these steps if you primarily want to run Victoria to analyze advertising data.
 
-### Build locally with Podman
+### 1. Install Podman
 
-Clone the repository and build the image from the provided `Containerfile`:
+Victoria relies on Podman for containerized execution. Install it from [podman.io](https://podman.io) or your system's package manager before proceeding.
 
-```bash
-podman build -t victoria-terminal .
-```
+### 2. Prepare the shared workspace
 
-### Run using the published image
+Create the directory that the container will use to share configuration and project files with your host operating system:
 
-A GitHub Action automatically builds and publishes the image to the GitHub Container Registry. Pull and run the latest image with Podman:
+* **macOS / Linux**
+  ```bash
+  mkdir -p ~/Victoria
+  ```
+* **Windows (PowerShell)**
+  ```powershell
+  New-Item -ItemType Directory -Path "$HOME/Victoria" -Force
+  ```
+* **Windows (Command Prompt)**
+  ```cmd
+  mkdir %USERPROFILE%\Victoria
+  ```
 
-Before running the container, make sure the shared directory exists on your host machine. Create it once with the command that
-matches your operating system:
+### 3. Launch Victoria Terminal
 
-* **macOS / Linux**: `mkdir -p ~/Victoria`
-* **Windows (PowerShell)**: `New-Item -ItemType Directory -Path "$HOME/Victoria" -Force`
-* **Windows (Command Prompt)**: `mkdir %USERPROFILE%\Victoria`
+Run the latest published container, mounting the shared directory you created above:
 
 ```bash
 podman run --rm -it \
@@ -42,19 +51,15 @@ podman run --rm -it \
 ```
 
 > [!TIP]
-> On Arm64 hardware such as Apple silicon Macs, use the dedicated Arm build:
->
+> On Arm64 hardware (for example, Apple silicon Macs), pull the architecture-specific image:
 > ```bash
 > podman run --rm -it \
 >   -v ~/Victoria:/root/Victoria \
 >   ghcr.io/elcanotek/victoria-terminal:latest-arm64
 > ```
->
-> The workflow also publishes a commit-specific tag that includes the suffix `-arm64` if you need to pin to an exact build.
+> Commit-specific tags with the `-arm64` suffix are also published if you need to pin to an exact build.
 
-Mounting `~/Victoria` ensures that the entry point can reuse your configuration and generated project files across container sessions.
-
-To pass options directly to `VictoriaTerminal.py`, append them after `--`:
+To pass command-line options directly to `VictoriaTerminal.py`, append them after a `--` separator:
 
 ```bash
 podman run --rm -it \
@@ -62,14 +67,14 @@ podman run --rm -it \
   ghcr.io/elcanotek/victoria-terminal:latest -- --course 2
 ```
 
-### First-run experience
+### 4. Configure on first run
 
-When the container runs for the first time it executes `victoria_entrypoint.py`, which either:
+The container entry point (`victoria_entrypoint.py`) guides the initial setup:
 
-* Detects configuration files inside the mounted `~/Victoria` directory and reuses them, or
-* Prompts you for required settings (OpenRouter API keys, optional Snowflake credentials) and writes them to `~/Victoria/.env`.
+- If it detects configuration files in `~/Victoria`, it reuses them automatically.
+- Otherwise it prompts for essentials—OpenRouter API keys and optional Snowflake credentials—and saves them to `~/Victoria/.env`.
 
-Configuration prompts can be revisited at any time by running:
+Re-run the configuration wizard at any time without launching the UI:
 
 ```bash
 podman run --rm -it \
@@ -77,71 +82,87 @@ podman run --rm -it \
   ghcr.io/elcanotek/victoria-terminal:latest -- --reconfigure --skip-launch
 ```
 
-The `--skip-launch` flag stops after writing configuration so that credentials can be updated without launching the terminal UI. You can also point the entry point at an alternate shared location with `--shared-home /path/to/shared/Victoria`.
+You can also point the entry point at an alternate shared location with `--shared-home /path/to/shared/Victoria`.
 
-### Local development workflow
+### 5. Choose an AI model in Crush
 
-For code changes you can either work directly on the host with a Python virtual environment or inside the container:
+When testing **Victoria** in the terminal, we recommend the following models. They have been vetted for compatibility, reliability, and cost.
+
+| **Model Name**           | **How It Appears in Crush (under ✅ Configured)** |
+|-------------------------|---------------------------------------------------|
+| ChatGPT 5               | `OpenAI: GPT-5`                                   |
+| ChatGPT 5 Mini          | `OpenAI: GPT-5 Mini`                              |
+| xAI Grok Code Fast 1    | `xAI: Grok Code Fast 1`                           |
+| Google Gemini 2.5 Pro   | `Google: Gemini 2.5 Pro`                          |
+| Google Gemini 2.5 Flash | `Google: Gemini 2.5 Flash`                        |
+
+**Selecting a model:**
+
+1. Launch Victoria in your terminal.
+2. Press **`Ctrl+P`** to open the command menu.
+3. Choose **“Select Model.”**
+4. Use the search bar to find a recommended model (for example, type `GPT-5` or `Gemini 2.5`).
+5. Under the **✅ Configured** heading, pick one of the models from the table above.
+
+<p align="left">
+  <img src="assets/select_model.png" alt="Select Model in Crush" width="300" />
+</p>
+
+> [!NOTE]
+> - These five models are the only ones approved for Victoria at this time.
+> - Selecting a model outside this list is unsupported and may produce unreliable results.
+> - Victoria remembers the last model you selected and loads it automatically on the next launch.
+> - To compare results across models, switch models and **restart Victoria** so each model begins with a fresh context.
+
+---
+
+## 🛠️ Developer & Contributor Guide
+
+Follow this path if you plan to modify Victoria or run the automated tests.
+
+### Clone the repository and set up a virtual environment
 
 ```bash
-# Inside the repository
+git clone https://github.com/elcanotek/victoria.git
+cd victoria
+
 uv venv
 source .venv/bin/activate
 uv pip install -r requirements-dev.txt
+```
+
+> You can use `python -m venv .venv` and `pip install -r requirements-dev.txt` instead of `uv` if preferred.
+
+### Run tests on the host
+
+With the virtual environment activated, execute the test suite:
+
+```bash
 pytest
 ```
 
-To execute tests inside the container build:
+### Build and test the container locally
+
+Use Podman to build the development image and run commands inside it:
 
 ```bash
+podman build -t victoria-terminal .
+
 podman run --rm -it \
   -v "$(pwd)":/workspace \
   -w /workspace \
   victoria-terminal pytest
 ```
 
-Both approaches use the same source tree and configuration files in `~/Victoria`.
+Both approaches share the same source tree and configuration files stored in `~/Victoria`.
+
+### Continuous delivery pipeline
+
+Every push to `main` triggers a GitHub Actions workflow that rebuilds the Podman image and publishes it to `ghcr.io/elcanotek/victoria-terminal`. The published image is what production users run, so CI keeps dependencies and CLI tooling up to date.
 
 ---
-
-## 🤖 Continuous Delivery
-
-The repository includes a GitHub Actions workflow that builds the Podman image on pushes to `main` and publishes it to `ghcr.io/elcanotek/victoria-terminal`. The published image is what production users run, and the workflow ensures every build contains the latest dependencies and CLI tooling.
-
----
-
-## Recommended Models for Testing Victoria
-
-When testing **Victoria** in the terminal, we recommend and have tested the following models.  
-These models have been vetted for **compatibility, reliability, and cost considerations**.  
-We will keep this list updated as new models become approved, tested, and vetted.
-
-| **Model Name**           | **How It Appears in Crush (under ✅ Configured)** |
-|---------------------------|--------------------------------------------------|
-| ChatGPT 5                | `OpenAI: GPT-5`                                   |
-| ChatGPT 5 Mini           | `OpenAI: GPT-5 Mini`                              |
-| xAI Grok Code Fast 1     | `xAI: Grok Code Fast 1`                           |
-| Google Gemini 2.5 Pro    | `Google: Gemini 2.5 Pro`                          |
-| Google Gemini 2.5 Flash  | `Google: Gemini 2.5 Flash`                        |
-
-### How to Select a Model in Crush
-1. Launch Victoria in your terminal.  
-2. Press **`Ctrl+P`** to open the command menu.  
-3. Choose **“Select Model.”**  
-4. In the search bar, type part of the model name (e.g., `GPT-5` or `Gemini 2.5`) to narrow down the results.  
-5. Under the **✅ Configured** heading, select one of the recommended models from the table above.  
-
-<p align="left">
-  <img src="assets/select_model.png" alt="Select Model in Crush" width="300"/>
-</p>
-
-### Important Notes
-- These five models are the **only** ones approved for Victoria at this time.
-- Selecting any model outside this list is unsupported and may produce unreliable results.  
-- As additional models are vetted, this table will be updated to reflect the approved set.
-- Victoria remembers the **last model you selected** and will load it automatically the next time you start.
-- **Tip:** If you want to compare results across models, switch models, then **restart Victoria** before running your prompts. This gives each model a fresh context and makes results easier to compare.  
 
 ## 🤝 Contributing
 
-We welcome contributions to Victoria! If you're interested in fixing bugs or adding new features, please see our [**Contributing Guidelines**](CONTRIBUTING.md) to get started.
+We welcome contributions to Victoria! Review our [Contributing Guidelines](CONTRIBUTING.md) for code style, testing expectations, and the pull-request process.
+
