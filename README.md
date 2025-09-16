@@ -6,97 +6,83 @@ Victoria is Elcano's AI agent that connects to programmatic advertising reports 
 
 ---
 
-## ⚙️ Installation & Setup
+## 🚢 Containerized Workflow
 
-Victoria can be installed on Fedora Linux.
+Victoria now ships as a Podman container image that bundles Python, `uv`, the `crush` CLI, and all required Python dependencies. The container stores configuration files inside a shared `~/Victoria` directory so that multiple team members or developer workstations can reuse the same environment.
 
-### Fedora Linux
+### Build locally with Podman
 
-The recommended way to install Victoria on Fedora Linux is with the `install.sh` script. This will install the Victoria fleet as command-line tools on your system.
-
-```bash
-curl -sL https://raw.githubusercontent.com/ElcanoTek/victoria-fleet/main/install.sh | bash
-```
-
-This script will:
-- Clone the repository to `~/.victoria`.
-- Set up a Python virtual environment.
-- Install all necessary dependencies.
-- Create command-line wrappers in `/usr/local/bin`.
-
-### First-Time Setup
-
-After installation, you must run the configurator to set up your environment.
+Clone the repository and build the image from the provided `Containerfile`:
 
 ```bash
-victoria-configurator
+podman build -t victoria-terminal .
 ```
-This will guide you through the necessary setup steps, including creating a `.env` file for your API keys and other secrets in `~/Victoria/.env`.
 
-### Running the Terminal
+### Run using the published image
 
-Once setup is complete, you can run the Victoria Terminal for your data analysis work.
+A GitHub Action automatically builds and publishes the image to the GitHub Container Registry. Pull and run the latest image with Podman:
 
 ```bash
-victoria-terminal
+podman run --rm -it \
+  -v ~/Victoria:/root/Victoria \
+  ghcr.io/elcanotek/victoria-terminal:latest
 ```
+
+Mounting `~/Victoria` ensures that the entry point can reuse your configuration and generated project files across container sessions.
+
+To pass options directly to `VictoriaTerminal.py`, append them after `--`:
+
+```bash
+podman run --rm -it \
+  -v ~/Victoria:/root/Victoria \
+  ghcr.io/elcanotek/victoria-terminal:latest -- --course 2
+```
+
+### First-run experience
+
+When the container runs for the first time it executes `victoria_entrypoint.py`, which either:
+
+* Detects configuration files inside the mounted `~/Victoria` directory and reuses them, or
+* Prompts you for required settings (OpenRouter API keys, optional Snowflake credentials) and writes them to `~/Victoria/.env`.
+
+Configuration prompts can be revisited at any time by running:
+
+```bash
+podman run --rm -it \
+  -v ~/Victoria:/root/Victoria \
+  ghcr.io/elcanotek/victoria-terminal:latest -- --reconfigure --skip-launch
+```
+
+The `--skip-launch` flag stops after writing configuration so that credentials can be updated without launching the terminal UI. You can also point the entry point at an alternate shared location with `--shared-home /path/to/shared/Victoria`.
+
+### Local development workflow
+
+For code changes you can either work directly on the host with a Python virtual environment or inside the container:
+
+```bash
+# Inside the repository
+uv venv
+source .venv/bin/activate
+uv pip install -r requirements-dev.txt
+pytest
+```
+
+To execute tests inside the container build:
+
+```bash
+podman run --rm -it \
+  -v "$(pwd)":/workspace \
+  -w /workspace \
+  victoria-terminal pytest
+```
+
+Both approaches use the same source tree and configuration files in `~/Victoria`.
 
 ---
 
-## 🧹 Uninstalling Victoria
+## 🤖 Continuous Delivery
 
-If you wish to remove Victoria from your system, you can use the provided uninstaller scripts.
-
-### Fedora Linux
-
-Run the `uninstall.sh` script from the repository directory, or download and run it directly:
-
-```bash
-curl -sL https://raw.githubusercontent.com/ElcanoTek/victoria-fleet/main/uninstall.sh | bash
-```
-
-This script will:
-- Remove the command-line wrappers from `/usr/local/bin`.
-- Delete the Victoria installation directory at `~/.victoria`.
-
----
-
-## 🚀 For Developers
-
-If you want to contribute to Victoria, you can set up a development environment by following these steps.
-
-### Prerequisites
-
-*   **Python 3.8+**
-*   **uv**: A fast Python package installer. ([Installation guide](https://docs.astral.sh/uv/getting-started/installation/))
-
-### Development Setup
-
-1.  **Clone the Repository:**
-    ```bash
-    git clone https://github.com/ElcanoTek/victoria-fleet.git
-    cd victoria-fleet
-    ```
-
-2.  **Create a Virtual Environment:**
-    It is highly recommended to use a virtual environment to manage dependencies.
-    ```bash
-    uv venv
-    source .venv/bin/activate
-    ```
-
-3.  **Install Dependencies:**
-    Install all application and development dependencies using `uv`.
-    ```bash
-    uv pip install -r requirements-dev.txt
-    ```
-
-4.  **Running the tools:**
-    You can run the tools directly from the command line:
-    ```bash
-    python3 VictoriaConfigurator.py
-    python3 VictoriaTerminal.py
-    ```
+The repository includes a GitHub Actions workflow that builds the Podman image on pushes to `main` and publishes it to `ghcr.io/elcanotek/victoria-terminal`. The published image is what production users run, and the workflow ensures every build contains the latest dependencies and CLI tooling.
 
 ---
 

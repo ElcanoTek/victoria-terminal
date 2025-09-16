@@ -35,7 +35,7 @@ def test_preflight_fails_if_command_missing(mocker, mock_tool):
 
     assert excinfo.value.code == 1
     mock_err.assert_called_with(
-        "Missing 'crush' command-line tool. Please run the Victoria Configurator first."
+        "Missing 'crush' command-line tool. Rebuild the Victoria container or install the CLI in your environment."
     )
 
 
@@ -58,7 +58,7 @@ def test_preflight_requires_key_when_not_local(mocker, mock_tool):
     assert excinfo.value.code == 1
     mock_warn.assert_called_with(
         "OPENROUTER_API_KEY not configured. "
-        "Please run the Victoria Configurator to set it up."
+        "Run the Victoria container entrypoint to add it or select the local model option."
     )
 
 

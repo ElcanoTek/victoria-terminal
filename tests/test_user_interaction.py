@@ -1,84 +1,76 @@
-import sys
-from pathlib import Path
-
-# Add project root to path to allow importing victoria
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-
-from VictoriaConfigurator import first_run_check
 from VictoriaTerminal import course_menu, local_model_menu
+from victoria_entrypoint import prompt_for_configuration, SNOWFLAKE_ENV_VARS
 
 
 def test_local_model_menu_yes(mocker):
-    """Test local_model_menu returns True when user enters 'y'."""
     mocker.patch("rich.prompt.Prompt.ask", return_value="y")
     assert local_model_menu() is True
 
 
 def test_local_model_menu_no(mocker):
-    """Test local_model_menu returns False when user enters 'n'."""
     mocker.patch("rich.prompt.Prompt.ask", return_value="n")
     assert local_model_menu() is False
 
 
 def test_course_menu_one(mocker):
-    """Test course_menu returns '1'."""
     mocker.patch("rich.prompt.Prompt.ask", return_value="1")
     assert course_menu() == "1"
 
 
 def test_course_menu_two(mocker):
-    """Test course_menu returns '2'."""
     mocker.patch("rich.prompt.Prompt.ask", return_value="2")
     assert course_menu() == "2"
 
 
-def test_first_run_check_sentinel_exists_user_declines_rerun(mocker):
-    """Test first_run_check returns False if sentinel exists and user says no."""
-    mock_run_setup = mocker.Mock()
-    mock_sentinel = mocker.Mock()
-    mock_sentinel.exists.return_value = True
-    mock_prompt_ask = mocker.Mock(return_value="n")
-    mock_info = mocker.Mock()
-    mock_warn = mocker.Mock()
+def test_prompt_for_configuration_openrouter_retry(mocker):
+    confirm = mocker.Mock(side_effect=[True, False])
+    prompt = mocker.Mock(side_effect=["", "api-key"])
+    warn = mocker.Mock()
 
-    result = first_run_check(
-        use_local_model=False,
-        force_install_deps=False,
-        _run_setup_scripts=mock_run_setup,
-        _SETUP_SENTINEL=mock_sentinel,
-        _Prompt_ask=mock_prompt_ask,
-        _info=mock_info,
-        _warn=mock_warn,
-    )
-    assert result is False
-    mock_warn.assert_called_once_with("Setup has already been completed.")
-    mock_prompt_ask.assert_called_once()
-    mock_info.assert_called_once()
-    mock_run_setup.assert_not_called()
-
-
-def test_first_run_check_user_says_yes(mocker):
-    """Test first_run_check runs setup and returns True if user says yes."""
-    mock_run_setup = mocker.Mock()
-    mock_sentinel = mocker.Mock()
-    mock_sentinel.exists.return_value = False
-    mock_check_existing = mocker.Mock(return_value=True)
-    mock_update_path = mocker.Mock()
-    mock_good = mocker.Mock()
-
-    result = first_run_check(
-        use_local_model=True,
-        force_install_deps=False,
-        _run_setup_scripts=mock_run_setup,
-        _SETUP_SENTINEL=mock_sentinel,
-        _check_for_existing_tools=mock_check_existing,
-        _update_path_from_install=mock_update_path,
-        _good=mock_good,
+    result = prompt_for_configuration(
+        {},
+        _Confirm_ask=confirm,
+        _Prompt_ask=prompt,
+        _section=mocker.Mock(),
+        _info=mocker.Mock(),
+        _warn=warn,
     )
 
-    assert result is True
-    mock_check_existing.assert_called_once()
-    mock_run_setup.assert_called_once_with(True)
-    mock_sentinel.write_text.assert_called_once_with("done")
-    mock_update_path.assert_called_once()
-    mock_good.assert_called()
+    assert result["OPENROUTER_API_KEY"] == "api-key"
+    warn.assert_called_once()
+    prompt.assert_called()
+
+
+def test_prompt_for_configuration_decline_all(mocker):
+    confirm = mocker.Mock(side_effect=[False, False])
+
+    result = prompt_for_configuration(
+        {"OPENROUTER_API_KEY": "previous"},
+        _Confirm_ask=confirm,
+        _Prompt_ask=mocker.Mock(),
+        _section=mocker.Mock(),
+        _info=mocker.Mock(),
+        _warn=mocker.Mock(),
+    )
+
+    assert "OPENROUTER_API_KEY" not in result
+    for key in SNOWFLAKE_ENV_VARS:
+        assert key not in result
+
+
+def test_prompt_for_configuration_snowflake(mocker):
+    confirm = mocker.Mock(side_effect=[False, True])
+    responses = [f"value-{i}" for i in range(len(SNOWFLAKE_ENV_VARS))]
+    prompt = mocker.Mock(side_effect=responses)
+
+    result = prompt_for_configuration(
+        {},
+        _Confirm_ask=confirm,
+        _Prompt_ask=prompt,
+        _section=mocker.Mock(),
+        _info=mocker.Mock(),
+        _warn=mocker.Mock(),
+    )
+
+    for key, expected in zip(SNOWFLAKE_ENV_VARS, responses):
+        assert result[key] == expected
