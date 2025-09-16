@@ -28,47 +28,35 @@ def mock_env(mocker):
     )
 
 
-def test_config_local_only():
-    """Test config generation for local files only."""
-    config = build_crush_config(
-        include_snowflake=False, strict_env=False, local_model=False
-    )
-    assert "motherduck" in config["mcp"]
-    assert "snowflake" not in config["mcp"]
-    assert "lmstudio" not in config["providers"]
-    assert config["providers"]["openrouter"]["api_key"] == "test_api_key"
+def test_config_includes_all_integrations():
+    """The generated config should always include every available integration."""
 
+    config = build_crush_config()
 
-def test_config_with_snowflake():
-    """Test config generation with Snowflake included."""
-    config = build_crush_config(
-        include_snowflake=True, strict_env=True, local_model=False
-    )
-    assert "motherduck" in config["mcp"]
-    assert "snowflake" in config["mcp"]
-    assert "lmstudio" not in config["providers"]
-    assert "test_account" in config["mcp"]["snowflake"]["args"]
-
-
-def test_config_with_local_model():
-    """Test config generation with a local model."""
-    config = build_crush_config(
-        include_snowflake=False, strict_env=False, local_model=True
-    )
-    assert "motherduck" in config["mcp"]
-    assert "snowflake" not in config["mcp"]
-    assert "lmstudio" in config["providers"]
-
-
-def test_config_with_snowflake_and_local_model():
-    """Test config generation with Snowflake and a local model."""
-    config = build_crush_config(
-        include_snowflake=True, strict_env=True, local_model=True
-    )
     assert "motherduck" in config["mcp"]
     assert "snowflake" in config["mcp"]
     assert "lmstudio" in config["providers"]
-    assert "test_account" in config["mcp"]["snowflake"]["args"]
+    assert config["permissions"]["allowed_tools"] == ["*"]
+    assert config["lsp"]["python"]["command"] == "pylsp"
+
+
+def test_config_substitutes_environment_values():
+    """Environment variables should be substituted into the Snowflake MCP command."""
+
+    config = build_crush_config()
+    args = config["mcp"]["snowflake"]["args"]
+
+    assert "test_account" in args
+    assert "test_user" in args
+
+
+def test_config_allows_missing_environment(monkeypatch):
+    """Missing values leave placeholders so Crush can still start."""
+
+    monkeypatch.delenv("SNOWFLAKE_ACCOUNT", raising=False)
+    config = build_crush_config()
+
+    assert "${SNOWFLAKE_ACCOUNT}" in config["mcp"]["snowflake"]["args"]
 
 
 def test_load_tool_config_not_found(mocker):
