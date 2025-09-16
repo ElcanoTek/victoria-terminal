@@ -6,9 +6,15 @@ Victoria is Elcano's AI agent that connects to programmatic advertising reports 
 
 ---
 
+## ⚠️ Install Podman First!
+
+Before you start, make sure you have Podman installed on your local machine. Podman enables containerized applications, like the Victoria Terminal, to run seamlessly on any operating system, see more at [podman.io](https://podman.io).
+
+---
+
 ## 🚢 Containerized Workflow
 
-Victoria now ships as a Podman container image that bundles Python, `uv`, the `crush` CLI, and all required Python dependencies. The container stores configuration files inside a shared `~/Victoria` directory so that multiple team members or developer workstations can reuse the same environment.
+Victoria now ships as a Podman container image that bundles Python, `uv`, the `crush` CLI, and all required Python dependencies. The container stores configuration files inside a shared `~/Victoria` directory so that traders can easily drop files into a shared folder, but the Victoria agent's environment is isolated from their operating system. 
 
 ### Build locally with Podman
 
