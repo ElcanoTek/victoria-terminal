@@ -32,7 +32,7 @@ jobs:
 
       - name: Build image
         id: build-image
-        uses: redhat-actions/buildah-build@v1
+        uses: redhat-actions/buildah-build@v2
         with:
           containerfiles: Containerfile
           image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
