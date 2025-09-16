@@ -8,7 +8,6 @@ Victoria connects to advertising data sources (CSVs, Excel files, Snowflake) and
 
 **Core Technologies:**
 - Python 3.8+
-- `uv` for package management
 - `crush` as the AI coding agent
 - `rich` for terminal UI
 - `colorama` for cross-platform terminal colors
@@ -27,28 +26,7 @@ To get started with Victoria development, you'll need to set up a Python environ
 
 ### Local Development Setup (Recommended)
 
-For local development, we strongly recommend using a virtual environment to isolate project dependencies. This prevents conflicts with other Python projects on your system. We support both `uv` and the standard `venv`/`pip`.
-
-#### Using `uv` (Fastest)
-
-1.  **Prerequisites**:
-    - Python 3.8+
-    - `uv` installed (`pip install uv`)
-
-2.  **Setup**:
-    ```bash
-    # Clone the repository
-    git clone https://github.com/elcanotek/victoria.git
-    cd victoria
-
-    # Create and activate a virtual environment
-    uv venv
-    source .venv/bin/activate  # On macOS/Linux
-    # .venv\Scripts\activate  # On Windows
-
-    # Install development dependencies
-    uv pip install -r requirements-dev.txt
-    ```
+For local development, we strongly recommend using a virtual environment to isolate project dependencies. This prevents conflicts with other Python projects on your system and keeps Victoria's tooling self-contained.
 
 #### Using `pip` and `venv`
 
@@ -63,26 +41,26 @@ For local development, we strongly recommend using a virtual environment to isol
 
     # Create and activate a virtual environment
     python -m venv .venv
-    source .venv/bin/activate  # On macOS/Linux
+    source .venv/bin/activate  # On Fedora Linux
     # .venv\Scripts\activate  # On Windows
 
     # Install development dependencies
-    pip install -r requirements-dev.txt
+    pip install -r requirements.txt
     ```
 
-### Isolated Environments (e.g., Docker)
+### Podman Containers
 
-If you are working within an isolated environment like a Docker container, creating an additional virtual environment is often unnecessary. You can install the dependencies directly.
+Victoria now provides a Podman container image that ships with Python and the `crush` CLI pre-installed. Developers can build it locally with `podman build -t victoria-terminal .` or run the published image from `ghcr.io/elcanotek/victoria-terminal:latest`. Mount `~/Victoria` into the container to reuse configuration created by the entry point.
 
 ```bash
-# From the repository root
-pip install -r requirements-dev.txt
+podman run --rm -it \
+  -v ~/Victoria:/root/Victoria \
+  ghcr.io/elcanotek/victoria-terminal:latest
 ```
 
 ### Dependencies Explained
 
-- `requirements.txt`: Contains the core dependencies required to run the Victoria applications.
-- `requirements-dev.txt`: Contains all core dependencies plus additional tools for development, such as `pytest` for testing and `black` for code formatting. For development, you should always install from this file.
+- `requirements.txt`: Contains the dependencies required to run and develop the Victoria applications, including testing and formatting tools.
 
 ## Configuration & Secrets
 
@@ -98,9 +76,7 @@ pip install -r requirements-dev.txt
 
 ## The Victoria Fleet
 
-- **Victoria Configurator (`VictoriaConfigurator.py`)**: First-time setup tool that installs prerequisites and configures the environment.
-- **Victoria Terminal (`VictoriaTerminal.py`)**: The main application for launching data analysis sessions with `crush`.
-- **Victoria Browser (`VictoriaBrowser.py`)**: A utility to open the ElcanoTek website.
+- **Victoria Entry Point (`victoria_entrypoint.py`)**: Container-aware bootstrapper that synchronizes configuration from `~/Victoria`, guides first-run setup when needed, and launches the terminal experience end-to-end.
 
 ## Testing Instructions
 
@@ -108,7 +84,7 @@ The test suite is located in the `tests/` directory and uses `pytest`.
 
 To run the tests:
 
-1.  **Set up your environment**: Ensure you have installed the development dependencies from `requirements-dev.txt` as described in the "Development Environment" section. If you are using a virtual environment, make sure it is activated.
+1.  **Set up your environment**: Ensure you have installed the development dependencies from `requirements.txt` as described in the "Development Environment" section. If you are using a virtual environment, make sure it is activated.
 
 2.  **Run `pytest`**: From the root of the repository, run the following command:
     ```bash

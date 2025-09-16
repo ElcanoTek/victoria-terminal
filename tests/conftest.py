@@ -1,7 +1,12 @@
 import os
 import pathlib
+import sys
+from pathlib import Path
 
 import pytest
+
+# Ensure the project root is importable for tests without packaging the module.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 
 @pytest.fixture(autouse=True)
