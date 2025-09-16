@@ -271,7 +271,9 @@ def preflight_crush() -> None:
     if os.environ.get("OPENROUTER_API_KEY"):
         good("OpenRouter API key configured")
     else:
-        warn("OPENROUTER_API_KEY not configured. Remote models will be unavailable until it is set.")
+        warn(
+            "OPENROUTER_API_KEY not configured. Remote models will be unavailable until it is set."
+        )
 
     good("All systems ready")
 
@@ -305,13 +307,18 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     """Parse CLI arguments for the entry point."""
 
     parser = argparse.ArgumentParser(
-        description="Victoria container entry point. Ensures configuration exists and launches Crush."
+        description=(
+            "Victoria container entry point. Ensures configuration exists " "and launches Crush."
+        )
     )
     parser.add_argument(
         "--app-home",
         type=Path,
         default=APP_HOME,
-        help="Directory to use for Victoria configuration (defaults to ~/Victoria or $VICTORIA_HOME).",
+        help=(
+            "Directory to use for Victoria configuration "
+            "(defaults to ~/Victoria or $VICTORIA_HOME)."
+        ),
     )
     parser.add_argument(
         "--skip-launch",

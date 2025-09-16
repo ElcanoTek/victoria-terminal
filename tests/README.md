@@ -6,7 +6,14 @@ reliable.
 
 ## Running the Tests
 
-Execute the test suite from the project root:
+Use `nox` to create an isolated virtual environment and execute the suite:
+
+```bash
+nox -s tests
+```
+
+The session installs dependencies from `requirements.txt`. To iterate quickly
+inside an existing environment you can still run:
 
 ```bash
 pytest
@@ -15,7 +22,10 @@ pytest
 ## Covered Scenarios
 
 - Validating `.env` parsing and serialization helpers.
-- Ensuring shared configuration folders are synchronised correctly.
-- Verifying Crush configuration generation performs environment substitution.
-- Confirming the entry point refuses to proceed when configuration is missing in
-  non-interactive mode.
+- Verifying configuration files are created from bundled templates when
+  variables are substituted.
+- Ensuring shared configuration folders synchronise bundled documentation.
+- Checking Snowflake credential detection so the CLI can warn when secrets are
+  absent.
+- Confirming the entry point honours the `--skip-launch` flag without invoking
+  external binaries.

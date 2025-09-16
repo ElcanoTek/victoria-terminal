@@ -4,6 +4,7 @@ flake8
 isort
 mcp-server-motherduck
 mcp-snowflake-server
+nox
 pytest
 pytest-cov
 pytest-mock
