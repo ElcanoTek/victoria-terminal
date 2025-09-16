@@ -6,15 +6,7 @@
       "ls",
       "grep",
       "edit",
-      "motherduck_query",
-      "python_exec",
-      "pip_install",
-      "venv_create",
-      "venv_activate",
-      "excel_read_advanced",
-      "excel_write_formatted",
-      "data_visualize",
-      "ml_analyze"
+      "motherduck_query"
     ]
   },
   "providers": {
