@@ -67,10 +67,16 @@ def test_generate_crush_config_substitutes_env(tmp_path: Path) -> None:
 
     data = json.loads(output.read_text(encoding="utf-8"))
     assert data["providers"]["openrouter"]["api_key"] == "test-key"
-    args = data["mcp"]["snowflake"]["args"]
+    motherduck = data["mcp"]["motherduck"]
+    assert motherduck["command"] == "python"
+    assert motherduck["args"][:2] == ["-m", "mcp_server_motherduck"]
+    assert str(tmp_path / "adtech.duckdb") in motherduck["args"]
+
+    snowflake = data["mcp"]["snowflake"]
+    assert snowflake["command"] == "python"
+    assert snowflake["args"][:2] == ["-m", "mcp_snowflake_server"]
     for value in ("acct", "user", "password", "warehouse", "role"):
-        assert value in args
-    assert str(tmp_path / "adtech.duckdb") in data["mcp"]["motherduck"]["args"]
+        assert value in snowflake["args"]
 
 
 def test_ensure_configuration_requires_interactive(tmp_path: Path, mocker) -> None:

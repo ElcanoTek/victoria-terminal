@@ -8,7 +8,7 @@ Victoria is Elcano's AI agent for navigating programmatic advertising datasets. 
 
 ## 🔐 Security & Licensing at a Glance
 
-- **Container-first distribution.** Victoria ships as a Podman image that packages Python, `uv`, the `crush` CLI, and all dependencies. Running in a container isolates the agent from the host OS while still allowing controlled file sharing via `~/Victoria`.
+- **Container-first distribution.** Victoria ships as a Podman image that packages Python, the `crush` CLI, and all dependencies. Running in a container isolates the agent from the host OS while still allowing controlled file sharing via `~/Victoria`.
 - **Secrets stay in your workspace.** Credentials are written to `~/Victoria/.env`, mounted into the container at runtime. The entry point can regenerate or update this file without embedding secrets in the image.
 - **Transparent builds.** GitHub Actions automatically builds and publishes the container to `ghcr.io/elcanotek/victoria-terminal`, ensuring every release is reproducible and verified in CI.
 - **Open, source-available code.** The repository is available for review and contribution under the [Elastic License 2.0](LICENSE), so teams can audit changes and collaborate while retaining commercial protections.
@@ -126,12 +126,10 @@ Follow this path if you plan to modify Victoria or run the automated tests.
 git clone https://github.com/elcanotek/victoria.git
 cd victoria
 
-uv venv
+python -m venv .venv
 source .venv/bin/activate
-uv pip install -r requirements-dev.txt
+pip install -r requirements.txt
 ```
-
-> You can use `python -m venv .venv` and `pip install -r requirements-dev.txt` instead of `uv` if preferred.
 
 ### Run tests on the host
 
