@@ -1,6 +1,6 @@
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock
+from unittest.mock import Mock
 
 import pytest
 
@@ -30,7 +30,6 @@ def test_preflight_fails_if_command_missing(mocker, mock_tool):
             _which=lambda cmd: None,
             _err=mock_err,
             _sys_exit=mock_sys_exit,
-            _Progress=MagicMock(),
         )
 
     assert excinfo.value.code == 1
@@ -52,7 +51,6 @@ def test_preflight_requires_key_when_not_local(mocker, mock_tool):
             _os_environ={},
             _warn=mock_warn,
             _sys_exit=mock_sys_exit,
-            _Progress=MagicMock(),
         )
 
     assert excinfo.value.code == 1
@@ -72,7 +70,6 @@ def test_preflight_allows_local_without_key(mocker, mock_tool):
         _which=lambda cmd: "/bin/crush",
         _os_environ={},
         _sys_exit=mock_sys_exit,
-        _Progress=MagicMock(),
     )
 
     mock_sys_exit.assert_not_called()
@@ -89,7 +86,6 @@ def test_preflight_succeeds_with_key_and_command(mocker, mock_tool):
         _which=lambda cmd: "/bin/crush",
         _os_environ=mock_env,
         _sys_exit=mock_sys_exit,
-        _Progress=MagicMock(),
     )
 
     mock_sys_exit.assert_not_called()

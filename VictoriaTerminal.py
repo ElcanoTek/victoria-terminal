@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
-"""Victoria Terminal - AdTech Data Navigation"""
+"""Victoria Terminal - AdTech Data Navigation.
+
+This module orchestrates a Victoria terminal session. It follows a simple flow:
+load environment values from ``~/Victoria/.env``, build a Crush configuration in
+that same directory and finally hand control over to the Crush CLI. The
+implementation is intentionally compact so future maintenance focuses on the
+workflow rather than framework plumbing.
+"""
 
 from __future__ import annotations
 
@@ -15,58 +22,81 @@ from pathlib import Path
 from typing import Any, Callable, Dict
 
 from rich.console import Console
-from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.prompt import Prompt
 
-from common import (APP_HOME, CONFIGS_DIR, VICTORIA_FILE,
-                    __version__, banner, console, err, good, handle_error, info,
-                    initialize_colorama, resource_path, section, warn)
+from common import (
+    APP_HOME,
+    CONFIGS_DIR,
+    VICTORIA_FILE,
+    __version__,
+    banner,
+    console,
+    err,
+    good,
+    handle_error,
+    info,
+    initialize_colorama,
+    load_dotenv,
+    resource_path,
+    section,
+    warn,
+)
 
+CRUSH_CONFIG_NAME = "crush.json"
+CRUSH_CONFIG_DIR = Path(CONFIGS_DIR) / "crush"
+CRUSH_SUPPORT_FILES = {
+    ".crushignore": CRUSH_CONFIG_DIR / ".crushignore",
+    "CRUSH.md": CRUSH_CONFIG_DIR / "CRUSH.md",
+}
 
-def which(cmd: str) -> str | None:
-    return shutil.which(cmd)
+SNOWFLAKE_ENV_VARS = [
+    "SNOWFLAKE_ACCOUNT",
+    "SNOWFLAKE_USER",
+    "SNOWFLAKE_PASSWORD",
+    "SNOWFLAKE_WAREHOUSE",
+    "SNOWFLAKE_ROLE",
+]
 
-
-# ---------------------------------------------------------------------------
-# Tooling Definition
-# ---------------------------------------------------------------------------
+_env_token = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}")
 
 
 @dataclass
 class Tool:
+    """Simple description of a launchable tool."""
+
     name: str
     command: str
     output_config: str
     config_builder: Callable[[bool, bool, bool], Dict[str, Any]]
-    preflight: Callable[[Tool, bool], None]
-    launcher: Callable[[Tool], None]
+    preflight: Callable[["Tool", bool], None]
+    launcher: Callable[["Tool"], None]
 
 
 def preflight_crush(
     tool: Tool,
     use_local_model: bool,
     _which: Callable[[str], str | None] = shutil.which,
-    _os_environ: dict = os.environ,
+    _os_environ: dict[str, str] = os.environ,
     _info: Callable[[str], None] = info,
     _good: Callable[[str], None] = good,
     _warn: Callable[[str], None] = warn,
     _err: Callable[[str], None] = err,
     _sys_exit: Callable[[int], None] = sys.exit,
     _section: Callable[[str], None] = section,
-    _Progress: type = Progress,
 ) -> None:
+    """Validate that Crush can be launched."""
+
     _section("System preflight check")
-    with _Progress(
-        SpinnerColumn(), TextColumn("{task.description}"), transient=True
-    ) as progress:
-        progress.add_task("Verifying prerequisites", total=None)
-        if _which(tool.command) is None:
-            _err(
-                f"Missing '{tool.command}' command-line tool. "
-                "Rebuild the Victoria container or install the CLI in your environment."
-            )
-            _sys_exit(1)
+    _info("Checking for Crush CLI")
+    if _which(tool.command) is None:
+        _err(
+            f"Missing '{tool.command}' command-line tool. "
+            "Rebuild the Victoria container or install the CLI in your environment."
+        )
+        _sys_exit(1)
+
     _good(f"{tool.command} CLI tool detected")
+
     has_key = bool(_os_environ.get("OPENROUTER_API_KEY"))
     if not use_local_model and not has_key:
         _warn(
@@ -74,6 +104,7 @@ def preflight_crush(
             "Run the Victoria container entrypoint to add it or select the local model option."
         )
         _sys_exit(1)
+
     if has_key:
         _good("OpenRouter API key configured")
     if use_local_model:
@@ -92,6 +123,8 @@ def launch_crush(
     _section: Callable[[str], None] = section,
     _sys_exit: Callable[[int], None] = sys.exit,
 ) -> None:
+    """Launch Crush with the generated configuration."""
+
     _section("Mission launch")
     _info(f"Launching {tool.name}...")
     cmd = [tool.command, "-c", str(_APP_HOME)]
@@ -114,31 +147,20 @@ def launch_crush(
         _sys_exit(1)
 
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-
 def ensure_default_files(
     _APP_HOME: Path = APP_HOME,
-    _CONFIGS_DIR: str = CONFIGS_DIR,
-    _VICTORIA_FILE: str = VICTORIA_FILE,
     _resource_path: Callable[[str | Path], Path] = resource_path,
     _shutil_copy: Callable[[Path, Path], None] = shutil.copy,
+    _VICTORIA_FILE: str = VICTORIA_FILE,
 ) -> None:
-    crush_dir = Path(_CONFIGS_DIR) / "crush"
-    # These files are only copied if they don't exist.
-    files_copy_if_missing = [
-        (crush_dir / ".crushignore", ".crushignore"),
-        (crush_dir / "CRUSH.md", "CRUSH.md"),
-    ]
-    for rel_path, fname in files_copy_if_missing:
+    """Ensure documentation and ignore files live next to the configuration."""
+
+    for target_name, rel_path in CRUSH_SUPPORT_FILES.items():
         src = _resource_path(rel_path)
-        dst = _APP_HOME / fname
+        dst = _APP_HOME / target_name
         if src.exists() and not dst.exists():
             _shutil_copy(src, dst)
 
-    # VICTORIA.md is always overwritten to ensure it's pristine.
     victoria_src = _resource_path(Path(_VICTORIA_FILE))
     victoria_dst = _APP_HOME / _VICTORIA_FILE
     if victoria_src.exists():
@@ -146,6 +168,8 @@ def ensure_default_files(
 
 
 def parse_args() -> argparse.Namespace:
+    """Parse CLI arguments for the terminal."""
+
     parser = argparse.ArgumentParser(description="Victoria Terminal")
     parser.add_argument(
         "--course",
@@ -156,9 +180,17 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--local-model",
+        dest="local_model",
         action="store_true",
-        help="Use a local model.",
+        help="Use a local LM Studio model instead of OpenRouter.",
     )
+    parser.add_argument(
+        "--remote-model",
+        dest="local_model",
+        action="store_false",
+        help="Force remote models even if prompted.",
+    )
+    parser.set_defaults(local_model=None)
     parser.add_argument(
         "--quiet",
         action="store_true",
@@ -172,129 +204,122 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-# ---------------------------------------------------------------------------
-# JSON handling
-# ---------------------------------------------------------------------------
-
-
 def read_json(path: Path) -> Dict[str, Any]:
-    with path.open("r", encoding="utf-8-sig") as f:
-        return json.load(f)
+    """Read JSON from ``path`` handling UTF-8 BOMs."""
+
+    with path.open("r", encoding="utf-8-sig") as handle:
+        return json.load(handle)
 
 
 def write_json(path: Path, obj: Dict[str, Any]) -> None:
-    with path.open("w", encoding="utf-8", newline="\n") as f:
-        json.dump(obj, f, ensure_ascii=False, indent=2)
-        f.write("\n")
+    """Write JSON to ``path`` in a deterministic format."""
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8", newline="\n") as handle:
+        json.dump(obj, handle, ensure_ascii=False, indent=2)
+        handle.write("\n")
 
 
 def deep_merge(dst: Dict[str, Any], src: Dict[str, Any]) -> Dict[str, Any]:
-    for k, v in src.items():
-        if k in dst and isinstance(dst[k], dict) and isinstance(v, dict):
-            deep_merge(dst[k], v)
-        elif k in dst and isinstance(dst[k], list) and isinstance(v, list):
-            dst[k].extend(v)
+    """Recursively merge ``src`` into ``dst``."""
+
+    for key, value in src.items():
+        if key in dst and isinstance(dst[key], dict) and isinstance(value, dict):
+            deep_merge(dst[key], value)
+        elif key in dst and isinstance(dst[key], list) and isinstance(value, list):
+            dst[key].extend(value)
         else:
-            dst[k] = v
+            dst[key] = value
     return dst
 
 
-_env_token = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}")
-
-
 def substitute_env(obj: Any, strict: bool = False) -> Any:
+    """Replace ``${VAR}`` tokens with environment values."""
+
     if isinstance(obj, dict):
-        return {k: substitute_env(v, strict) for k, v in obj.items()}
+        return {key: substitute_env(value, strict) for key, value in obj.items()}
     if isinstance(obj, list):
-        return [substitute_env(v, strict) for v in obj]
+        return [substitute_env(value, strict) for value in obj]
     if isinstance(obj, str):
 
-        def repl(m: re.Match[str]) -> str:
-            var = m.group(1)
-            val = os.environ.get(var)
-            if val is None:
+        def repl(match: re.Match[str]) -> str:
+            var = match.group(1)
+            value = os.environ.get(var)
+            if value is None:
                 if strict:
-                    raise KeyError(
-                        f"Environment variable {var} is required but not set"
-                    )
-                return m.group(0)
-            return val
+                    raise KeyError(f"Environment variable {var} is required but not set")
+                return match.group(0)
+            return value
 
         return _env_token.sub(repl, obj)
     return obj
 
 
-# ---------------------------------------------------------------------------
-# Config generation
-# ---------------------------------------------------------------------------
-
-SNOWFLAKE_ENV_VARS = [
-    "SNOWFLAKE_ACCOUNT",
-    "SNOWFLAKE_USER",
-    "SNOWFLAKE_PASSWORD",
-    "SNOWFLAKE_WAREHOUSE",
-    "SNOWFLAKE_ROLE",
-]
-
-
-def snowflake_env_missing() -> list[str]:
-    return [v for v in SNOWFLAKE_ENV_VARS if not os.environ.get(v)]
-
-
 def load_tool_config(tool: str, name: str) -> Dict[str, Any]:
-    path_home = APP_HOME / CONFIGS_DIR / tool / name
-    path_res = resource_path(Path(CONFIGS_DIR) / tool / name)
-    path = path_home if path_home.exists() else path_res
+    """Load a configuration fragment from ``~/Victoria`` or packaged defaults."""
+
+    home_candidate = APP_HOME / CONFIGS_DIR / tool / name
+    package_candidate = resource_path(Path(CONFIGS_DIR) / tool / name)
+    path = home_candidate if home_candidate.exists() else package_candidate
     if not path.exists():
         raise FileNotFoundError(f"Missing {name} for {tool}")
     return read_json(path)
 
 
+def _apply_fragment(base: Dict[str, Any], fragment: Dict[str, Any], key: str | None = None) -> None:
+    if key is None:
+        deep_merge(base, fragment)
+        return
+    base.setdefault(key, {})
+    deep_merge(base[key], fragment.get(key, fragment))
+
+
 def build_crush_config(
-    include_snowflake: bool, strict_env: bool, local_model: bool
+    include_snowflake: bool,
+    strict_env: bool,
+    local_model: bool,
 ) -> Dict[str, Any]:
-    base = load_tool_config("crush", "crush.template.json")
+    """Construct the Crush configuration for the requested session."""
+
+    config = load_tool_config("crush", "crush.template.json")
     if include_snowflake:
-        frag = load_tool_config("crush", "snowflake.mcp.json")
-        base.setdefault("mcp", {})
-        deep_merge(base["mcp"], frag.get("mcp", frag))
+        fragment = load_tool_config("crush", "snowflake.mcp.json")
+        _apply_fragment(config, fragment, key="mcp")
     if local_model:
-        frag = load_tool_config("crush", "local.providers.json")
-        providers = frag.get("providers")
+        fragment = load_tool_config("crush", "local.providers.json")
+        providers = fragment.get("providers")
         if providers:
-            base.setdefault("providers", {})
-            deep_merge(base["providers"], providers)
-    return substitute_env(base, strict=strict_env)
+            _apply_fragment(config, {"providers": providers})
+    return substitute_env(config, strict=strict_env)
 
 
 def generate_config(tool: Tool, include_snowflake: bool, use_local_model: bool) -> bool:
+    """Build and persist the Crush configuration."""
+
     try:
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            transient=True,
-        ) as progress:
-            progress.add_task("Building configuration", total=None)
-            cfg = tool.config_builder(
-                include_snowflake,
-                strict_env=include_snowflake,
-                local_model=use_local_model,
-            )
-            out_path = APP_HOME / tool.output_config
-            write_json(out_path, cfg)
-        good(f"Configuration written to {out_path}")
+        config = tool.config_builder(
+            include_snowflake,
+            strict_env=include_snowflake,
+            local_model=use_local_model,
+        )
+        output_path = APP_HOME / tool.output_config
+        write_json(output_path, config)
+        good(f"Configuration written to {output_path}")
         return True
-    except Exception as ex:  # pragma: no cover - runtime errors
-        err(f"Configuration generation failed: {ex}")
+    except Exception as exc:  # pragma: no cover - runtime errors
+        err(f"Configuration generation failed: {exc}")
         return False
 
 
-# ---------------------------------------------------------------------------
-# Main workflow
-# ---------------------------------------------------------------------------
+def snowflake_env_missing() -> list[str]:
+    """Return Snowflake variables that are not present in the environment."""
+
+    return [name for name in SNOWFLAKE_ENV_VARS if not os.environ.get(name)]
 
 
 def local_model_menu() -> bool:
+    """Ask whether the user wants to use a local model provider."""
+
     section("Model provider selection")
     choice = Prompt.ask(
         "Use locally hosted model (LM Studio)?",
@@ -305,6 +330,8 @@ def local_model_menu() -> bool:
 
 
 def course_menu() -> str:
+    """Prompt the user to choose a course."""
+
     section("Navigation course selection")
     console.print("1. Connect to Snowflake (for large-scale data)")
     console.print("2. Analyze local files (CSVs, Excel)")
@@ -312,6 +339,8 @@ def course_menu() -> str:
 
 
 def remove_local_duckdb() -> None:
+    """Remove the cached DuckDB file so each run starts fresh."""
+
     db_path = APP_HOME / "adtech.duckdb"
     try:
         if db_path.exists():
@@ -322,6 +351,8 @@ def remove_local_duckdb() -> None:
 
 
 def open_victoria_folder() -> None:
+    """Open the Victoria directory in the host file manager."""
+
     try:
         if os.name == "nt":
             os.startfile(str(APP_HOME))  # type: ignore[attr-defined]
@@ -336,7 +367,7 @@ def open_victoria_folder() -> None:
 TOOL = Tool(
     name="Crush",
     command="crush",
-    output_config="crush.json",
+    output_config=CRUSH_CONFIG_NAME,
     config_builder=build_crush_config,
     preflight=preflight_crush,
     launcher=launch_crush,
@@ -344,27 +375,27 @@ TOOL = Tool(
 
 
 def main(
-    _parse_args: Callable = parse_args,
-    _ensure_default_files: Callable = ensure_default_files,
-    _banner: Callable = banner,
-    _local_model_menu: Callable = local_model_menu,
-    _remove_local_duckdb: Callable = remove_local_duckdb,
-    _course_menu: Callable = course_menu,
-    _snowflake_env_missing: Callable = snowflake_env_missing,
-    _generate_config: Callable = generate_config,
-    _open_victoria_folder: Callable = open_victoria_folder,
+    _parse_args: Callable[[], argparse.Namespace] = parse_args,
+    _ensure_default_files: Callable[[], None] = ensure_default_files,
+    _banner: Callable[[], None] = banner,
+    _local_model_menu: Callable[[], bool] = local_model_menu,
+    _remove_local_duckdb: Callable[[], None] = remove_local_duckdb,
+    _course_menu: Callable[[], str] = course_menu,
+    _snowflake_env_missing: Callable[[], list[str]] = snowflake_env_missing,
+    _generate_config: Callable[[Tool, bool, bool], bool] = generate_config,
+    _open_victoria_folder: Callable[[], None] = open_victoria_folder,
     _console: Console = console,
     _err: Callable[[str], None] = err,
     _info: Callable[[str], None] = info,
+    _load_dotenv: Callable[[], None] = load_dotenv,
 ) -> None:
+    """Entry point for launching the Victoria terminal."""
+
     initialize_colorama()
+    _load_dotenv()
     args = _parse_args()
 
-    def quiet_info(msg):
-        pass
-
-    if args.quiet:
-        _info = quiet_info
+    info_printer = _info if not args.quiet else (lambda _msg: None)
 
     _ensure_default_files()
     _console.clear()
@@ -377,23 +408,22 @@ def main(
     )
 
     _remove_local_duckdb()
-    _info(f"Place files to analyze in: {APP_HOME}")
+    info_printer(f"Place files to analyze in: {APP_HOME}")
 
     tool.preflight(tool, use_local_model)
 
     choice = str(args.course) if args.course else _course_menu()
-    if choice == "1":
+    include_snowflake = choice == "1"
+    if include_snowflake:
         missing = _snowflake_env_missing()
         if missing:
             _err("Missing Snowflake environment variables:")
-            for v in missing:
-                _console.print(f"  [red]{v}")
+            for value in missing:
+                _console.print(f"  [red]{value}")
             sys.exit(1)
-        if not _generate_config(tool, True, use_local_model):
-            sys.exit(1)
-    else:
-        if not _generate_config(tool, False, use_local_model):
-            sys.exit(1)
+
+    if not _generate_config(tool, include_snowflake, use_local_model):
+        sys.exit(1)
 
     if not args.quiet:
         _open_victoria_folder()
@@ -407,5 +437,5 @@ if __name__ == "__main__":
     except KeyboardInterrupt:  # pragma: no cover - user interaction
         console.print("\n[yellow]Voyage cancelled. Fair winds!")
         sys.exit(130)
-    except Exception as e:
-        handle_error(e)
+    except Exception as exc:  # pragma: no cover - user interaction
+        handle_error(exc)

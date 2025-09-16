@@ -43,47 +43,49 @@ def test_sync_shared_configuration_respects_overwrite(tmp_path):
 
 
 def test_ensure_configuration_requires_interactive(tmp_path, mocker):
-    sentinel = tmp_path / ".first_run_complete"
+    env_path = tmp_path / ".env"
     warn = mocker.Mock()
+    write = mocker.Mock()
+
     configured = ensure_configuration(
         interactive=False,
         _APP_HOME=tmp_path,
-        _SETUP_SENTINEL=sentinel,
         _parse_env_file=lambda path: {},
-        _write_env_file=mocker.Mock(),
+        _write_env_file=write,
         _prompt_for_configuration=mocker.Mock(),
         _load_dotenv=mocker.Mock(),
         _good=mocker.Mock(),
         _info=mocker.Mock(),
         _warn=warn,
     )
+
     assert configured is False
     warn.assert_called_once()
-    assert not sentinel.exists()
+    write.assert_not_called()
+    assert not env_path.exists()
 
 
 def test_ensure_configuration_uses_existing_env(tmp_path, mocker):
     env_path = tmp_path / ".env"
     env_path.write_text("OPENROUTER_API_KEY=existing\n", encoding="utf-8")
-    sentinel = tmp_path / ".first_run_complete"
     info = mocker.Mock()
+    load_dotenv_mock = mocker.Mock()
 
     configured = ensure_configuration(
         interactive=True,
         _APP_HOME=tmp_path,
-        _SETUP_SENTINEL=sentinel,
         _parse_env_file=parse_env_file,
         _write_env_file=mocker.Mock(),
         _prompt_for_configuration=mocker.Mock(),
-        _load_dotenv=mocker.Mock(),
+        _load_dotenv=load_dotenv_mock,
         _good=mocker.Mock(),
         _info=info,
         _warn=mocker.Mock(),
     )
 
     assert configured is True
-    assert sentinel.exists()
     info.assert_called_once()
+    load_dotenv_mock.assert_called_once()
 
 
 def test_launch_tool_unix(mocker):
@@ -164,7 +166,6 @@ def test_ensure_default_files(mocker, tmp_path):
 
     ensure_default_files(
         _APP_HOME=mock_app_home,
-        _CONFIGS_DIR="configs",
         _VICTORIA_FILE="VICTORIA.md",
         _resource_path=mock_resource_path_func,
         _shutil_copy=mock_copy,
