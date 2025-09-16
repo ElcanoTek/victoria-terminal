@@ -8,6 +8,7 @@ isort
 matplotlib
 mcp-server-motherduck
 mcp-snowflake-server
+nox
 numpy
 openpyxl
 pandas

@@ -131,13 +131,20 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### Run tests on the host
+### Run tests and linters on the host
 
-With the virtual environment activated, execute the test suite:
+With the virtual environment activated, run the automated checks via
+[Nox](https://nox.thea.codes/):
 
 ```bash
-pytest
+nox -s lint
+nox -s tests
 ```
+
+Both sessions create (and reuse) virtual environments so the commands can also
+be executed on a clean workstation without manually activating `.venv`. If you
+prefer to iterate inside the existing environment, you can still execute
+individual tools directly, for example `pytest` or `flake8`.
 
 ### Build and test the container locally
 
