@@ -46,3 +46,39 @@ jobs:
           image: ${{ steps.build-image.outputs.image }}
           tags: ${{ steps.build-image.outputs.tags }}
           registry: ${{ env.REGISTRY }}
+
+  build-and-push-arm64:
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Normalize image name
+        run: echo "IMAGE_NAME=${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+
+      - name: Log in to registry
+        uses: redhat-actions/podman-login@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build image (arm64)
+        id: build-image-arm64
+        uses: redhat-actions/buildah-build@v2
+        with:
+          containerfiles: Containerfile
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            latest-arm64
+            ${{ github.sha }}-arm64
+
+      - name: Push image
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ steps.build-image-arm64.outputs.image }}
+          tags: ${{ steps.build-image-arm64.outputs.tags }}
+          registry: ${{ env.REGISTRY }}

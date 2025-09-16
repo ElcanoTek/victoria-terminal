@@ -34,6 +34,17 @@ podman run --rm -it \
   ghcr.io/elcanotek/victoria-terminal:latest
 ```
 
+> [!TIP]
+> On Arm64 hardware such as Apple silicon Macs, use the dedicated Arm build:
+>
+> ```bash
+> podman run --rm -it \
+>   -v ~/Victoria:/root/Victoria \
+>   ghcr.io/elcanotek/victoria-terminal:latest-arm64
+> ```
+>
+> The workflow also publishes a commit-specific tag that includes the suffix `-arm64` if you need to pin to an exact build.
+
 Mounting `~/Victoria` ensures that the entry point can reuse your configuration and generated project files across container sessions.
 
 To pass options directly to `VictoriaTerminal.py`, append them after `--`:
