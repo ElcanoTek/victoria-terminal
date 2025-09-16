@@ -14,7 +14,6 @@ from rich.prompt import Confirm, Prompt
 
 from common import (
     APP_HOME,
-    SETUP_SENTINEL,
     banner,
     console,
     err,
@@ -28,6 +27,7 @@ from common import (
 )
 from VictoriaTerminal import SNOWFLAKE_ENV_VARS, ensure_default_files, main as terminal_main
 
+ENV_FILENAME = ".env"
 SHARED_CONFIG_ITEMS: tuple[str, ...] = (".env", "crush.json", "crush.overrides.json", "prompts")
 SNOWFLAKE_PROMPTS: dict[str, str] = {
     "SNOWFLAKE_ACCOUNT": "Snowflake account identifier",
@@ -40,6 +40,7 @@ SNOWFLAKE_PROMPTS: dict[str, str] = {
 
 def parse_env_file(path: Path) -> Dict[str, str]:
     """Parse a .env-style file into a dictionary."""
+
     if not path.exists():
         return {}
     values: Dict[str, str] = {}
@@ -68,6 +69,7 @@ def write_env_file(
     order: Iterable[str] | None = None,
 ) -> None:
     """Write environment values to ``path`` in a stable order."""
+
     order_list: List[str] = list(order or (["OPENROUTER_API_KEY", *SNOWFLAKE_ENV_VARS]))
     seen = set()
     lines = [
@@ -93,6 +95,7 @@ def prompt_for_configuration(
     _warn: Callable[[str], None] = warn,
 ) -> Dict[str, str]:
     """Interactively collect configuration values from the user."""
+
     _section("Victoria configuration")
     _info(f"Configuration directory: {APP_HOME}")
     result = dict(existing)
@@ -149,15 +152,13 @@ def sync_shared_configuration(
     _info: Callable[[str], None] = info,
 ) -> List[Path]:
     """Copy configuration items from ``shared_home`` into ``local_home``."""
+
     copied: List[Path] = []
     try:
-        shared_resolved = shared_home.resolve()
-        local_resolved = local_home.resolve()
+        if shared_home.resolve() == local_home.resolve():
+            return copied
     except FileNotFoundError:
-        shared_resolved = shared_home
-        local_resolved = local_home
-    if shared_resolved == local_resolved:
-        return copied
+        pass
     if not shared_home.exists():
         return copied
 
@@ -181,6 +182,7 @@ def sync_shared_configuration(
             dest.parent.mkdir(parents=True, exist_ok=True)
             _copy2(src, dest)
             copied.append(dest)
+
     if copied:
         _info(
             "Synchronized shared configuration: "
@@ -195,7 +197,6 @@ def ensure_configuration(
     interactive: bool = True,
     shared_home: Path | None = None,
     _APP_HOME: Path = APP_HOME,
-    _SETUP_SENTINEL: Path = SETUP_SENTINEL,
     _parse_env_file: Callable[[Path], Dict[str, str]] = parse_env_file,
     _write_env_file: Callable[[Path, Dict[str, str]], None] = write_env_file,
     _prompt_for_configuration: Callable[[Dict[str, str]], Dict[str, str]] = prompt_for_configuration,
@@ -205,34 +206,29 @@ def ensure_configuration(
     _warn: Callable[[str], None] = warn,
 ) -> bool:
     """Ensure configuration exists and optionally interactively create it."""
-    env_path = _APP_HOME / ".env"
+
+    env_path = _APP_HOME / ENV_FILENAME
 
     if shared_home is not None:
         sync_shared_configuration(shared_home, local_home=_APP_HOME, overwrite=force_reconfigure)
 
-    if force_reconfigure:
-        if env_path.exists():
-            env_path.unlink()
-        if _SETUP_SENTINEL.exists():
-            _SETUP_SENTINEL.unlink()
+    existing_values = _parse_env_file(env_path)
 
-    existing = _parse_env_file(env_path)
-
-    if env_path.exists():
+    if env_path.exists() and not force_reconfigure:
         _info(f"Using configuration from {env_path}")
-        if not _SETUP_SENTINEL.exists():
-            _SETUP_SENTINEL.write_text("container-initialized\n", encoding="utf-8")
         _load_dotenv()
         return True
+
+    if force_reconfigure and env_path.exists():
+        env_path.unlink()
 
     if not interactive:
         _warn("Configuration file not found and interactive mode disabled.")
         return False
 
-    values = _prompt_for_configuration(existing)
+    values = _prompt_for_configuration(existing_values)
     _write_env_file(env_path, values)
     _good(f"Configuration written to {env_path}")
-    _SETUP_SENTINEL.write_text("container-initialized\n", encoding="utf-8")
     _load_dotenv()
     return True
 
