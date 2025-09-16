@@ -106,18 +106,10 @@ exec "$VENV_DIR/bin/python" "$INSTALL_DIR/VictoriaTerminal.py" "\$@"
 EOF
     $SUDO_CMD chmod +x "$BIN_DIR/victoria-terminal"
 
-    # Wrapper for Victoria Browser
-    $SUDO_CMD tee "$BIN_DIR/victoria-browser" > /dev/null <<EOF
-#!/usr/bin/env bash
-exec "$VENV_DIR/bin/python" "$INSTALL_DIR/VictoriaBrowser.py" "\$@"
-EOF
-    $SUDO_CMD chmod +x "$BIN_DIR/victoria-browser"
-
     print_success "Victoria has been installed successfully!"
     print_info "You can now run the following commands from your terminal:"
     echo "  - victoria-configurator"
     echo "  - victoria-terminal"
-    echo "  - victoria-browser"
 
     # 7. Update shell configuration
     update_shell_config

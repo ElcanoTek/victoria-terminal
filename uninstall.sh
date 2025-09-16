@@ -5,7 +5,7 @@ set -e
 INSTALL_DIR="$HOME/.victoria"
 CONFIG_DIR="$HOME/Victoria"
 BIN_DIR="/usr/local/bin"
-WRAPPERS=("victoria-configurator" "victoria-terminal" "victoria-browser")
+WRAPPERS=("victoria-configurator" "victoria-terminal")
 
 # --- Helper Functions ---
 print_info() {
