@@ -15,6 +15,9 @@ pandas
 plotly
 polars
 pyarrow
+pylsp-mypy
+python-lsp-ruff
+python-lsp-server
 pytest
 pytest-cov
 pytest-mock

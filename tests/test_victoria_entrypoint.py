@@ -86,7 +86,7 @@ def test_generate_crush_config_substitutes_env(tmp_path: Path) -> None:
     data = json.loads(output.read_text(encoding="utf-8"))
     assert data["providers"]["openrouter"]["api_key"] == "test-key"
 
-    assert "lsp" not in data
+    assert data["lsp"]["python"]["command"] == "python -m pylsp"
 
     motherduck_cmd = data["mcp"]["motherduck"]["command"]
     assert motherduck_cmd[-1] == str(tmp_path / "adtech.duckdb")
