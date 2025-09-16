@@ -36,7 +36,9 @@ jobs:
         with:
           containerfiles: Containerfile
           image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: latest,${{ github.sha }}
+          tags: |
+            latest
+            ${{ github.sha }}
 
       - name: Push image
         uses: redhat-actions/push-to-registry@v2
