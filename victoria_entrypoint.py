@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any, Mapping, MutableMapping, Sequence
 
 from colorama import init as colorama_init
+from dotenv import dotenv_values, load_dotenv, set_key
 from rich.console import Console
 from rich.panel import Panel
 
@@ -124,17 +125,8 @@ def parse_env_file(path: Path) -> dict[str, str]:
     if not path.exists():
         return {}
 
-    values: dict[str, str] = {}
-    for raw_line in path.read_text(encoding="utf-8").splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, value = line.split("=", 1)
-        key = key.strip()
-        value = value.strip().strip('"').strip("'")
-        if key:
-            values[key] = value
-    return values
+    values = dotenv_values(path)
+    return {key: str(value) for key, value in values.items() if value is not None}
 
 
 def load_environment(
@@ -148,12 +140,75 @@ def load_environment(
         return {}
 
     values = parse_env_file(env_path)
+    if env is None:
+        load_dotenv(env_path, override=False)
     target_env: MutableMapping[str, str] = env if env is not None else os.environ
     for key, value in values.items():
         target_env.setdefault(key, value)
 
     info(f"Loaded environment variables from {env_path}")
     return values
+
+
+def _prompt_value(prompt: str, *, secret: bool = False) -> str | None:
+    """Prompt the user for a value, returning ``None`` when skipped."""
+
+    try:
+        response = console.input(prompt, password=secret)
+    except EOFError:
+        warn("Input stream closed; continuing without updating the value.")
+        return None
+    value = response.strip()
+    return value or None
+
+
+def prompt_for_missing_credentials(
+    *, app_home: Path = APP_HOME, env: MutableMapping[str, str] | None = None
+) -> None:
+    """Interactively prompt for missing credentials and persist them to ``.env``."""
+
+    env_map = env if env is not None else os.environ
+    env_path = app_home / ENV_FILENAME
+    env_path.parent.mkdir(parents=True, exist_ok=True)
+
+    needs_openrouter = not env_map.get("OPENROUTER_API_KEY")
+    missing_snowflake = snowflake_env_missing(env_map)
+    if not needs_openrouter and not missing_snowflake:
+        return
+
+    section("Credential setup")
+
+    def store_value(key: str, value: str) -> None:
+        env_map[key] = value
+        env_path.touch(exist_ok=True)
+        set_key(str(env_path), key, value)
+        good(f"Stored {key} in {env_path}")
+
+    if needs_openrouter:
+        warn(
+            "OPENROUTER_API_KEY is not configured. Enter a key to enable remote models "
+            "or press Enter to continue without it."
+        )
+        value = _prompt_value("OpenRouter API key: ", secret=True)
+        if value:
+            store_value("OPENROUTER_API_KEY", value)
+        else:
+            warn("Continuing without an OpenRouter API key.")
+
+    if missing_snowflake:
+        warn(
+            "Snowflake credentials are incomplete. Provide values to enable Snowflake "
+            "connectivity or press Enter to skip each one."
+        )
+        for key in SNOWFLAKE_ENV_VARS:
+            if env_map.get(key):
+                continue
+            prompt_label = key.replace("SNOWFLAKE_", "").replace("_", " ").title()
+            value = _prompt_value(f"{prompt_label}: ", secret=key == "SNOWFLAKE_PASSWORD")
+            if value:
+                store_value(key, value)
+            else:
+                warn(f"Skipped {key}; Snowflake access will remain unavailable.")
 
 
 def ensure_app_home(app_home: Path = APP_HOME) -> Path:
@@ -345,6 +400,7 @@ def main(argv: Sequence[str] | None = None) -> None:
     banner()
     ensure_app_home(app_home)
     load_environment(app_home)
+    prompt_for_missing_credentials(app_home=app_home)
     generate_crush_config(app_home=app_home)
     check_snowflake_credentials()
     remove_local_duckdb(app_home=app_home)
