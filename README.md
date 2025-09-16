@@ -28,6 +28,13 @@ podman build -t victoria-terminal .
 
 A GitHub Action automatically builds and publishes the image to the GitHub Container Registry. Pull and run the latest image with Podman:
 
+Before running the container, make sure the shared directory exists on your host machine. Create it once with the command that
+matches your operating system:
+
+* **macOS / Linux**: `mkdir -p ~/Victoria`
+* **Windows (PowerShell)**: `New-Item -ItemType Directory -Path "$HOME/Victoria" -Force`
+* **Windows (Command Prompt)**: `mkdir %USERPROFILE%\Victoria`
+
 ```bash
 podman run --rm -it \
   -v ~/Victoria:/root/Victoria \
