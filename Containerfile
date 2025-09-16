@@ -1,7 +1,8 @@
 FROM registry.fedoraproject.org/fedora:latest
 
 ENV PATH="/root/.local/bin:${PATH}" \
-    PYTHONUNBUFFERED="1"
+    PYTHONUNBUFFERED="1" \
+    GOTOOLCHAIN="auto"
 
 RUN dnf -y upgrade && \
     dnf -y install python3 python3-pip git curl golang && \
