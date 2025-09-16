@@ -28,7 +28,7 @@ from common import (
 from VictoriaTerminal import SNOWFLAKE_ENV_VARS, ensure_default_files, main as terminal_main
 
 ENV_FILENAME = ".env"
-SHARED_CONFIG_ITEMS: tuple[str, ...] = (".env", "crush.json", "crush.overrides.json", "prompts")
+SHARED_CONFIG_ITEMS: tuple[str, ...] = (".env", "crush.json", "prompts")
 SNOWFLAKE_PROMPTS: dict[str, str] = {
     "SNOWFLAKE_ACCOUNT": "Snowflake account identifier",
     "SNOWFLAKE_USER": "Snowflake username",

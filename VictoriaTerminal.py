@@ -253,24 +253,10 @@ def load_tool_config(tool: str, name: str) -> Dict[str, Any]:
     return read_json(path)
 
 
-def _apply_fragment(base: Dict[str, Any], fragment: Dict[str, Any], key: str | None = None) -> None:
-    if key is None:
-        deep_merge(base, fragment)
-        return
-    base.setdefault(key, {})
-    deep_merge(base[key], fragment.get(key, fragment))
-
-
 def build_crush_config() -> Dict[str, Any]:
     """Construct the Crush configuration for the requested session."""
 
     config = load_tool_config("crush", "crush.template.json")
-    snowflake = load_tool_config("crush", "snowflake.mcp.json")
-    local_models = load_tool_config("crush", "local.providers.json")
-    _apply_fragment(config, snowflake, key="mcp")
-    providers = local_models.get("providers")
-    if providers:
-        _apply_fragment(config, {"providers": providers})
     return substitute_env(config, strict=False)
 
 

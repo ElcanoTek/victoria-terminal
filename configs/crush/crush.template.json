@@ -53,6 +53,28 @@
           "supports_tools": true
         }
       ]
+    },
+    "lmstudio": {
+      "type": "openai",
+      "base_url": "http://localhost:1234/v1",
+      "api_key": "not-needed",
+      "name": "LM Studio (local)",
+      "models": [
+        {
+          "id": "openai/gpt-oss-120b",
+          "name": "gpt-oss-120b (LM Studio)",
+          "context_window": 131072,
+          "default_max_tokens": 4096,
+          "supports_tools": true
+        },
+        {
+          "id": "qwen/qwen3-coder-30b",
+          "name": "Qwen 3 Coder 30B (LM Studio)",
+          "context_window": 131072,
+          "default_max_tokens": 4096,
+          "supports_tools": true
+        }
+      ]
     }
   },
   "options": {
@@ -69,6 +91,25 @@
         "mcp-server-motherduck",
         "--db-path",
         "${VICTORIA_HOME}/adtech.duckdb"
+      ]
+    },
+    "snowflake": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "--python",
+        "3.12",
+        "mcp_snowflake_server",
+        "--account",
+        "${SNOWFLAKE_ACCOUNT}",
+        "--warehouse",
+        "${SNOWFLAKE_WAREHOUSE}",
+        "--user",
+        "${SNOWFLAKE_USER}",
+        "--password",
+        "${SNOWFLAKE_PASSWORD}",
+        "--role",
+        "${SNOWFLAKE_ROLE}"
       ]
     }
   }
