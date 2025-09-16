@@ -96,7 +96,6 @@ If you want to contribute to Victoria, you can set up a development environment 
     ```bash
     python3 VictoriaConfigurator.py
     python3 VictoriaTerminal.py
-    python3 VictoriaBrowser.py
     ```
 
 ---

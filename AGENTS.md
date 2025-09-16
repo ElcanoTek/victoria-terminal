@@ -98,7 +98,6 @@ pip install -r requirements-dev.txt
 
 - **Victoria Configurator (`VictoriaConfigurator.py`)**: First-time setup tool that installs prerequisites and configures the environment.
 - **Victoria Terminal (`VictoriaTerminal.py`)**: The main application for launching data analysis sessions with `crush`.
-- **Victoria Browser (`VictoriaBrowser.py`)**: A utility to open the ElcanoTek website.
 
 ## Testing Instructions
 
