@@ -196,6 +196,26 @@ WHERE campaign_id = 'campaign_123';
 - **Time matters**: Use the correct timezone; be explicit with date windows (inclusive/exclusive). Handle conversion lag
 - **Quality gates**: Optionally exclude IVT/fraud in "clean" KPI views; keep a "raw" view for reconciliation
 
+### Field Note — Platform File Schema Reconciliation (Cadent Toyota, 2025-09-16 → Evergreen Playbook)
+
+- **Symptom (generalized):** Spend deltas appear when consolidated rollups are blended with platform-level extracts whose column semantics differ (e.g., a $280.52 / +7.1% gap between a DSP summary and individual platform files).
+- **Root cause pattern:** Platform deliverables rarely share identical schemas—one file may expose fees, another curator revenue, another delivery spend—so summing like-named columns without validation produces inflated or deflated totals.
+- **Mandate:** Assume every inbound file requires discovery. Run `validate_data_source(file_path)` (or an equivalent schema inspection) before aggregating anything, classify each metric column, and document which field represents the business definition of spend for that source.
+
+Use the following template to capture authoritative metric mappings. The Cadent Toyota case is included as a worked example—add rows for new partners as you encounter them.
+
+| Platform file | What the file actually contains | Authoritative spend column | Verified total (example) |
+| --- | --- | --- | --- |
+| Index | Fee/margin detail, not pure spend | `marketplace_total_fee` | $2,056.70 |
+| Xandr / Microsoft | Curator economics, not delivery spend | `Curator Revenue` | $1,292.58 |
+| Pubmatic | Delivery spend and revenue side-by-side | `Spend` | $596.48 |
+
+**Evergreen protocol:**
+1. **Discovery:** Inspect column names, dtypes, and sample values on ingest. Log the inspection artifact for reuse.
+2. **Definition mapping:** For every metric we care about (spend, impressions, conversions, fees), record the column that matches the business definition. Flag look-alikes (e.g., revenue vs. spend) explicitly.
+3. **Internal reconciliation:** Recompute consolidated totals from the mapped columns and confirm they align with the canonical rollup you intend to publish. Do not depend on an external dashboard existing in perpetuity—our numbers must stand alone.
+4. **Documentation:** Store the mapping, validation sums, and any assumptions alongside the analysis so the next pass starts from trusted ground.
+
 ---
 
 ## Safe SQL Patterns & Best Practices
