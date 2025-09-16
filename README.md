@@ -1,4 +1,4 @@
-# Victoria Fleet
+# Victoria Terminal
 
 <img src="assets/VictoriaFleet.png" alt="Victoria Icon" width="200" />
 
