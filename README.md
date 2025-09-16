@@ -24,7 +24,7 @@ Follow these steps if you primarily want to run Victoria to analyze advertising 
 Victoria relies on Podman for containerized execution. Install it from [podman.io](https://podman.io) or your system's package manager before proceeding.
 
 > [!IMPORTANT]
-> Make sure the Podman machine is running before continuing. After installation, run the following from a Terminal:
+> If you install the podman-cli make sure the Podman machine is running before continuing. After installation, run the following from a Terminal:
 > ```powershell
 > podman machine init   # first run only
 > podman machine start
