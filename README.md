@@ -148,10 +148,14 @@ Use Podman to build the development image and run commands inside it:
 ```bash
 podman build -t victoria-terminal .
 
+#optionally run pytest
 podman run --rm -it \
-  -v "$(pwd)":/workspace \
-  -w /workspace \
   victoria-terminal pytest
+
+#run the terminal agent
+podman run --rm -it \
+  -v ~/Victoria:/root/Victoria \
+  victoria-terminal
 ```
 
 Both approaches share the same source tree and configuration files stored in `~/Victoria`.
