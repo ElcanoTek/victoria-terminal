@@ -68,13 +68,14 @@ For local development, we strongly recommend using a virtual environment to isol
     pip install -r requirements-dev.txt
     ```
 
-### Isolated Environments (e.g., Docker)
+### Podman Containers
 
-If you are working within an isolated environment like a Docker container, creating an additional virtual environment is often unnecessary. You can install the dependencies directly.
+Victoria now provides a Podman container image that ships with Python, `uv`, and the `crush` CLI pre-installed. Developers can build it locally with `podman build -t victoria-terminal .` or run the published image from `ghcr.io/elcanotek/victoria-terminal:latest`. Mount `~/Victoria` into the container to reuse configuration created by the entry point.
 
 ```bash
-# From the repository root
-pip install -r requirements-dev.txt
+podman run --rm -it \
+  -v ~/Victoria:/root/Victoria \
+  ghcr.io/elcanotek/victoria-terminal:latest
 ```
 
 ### Dependencies Explained
@@ -96,7 +97,7 @@ pip install -r requirements-dev.txt
 
 ## The Victoria Fleet
 
-- **Victoria Configurator (`VictoriaConfigurator.py`)**: First-time setup tool that installs prerequisites and configures the environment.
+- **Victoria Entry Point (`victoria_entrypoint.py`)**: Container-aware bootstrapper that synchronizes configuration from `~/Victoria`, guides first-run setup when needed, and launches the terminal.
 - **Victoria Terminal (`VictoriaTerminal.py`)**: The main application for launching data analysis sessions with `crush`.
 
 ## Testing Instructions

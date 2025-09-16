@@ -18,7 +18,7 @@ from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.prompt import Prompt
 
-from common import (APP_HOME, CONFIGS_DIR, SETUP_SENTINEL, VICTORIA_FILE,
+from common import (APP_HOME, CONFIGS_DIR, VICTORIA_FILE,
                     __version__, banner, console, err, good, handle_error, info,
                     initialize_colorama, resource_path, section, warn)
 
@@ -63,7 +63,7 @@ def preflight_crush(
         if _which(tool.command) is None:
             _err(
                 f"Missing '{tool.command}' command-line tool. "
-                "Please run the Victoria Configurator first."
+                "Rebuild the Victoria container or install the CLI in your environment."
             )
             _sys_exit(1)
     _good(f"{tool.command} CLI tool detected")
@@ -71,7 +71,7 @@ def preflight_crush(
     if not use_local_model and not has_key:
         _warn(
             "OPENROUTER_API_KEY not configured. "
-            "Please run the Victoria Configurator to set it up."
+            "Run the Victoria container entrypoint to add it or select the local model option."
         )
         _sys_exit(1)
     if has_key:
@@ -106,7 +106,7 @@ def launch_crush(
     except FileNotFoundError:
         _err(
             f"'{tool.command}' command not found in PATH. "
-            "Please run the Victoria Configurator."
+            "Rebuild the Victoria container or install the CLI in your environment."
         )
         _sys_exit(1)
     except Exception as exc:  # pragma: no cover - runtime errors
@@ -358,13 +358,6 @@ def main(
     _info: Callable[[str], None] = info,
 ) -> None:
     initialize_colorama()
-    if not SETUP_SENTINEL.exists():
-        _err(
-            "First-time setup has not been completed. "
-            "Please run the Victoria Configurator first."
-        )
-        sys.exit(1)
-
     args = _parse_args()
 
     def quiet_info(msg):
