@@ -86,14 +86,18 @@ def test_generate_crush_config_substitutes_env(tmp_path: Path) -> None:
     data = json.loads(output.read_text(encoding="utf-8"))
     assert data["providers"]["openrouter"]["api_key"] == "test-key"
 
-    assert data["lsp"]["python"]["command"] == "python -m pylsp"
+    python_lsp = data["lsp"]["python"]
+    assert python_lsp["command"] == "python"
+    assert python_lsp["args"] == ["-m", "pylsp"]
+    assert "typescript" not in data["lsp"]
 
-    motherduck_cmd = data["mcp"]["motherduck"]["command"]
-    assert motherduck_cmd[-1] == str(tmp_path / "adtech.duckdb")
+    motherduck_cfg = data["mcp"]["motherduck"]
+    assert motherduck_cfg["command"] == "python"
+    assert motherduck_cfg["args"][-1] == str(tmp_path / "adtech.duckdb")
 
-    snowflake_cmd = data["mcp"]["snowflake"]["command"]
-    assert snowflake_cmd == [
-        "python",
+    snowflake_cfg = data["mcp"]["snowflake"]
+    assert snowflake_cfg["command"] == "python"
+    assert snowflake_cfg["args"] == [
         "-m",
         "mcp_snowflake_server",
         "--account",

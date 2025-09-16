@@ -7,7 +7,8 @@
   },
   "lsp": {
     "python": {
-      "command": "python -m pylsp"
+      "command": "python",
+      "args": ["-m", "pylsp"]
     }
   },
   "providers": {
@@ -86,8 +87,8 @@
   "mcp": {
     "motherduck": {
       "type": "stdio",
-      "command": [
-        "python",
+      "command": "python",
+      "args": [
         "-m",
         "mcp_server_motherduck",
         "--db-path",
@@ -96,8 +97,8 @@
     },
     "snowflake": {
       "type": "stdio",
-      "command": [
-        "python",
+      "command": "python",
+      "args": [
         "-m",
         "mcp_snowflake_server",
         "--account",
