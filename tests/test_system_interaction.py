@@ -103,7 +103,7 @@ def test_launch_tool_unix(mocker):
         _sys_exit=mock_sys_exit,
     )
 
-    mock_execvp.assert_called_once_with("crush", ["crush", "-c", str(fake_home)])
+    mock_execvp.assert_called_once_with("crush", ["crush", "-c", str(fake_home), "--yolo"])
     mock_sys_exit.assert_not_called()
 
 
@@ -122,7 +122,7 @@ def test_launch_tool_windows(mocker):
         _sys_exit=mock_sys_exit,
     )
 
-    mock_run.assert_called_once_with(["crush", "-c", str(fake_home)])
+    mock_run.assert_called_once_with(["crush", "-c", str(fake_home), "--yolo"])
     mock_sys_exit.assert_not_called()
 
 

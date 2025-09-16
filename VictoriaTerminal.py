@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict
 
 from rich.console import Console
-from rich.prompt import Prompt
+from rich.prompt import Confirm
 
 from common import (
     APP_HOME,
@@ -67,14 +67,13 @@ class Tool:
     name: str
     command: str
     output_config: str
-    config_builder: Callable[[bool, bool, bool], Dict[str, Any]]
-    preflight: Callable[["Tool", bool], None]
+    config_builder: Callable[[], Dict[str, Any]]
+    preflight: Callable[["Tool"], None]
     launcher: Callable[["Tool"], None]
 
 
 def preflight_crush(
     tool: Tool,
-    use_local_model: bool,
     _which: Callable[[str], str | None] = shutil.which,
     _os_environ: dict[str, str] = os.environ,
     _info: Callable[[str], None] = info,
@@ -97,18 +96,13 @@ def preflight_crush(
 
     _good(f"{tool.command} CLI tool detected")
 
-    has_key = bool(_os_environ.get("OPENROUTER_API_KEY"))
-    if not use_local_model and not has_key:
-        _warn(
-            "OPENROUTER_API_KEY not configured. "
-            "Run the Victoria container entrypoint to add it or select the local model option."
-        )
-        _sys_exit(1)
-
-    if has_key:
+    if _os_environ.get("OPENROUTER_API_KEY"):
         _good("OpenRouter API key configured")
-    if use_local_model:
-        _good("Local model provider selected")
+    else:
+        _warn(
+            "OPENROUTER_API_KEY not configured. Remote models will be unavailable until it is set."
+        )
+
     _good("All systems ready")
 
 
@@ -127,7 +121,7 @@ def launch_crush(
 
     _section("Mission launch")
     _info(f"Launching {tool.name}...")
-    cmd = [tool.command, "-c", str(_APP_HOME)]
+    cmd = [tool.command, "-c", str(_APP_HOME), "--yolo"]
     try:
         if _os_name == "nt":
             proc = _subprocess_run(cmd)
@@ -172,25 +166,18 @@ def parse_args() -> argparse.Namespace:
 
     parser = argparse.ArgumentParser(description="Victoria Terminal")
     parser.add_argument(
-        "--course",
-        type=int,
-        choices=[1, 2],
-        default=None,
-        help="The course to select (1 for Snowflake, 2 for local files).",
-    )
-    parser.add_argument(
-        "--local-model",
-        dest="local_model",
+        "--check-credentials",
+        dest="check_credentials",
         action="store_true",
-        help="Use a local LM Studio model instead of OpenRouter.",
+        help="Warn if Snowflake credentials are missing before launch.",
     )
     parser.add_argument(
-        "--remote-model",
-        dest="local_model",
+        "--skip-credential-check",
+        dest="check_credentials",
         action="store_false",
-        help="Force remote models even if prompted.",
+        help="Skip the Snowflake credential warning prompt.",
     )
-    parser.set_defaults(local_model=None)
+    parser.set_defaults(check_credentials=None)
     parser.add_argument(
         "--quiet",
         action="store_true",
@@ -274,34 +261,24 @@ def _apply_fragment(base: Dict[str, Any], fragment: Dict[str, Any], key: str | N
     deep_merge(base[key], fragment.get(key, fragment))
 
 
-def build_crush_config(
-    include_snowflake: bool,
-    strict_env: bool,
-    local_model: bool,
-) -> Dict[str, Any]:
+def build_crush_config() -> Dict[str, Any]:
     """Construct the Crush configuration for the requested session."""
 
     config = load_tool_config("crush", "crush.template.json")
-    if include_snowflake:
-        fragment = load_tool_config("crush", "snowflake.mcp.json")
-        _apply_fragment(config, fragment, key="mcp")
-    if local_model:
-        fragment = load_tool_config("crush", "local.providers.json")
-        providers = fragment.get("providers")
-        if providers:
-            _apply_fragment(config, {"providers": providers})
-    return substitute_env(config, strict=strict_env)
+    snowflake = load_tool_config("crush", "snowflake.mcp.json")
+    local_models = load_tool_config("crush", "local.providers.json")
+    _apply_fragment(config, snowflake, key="mcp")
+    providers = local_models.get("providers")
+    if providers:
+        _apply_fragment(config, {"providers": providers})
+    return substitute_env(config, strict=False)
 
 
-def generate_config(tool: Tool, include_snowflake: bool, use_local_model: bool) -> bool:
+def generate_config(tool: Tool) -> bool:
     """Build and persist the Crush configuration."""
 
     try:
-        config = tool.config_builder(
-            include_snowflake,
-            strict_env=include_snowflake,
-            local_model=use_local_model,
-        )
+        config = tool.config_builder()
         output_path = APP_HOME / tool.output_config
         write_json(output_path, config)
         good(f"Configuration written to {output_path}")
@@ -317,25 +294,14 @@ def snowflake_env_missing() -> list[str]:
     return [name for name in SNOWFLAKE_ENV_VARS if not os.environ.get(name)]
 
 
-def local_model_menu() -> bool:
-    """Ask whether the user wants to use a local model provider."""
+def snowflake_credentials_prompt(default: bool = False) -> bool:
+    """Ask whether to verify Snowflake credentials before launching."""
 
-    section("Model provider selection")
-    choice = Prompt.ask(
-        "Use locally hosted model (LM Studio)?",
-        choices=["y", "n"],
-        default="n",
+    section("Snowflake credential check")
+    return Confirm.ask(
+        "Check for Snowflake credentials before launch?",
+        default=default,
     )
-    return choice == "y"
-
-
-def course_menu() -> str:
-    """Prompt the user to choose a course."""
-
-    section("Navigation course selection")
-    console.print("1. Connect to Snowflake (for large-scale data)")
-    console.print("2. Analyze local files (CSVs, Excel)")
-    return Prompt.ask("Select course", choices=["1", "2"], default="2")
 
 
 def remove_local_duckdb() -> None:
@@ -378,15 +344,15 @@ def main(
     _parse_args: Callable[[], argparse.Namespace] = parse_args,
     _ensure_default_files: Callable[[], None] = ensure_default_files,
     _banner: Callable[[], None] = banner,
-    _local_model_menu: Callable[[], bool] = local_model_menu,
+    _credential_prompt: Callable[[bool], bool] = snowflake_credentials_prompt,
     _remove_local_duckdb: Callable[[], None] = remove_local_duckdb,
-    _course_menu: Callable[[], str] = course_menu,
     _snowflake_env_missing: Callable[[], list[str]] = snowflake_env_missing,
-    _generate_config: Callable[[Tool, bool, bool], bool] = generate_config,
+    _generate_config: Callable[[Tool], bool] = generate_config,
     _open_victoria_folder: Callable[[], None] = open_victoria_folder,
     _console: Console = console,
-    _err: Callable[[str], None] = err,
     _info: Callable[[str], None] = info,
+    _warn: Callable[[str], None] = warn,
+    _good: Callable[[str], None] = good,
     _load_dotenv: Callable[[], None] = load_dotenv,
 ) -> None:
     """Entry point for launching the Victoria terminal."""
@@ -403,26 +369,28 @@ def main(
 
     tool = TOOL
 
-    use_local_model = (
-        args.local_model if args.local_model is not None else _local_model_menu()
-    )
-
     _remove_local_duckdb()
     info_printer(f"Place files to analyze in: {APP_HOME}")
 
-    tool.preflight(tool, use_local_model)
+    tool.preflight(tool)
 
-    choice = str(args.course) if args.course else _course_menu()
-    include_snowflake = choice == "1"
-    if include_snowflake:
+    check_credentials = (
+        args.check_credentials
+        if getattr(args, "check_credentials", None) is not None
+        else _credential_prompt()
+    )
+    if check_credentials:
         missing = _snowflake_env_missing()
         if missing:
-            _err("Missing Snowflake environment variables:")
-            for value in missing:
-                _console.print(f"  [red]{value}")
-            sys.exit(1)
+            _warn(
+                "Snowflake credentials are not fully configured (missing: "
+                + ", ".join(missing)
+                + "). Continuing without Snowflake access."
+            )
+        else:
+            _good("Snowflake credentials detected")
 
-    if not _generate_config(tool, include_snowflake, use_local_model):
+    if not _generate_config(tool):
         sys.exit(1)
 
     if not args.quiet:

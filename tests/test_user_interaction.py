@@ -1,25 +1,13 @@
-from VictoriaTerminal import course_menu, local_model_menu
+from VictoriaTerminal import snowflake_credentials_prompt
 from victoria_entrypoint import prompt_for_configuration, SNOWFLAKE_ENV_VARS
+def test_snowflake_credentials_prompt_yes(mocker):
+    mocker.patch("VictoriaTerminal.Confirm.ask", return_value=True)
+    assert snowflake_credentials_prompt() is True
 
 
-def test_local_model_menu_yes(mocker):
-    mocker.patch("rich.prompt.Prompt.ask", return_value="y")
-    assert local_model_menu() is True
-
-
-def test_local_model_menu_no(mocker):
-    mocker.patch("rich.prompt.Prompt.ask", return_value="n")
-    assert local_model_menu() is False
-
-
-def test_course_menu_one(mocker):
-    mocker.patch("rich.prompt.Prompt.ask", return_value="1")
-    assert course_menu() == "1"
-
-
-def test_course_menu_two(mocker):
-    mocker.patch("rich.prompt.Prompt.ask", return_value="2")
-    assert course_menu() == "2"
+def test_snowflake_credentials_prompt_no(mocker):
+    mocker.patch("VictoriaTerminal.Confirm.ask", return_value=False)
+    assert snowflake_credentials_prompt() is False
 
 
 def test_prompt_for_configuration_openrouter_retry(mocker):
