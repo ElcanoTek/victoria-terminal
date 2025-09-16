@@ -5,6 +5,11 @@
       "*"
     ]
   },
+  "lsp": {
+    "python": {
+      "command": "python -m pylsp"
+    }
+  },
   "providers": {
     "openrouter": {
       "type": "openai",
