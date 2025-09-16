@@ -18,7 +18,7 @@ from dotenv import dotenv_values, load_dotenv, set_key
 from rich.console import Console
 from rich.panel import Panel
 
-__version__ = "2025.9.8"
+__version__ = "2025.9.9"
 VICTORIA_FILE = "VICTORIA.md"
 CONFIGS_DIR = "configs"
 CRUSH_TEMPLATE = Path(CONFIGS_DIR) / "crush" / "crush.template.json"
@@ -162,53 +162,145 @@ def _prompt_value(prompt: str, *, secret: bool = False) -> str | None:
     return value or None
 
 
-def prompt_for_missing_credentials(
-    *, app_home: Path = APP_HOME, env: MutableMapping[str, str] | None = None
-) -> None:
-    """Interactively prompt for missing credentials and persist them to ``.env``."""
+def _mask_secret(value: str) -> str:
+    """Return a partially masked version of ``value`` for display purposes."""
+
+    if not value:
+        return ""
+    if len(value) <= 4:
+        return "•" * len(value)
+    visible = min(4, len(value) - 2)
+    prefix = value[: visible // 2]
+    suffix = value[-(visible - len(prefix)) :]
+    masked_length = max(len(value) - len(prefix) - len(suffix), 0)
+    return f"{prefix}{'•' * masked_length}{suffix}"
+
+
+def run_setup_wizard(
+    *,
+    app_home: Path = APP_HOME,
+    env: MutableMapping[str, str] | None = None,
+    force: bool = False,
+) -> bool:
+    """Guide the user through configuring credentials in ``.env``.
+
+    Parameters
+    ----------
+    app_home:
+        Victoria's shared workspace directory.
+    env:
+        Mapping used to read/write environment variables. Defaults to :mod:`os.environ`.
+    force:
+        When ``True`` the wizard prompts for all credentials even if they already exist.
+
+    Returns
+    -------
+    bool
+        ``True`` if the ``.env`` file was updated, otherwise ``False``.
+    """
 
     env_map = env if env is not None else os.environ
     env_path = app_home / ENV_FILENAME
     env_path.parent.mkdir(parents=True, exist_ok=True)
 
+    existing_values = parse_env_file(env_path)
+    for key, value in existing_values.items():
+        env_map.setdefault(key, value)
+
     needs_openrouter = not env_map.get("OPENROUTER_API_KEY")
     missing_snowflake = snowflake_env_missing(env_map)
-    if not needs_openrouter and not missing_snowflake:
-        return
+    if not (force or needs_openrouter or missing_snowflake):
+        return False
 
-    section("Credential setup")
+    section("Victoria setup wizard")
+    info(
+        "Victoria stores configuration in your shared workspace so future runs can reuse it."
+    )
+    info(
+        "On your host computer this folder is typically [bold]~/Victoria[/bold]. "
+        f"Inside the container it is mounted at: [bold]{app_home}[/bold]"
+    )
+    info(f"Secrets will be written to [bold]{env_path}[/bold].")
+
+    updated = False
 
     def store_value(key: str, value: str) -> None:
+        nonlocal updated
         env_map[key] = value
         env_path.touch(exist_ok=True)
         set_key(str(env_path), key, value)
         good(f"Stored {key} in {env_path}")
+        updated = True
 
-    if needs_openrouter:
+    openrouter_key = env_map.get("OPENROUTER_API_KEY")
+    if force or not openrouter_key:
         warn(
-            "OPENROUTER_API_KEY is not configured. Enter a key to enable remote models "
-            "or press Enter to continue without it."
+            "Provide your OpenRouter API key to enable remote models. "
+            "Press Enter to keep the existing key or skip for now."
         )
-        value = _prompt_value("OpenRouter API key: ", secret=True)
+        if openrouter_key:
+            masked = _mask_secret(openrouter_key)
+            prompt_text = (
+                f"OpenRouter API key [{masked}] (press Enter to keep current): "
+            )
+        else:
+            prompt_text = "OpenRouter API key (press Enter to skip): "
+        value = _prompt_value(prompt_text, secret=True)
         if value:
             store_value("OPENROUTER_API_KEY", value)
+        elif openrouter_key:
+            info("Keeping existing OpenRouter API key.")
         else:
-            warn("Continuing without an OpenRouter API key.")
+            warn("Continuing without an OpenRouter API key. Remote models remain unavailable.")
 
-    if missing_snowflake:
+    for key in SNOWFLAKE_ENV_VARS:
+        current_value = env_map.get(key)
+        if not (force or not current_value):
+            continue
+        label = key.replace("SNOWFLAKE_", "").replace("_", " ").title()
+        secret = key == "SNOWFLAKE_PASSWORD"
+        if current_value:
+            masked = _mask_secret(current_value) if secret else current_value
+            prompt_text = f"{label} [{masked}] (press Enter to keep current): "
+        else:
+            prompt_text = f"{label} (press Enter to skip): "
+        value = _prompt_value(prompt_text, secret=secret)
+        if value:
+            store_value(key, value)
+        elif current_value:
+            info(f"Keeping existing {label.lower()}.")
+        else:
+            warn(f"{label} not provided; Snowflake access will remain unavailable.")
+
+    if updated:
+        good(f"Setup complete. Updated values saved to {env_path}.")
+    else:
+        info("No changes were made to existing credentials.")
+
+    remaining = snowflake_env_missing(env_map)
+    if remaining:
         warn(
-            "Snowflake credentials are incomplete. Provide values to enable Snowflake "
-            "connectivity or press Enter to skip each one."
+            "Snowflake credentials are still incomplete (missing: "
+            + ", ".join(remaining)
+            + "). Run --reconfigure again when you're ready to add them."
         )
-        for key in SNOWFLAKE_ENV_VARS:
-            if env_map.get(key):
-                continue
-            prompt_label = key.replace("SNOWFLAKE_", "").replace("_", " ").title()
-            value = _prompt_value(f"{prompt_label}: ", secret=key == "SNOWFLAKE_PASSWORD")
-            if value:
-                store_value(key, value)
-            else:
-                warn(f"Skipped {key}; Snowflake access will remain unavailable.")
+
+    if not env_map.get("OPENROUTER_API_KEY"):
+        warn(
+            "Remote model access is disabled until an OpenRouter API key is configured."
+        )
+
+    return updated
+
+
+def prompt_for_missing_credentials(
+    *,
+    app_home: Path = APP_HOME,
+    env: MutableMapping[str, str] | None = None,
+) -> bool:
+    """Backward compatible wrapper for :func:`run_setup_wizard`."""
+
+    return run_setup_wizard(app_home=app_home, env=env)
 
 
 def ensure_app_home(app_home: Path = APP_HOME) -> Path:
@@ -376,6 +468,11 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--reconfigure",
+        action="store_true",
+        help="Run the setup wizard even if credentials already exist.",
+    )
+    parser.add_argument(
         "--skip-launch",
         action="store_true",
         help="Prepare configuration without launching Crush.",
@@ -400,11 +497,14 @@ def main(argv: Sequence[str] | None = None) -> None:
     banner()
     ensure_app_home(app_home)
     load_environment(app_home)
-    prompt_for_missing_credentials(app_home=app_home)
+    run_setup_wizard(app_home=app_home, force=args.reconfigure)
     generate_crush_config(app_home=app_home)
     check_snowflake_credentials()
     remove_local_duckdb(app_home=app_home)
-    info(f"Place files to analyze in: {app_home}")
+    info(
+        "Place files to analyze in the Victoria folder on your host (~/Victoria by default). "
+        f"Inside the container that directory is available at: {app_home}"
+    )
     preflight_crush()
     if args.skip_launch:
         return
