@@ -46,10 +46,10 @@ def test_load_environment_returns_empty_when_file_absent(tmp_path: Path) -> None
     assert entrypoint.load_environment(app_home=tmp_path, env={}) == {}
 
 
-def test_prompt_for_missing_credentials_updates_env_file(
+def test_run_setup_wizard_updates_env_file(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    env = {}
+    env: dict[str, str] = {}
     responses = iter(
         [
             "openrouter-key",
@@ -66,7 +66,9 @@ def test_prompt_for_missing_credentials_updates_env_file(
         lambda prompt, password=False: next(responses),
     )
 
-    entrypoint.prompt_for_missing_credentials(app_home=tmp_path, env=env)
+    updated = entrypoint.run_setup_wizard(app_home=tmp_path, env=env)
+
+    assert updated is True
 
     env_path = tmp_path / entrypoint.ENV_FILENAME
     values = entrypoint.parse_env_file(env_path)
@@ -85,7 +87,31 @@ def test_prompt_for_missing_credentials_updates_env_file(
         assert values[key] == value
 
 
-def test_prompt_for_missing_credentials_skips_when_complete(
+def test_run_setup_wizard_force_keeps_existing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    env = {
+        "OPENROUTER_API_KEY": "configured",
+        "SNOWFLAKE_ACCOUNT": "acct",
+        "SNOWFLAKE_USER": "user",
+        "SNOWFLAKE_PASSWORD": "password",
+        "SNOWFLAKE_WAREHOUSE": "warehouse",
+        "SNOWFLAKE_ROLE": "role",
+    }
+
+    responses = iter(["", "", "", "", "", ""])
+    monkeypatch.setattr(
+        entrypoint.console, "input", lambda prompt, password=False: next(responses)
+    )
+
+    updated = entrypoint.run_setup_wizard(app_home=tmp_path, env=env, force=True)
+
+    assert updated is False
+    assert env["OPENROUTER_API_KEY"] == "configured"
+    assert not (tmp_path / entrypoint.ENV_FILENAME).exists()
+
+
+def test_run_setup_wizard_skips_when_complete(
     tmp_path: Path, mocker: pytest.MockFixture
 ) -> None:
     env = {"OPENROUTER_API_KEY": "configured"}
@@ -93,9 +119,10 @@ def test_prompt_for_missing_credentials_skips_when_complete(
 
     input_mock = mocker.patch.object(entrypoint.console, "input")
 
-    entrypoint.prompt_for_missing_credentials(app_home=tmp_path, env=env)
+    updated = entrypoint.run_setup_wizard(app_home=tmp_path, env=env)
 
     input_mock.assert_not_called()
+    assert updated is False
     assert not (tmp_path / entrypoint.ENV_FILENAME).exists()
 
 
@@ -209,7 +236,14 @@ def test_parse_args_accepts_custom_app_home(tmp_path: Path) -> None:
     args = entrypoint.parse_args(["--app-home", str(tmp_path), "--skip-launch"])
 
     assert args.app_home == tmp_path
+    assert args.reconfigure is False
     assert args.skip_launch is True
+
+
+def test_parse_args_sets_reconfigure_flag() -> None:
+    args = entrypoint.parse_args(["--reconfigure"])
+
+    assert args.reconfigure is True
 
 
 def test_main_honours_skip_launch(
@@ -223,7 +257,7 @@ def test_main_honours_skip_launch(
         "victoria_entrypoint.ensure_app_home", side_effect=lambda path: path
     )
     load_environment = mocker.patch("victoria_entrypoint.load_environment")
-    prompt_credentials = mocker.patch("victoria_entrypoint.prompt_for_missing_credentials")
+    run_wizard = mocker.patch("victoria_entrypoint.run_setup_wizard")
     generate_config = mocker.patch("victoria_entrypoint.generate_crush_config")
     mocker.patch("victoria_entrypoint.check_snowflake_credentials")
     mocker.patch("victoria_entrypoint.remove_local_duckdb")
@@ -236,6 +270,33 @@ def test_main_honours_skip_launch(
     assert os.environ["VICTORIA_HOME"] == str(tmp_path)
     ensure_app_home.assert_called_once_with(tmp_path)
     load_environment.assert_called_once_with(tmp_path)
-    prompt_credentials.assert_called_once_with(app_home=tmp_path)
+    run_wizard.assert_called_once_with(app_home=tmp_path, force=False)
     generate_config.assert_called_once_with(app_home=tmp_path)
     launch_crush.assert_not_called()
+
+
+def test_main_with_reconfigure_forces_wizard(
+    tmp_path: Path, mocker: pytest.MockFixture, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.delenv("VICTORIA_HOME", raising=False)
+
+    mocker.patch("victoria_entrypoint.initialize_colorama")
+    mocker.patch("victoria_entrypoint.banner")
+    mocker.patch("victoria_entrypoint.ensure_app_home", side_effect=lambda path: path)
+    mocker.patch("victoria_entrypoint.load_environment")
+    run_wizard = mocker.patch("victoria_entrypoint.run_setup_wizard")
+    mocker.patch("victoria_entrypoint.generate_crush_config")
+    mocker.patch("victoria_entrypoint.check_snowflake_credentials")
+    mocker.patch("victoria_entrypoint.remove_local_duckdb")
+    mocker.patch("victoria_entrypoint.info")
+    mocker.patch("victoria_entrypoint.preflight_crush")
+    mocker.patch("victoria_entrypoint.launch_crush")
+
+    entrypoint.main([
+        "--skip-launch",
+        "--reconfigure",
+        "--app-home",
+        str(tmp_path),
+    ])
+
+    run_wizard.assert_called_once_with(app_home=tmp_path, force=True)
