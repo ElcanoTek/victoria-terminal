@@ -6,7 +6,7 @@ ENV PATH="/root/.local/bin:${PATH}" \
     GOSUMDB="sum.golang.org"
 
 RUN dnf -y upgrade && \
-    dnf -y install python3 python3-pip git curl golang && \
+    dnf -y install python3 python3-pip git curl golang helix uv && \
     GOBIN=/usr/local/bin go install github.com/charmbracelet/crush@latest && \
     dnf clean all && rm -rf /var/cache/dnf && rm -rf /root/go/pkg/mod
 

@@ -87,30 +87,11 @@
   "mcp": {
     "motherduck": {
       "type": "stdio",
-      "command": "python",
+      "command": "uvx",
       "args": [
-        "-m",
-        "mcp_server_motherduck",
+        "mcp-server-motherduck",
         "--db-path",
         "${VICTORIA_HOME}/adtech.duckdb"
-      ]
-    },
-    "snowflake": {
-      "type": "stdio",
-      "command": "python",
-      "args": [
-        "-m",
-        "mcp_snowflake_server",
-        "--account",
-        "${SNOWFLAKE_ACCOUNT}",
-        "--warehouse",
-        "${SNOWFLAKE_WAREHOUSE}",
-        "--user",
-        "${SNOWFLAKE_USER}",
-        "--password",
-        "${SNOWFLAKE_PASSWORD}",
-        "--role",
-        "${SNOWFLAKE_ROLE}"
       ]
     }
   }

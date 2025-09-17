@@ -29,14 +29,6 @@ SUPPORT_FILES: tuple[Path, ...] = (
     Path(CONFIGS_DIR) / "crush" / "CRUSH.md",
     Path(VICTORIA_FILE),
 )
-SNOWFLAKE_ENV_VARS: tuple[str, ...] = (
-    "SNOWFLAKE_ACCOUNT",
-    "SNOWFLAKE_USER",
-    "SNOWFLAKE_PASSWORD",
-    "SNOWFLAKE_WAREHOUSE",
-    "SNOWFLAKE_ROLE",
-)
-
 DEFAULT_APP_HOME = Path.home() / "Victoria"
 APP_HOME = Path(os.environ.get("VICTORIA_HOME", DEFAULT_APP_HOME))
 APP_HOME.mkdir(parents=True, exist_ok=True)
@@ -208,8 +200,7 @@ def run_setup_wizard(
         env_map.setdefault(key, value)
 
     needs_openrouter = not env_map.get("OPENROUTER_API_KEY")
-    missing_snowflake = snowflake_env_missing(env_map)
-    if not (force or needs_openrouter or missing_snowflake):
+    if not (force or needs_openrouter):
         return False
 
     section("Victoria setup wizard")
@@ -253,37 +244,10 @@ def run_setup_wizard(
         else:
             warn("Continuing without an OpenRouter API key. Remote models remain unavailable.")
 
-    for key in SNOWFLAKE_ENV_VARS:
-        current_value = env_map.get(key)
-        if not (force or not current_value):
-            continue
-        label = key.replace("SNOWFLAKE_", "").replace("_", " ").title()
-        secret = key == "SNOWFLAKE_PASSWORD"
-        if current_value:
-            masked = _mask_secret(current_value) if secret else current_value
-            prompt_text = f"{label} [{masked}] (press Enter to keep current): "
-        else:
-            prompt_text = f"{label} (press Enter to skip): "
-        value = _prompt_value(prompt_text, secret=secret)
-        if value:
-            store_value(key, value)
-        elif current_value:
-            info(f"Keeping existing {label.lower()}.")
-        else:
-            warn(f"{label} not provided; Snowflake access will remain unavailable.")
-
     if updated:
         good(f"Setup complete. Updated values saved to {env_path}.")
     else:
         info("No changes were made to existing credentials.")
-
-    remaining = snowflake_env_missing(env_map)
-    if remaining:
-        warn(
-            "Snowflake credentials are still incomplete (missing: "
-            + ", ".join(remaining)
-            + "). Run --reconfigure again when you're ready to add them."
-        )
 
     if not env_map.get("OPENROUTER_API_KEY"):
         warn(
@@ -365,30 +329,6 @@ def generate_crush_config(
     _write_json(output_path, resolved)
     good(f"Configuration written to {output_path}")
     return output_path
-
-
-def snowflake_env_missing(env: Mapping[str, str] | None = None) -> list[str]:
-    """Return Snowflake variables that are not present in ``env``."""
-
-    env_map = env or os.environ
-    return [name for name in SNOWFLAKE_ENV_VARS if not env_map.get(name)]
-
-
-def check_snowflake_credentials(env: Mapping[str, str] | None = None) -> None:
-    """Report whether Snowflake credentials appear to be configured."""
-
-    section("Snowflake credential check")
-    missing = snowflake_env_missing(env)
-    if missing:
-        warn(
-            "Snowflake credentials are not fully configured (missing: "
-            + ", ".join(missing)
-            + "). Continuing without Snowflake access."
-        )
-    else:
-        good("Snowflake credentials detected")
-
-
 def remove_local_duckdb(app_home: Path = APP_HOME) -> None:
     """Remove the cached DuckDB file so each run starts fresh."""
 
@@ -499,7 +439,6 @@ def main(argv: Sequence[str] | None = None) -> None:
     load_environment(app_home)
     run_setup_wizard(app_home=app_home, force=args.reconfigure)
     generate_crush_config(app_home=app_home)
-    check_snowflake_credentials()
     remove_local_duckdb(app_home=app_home)
     info(
         "Place files to analyze in the Victoria folder on your host (~/Victoria by default). "

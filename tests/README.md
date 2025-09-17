@@ -25,7 +25,5 @@ pytest
 - Verifying configuration files are created from bundled templates when
   variables are substituted.
 - Ensuring shared configuration folders synchronise bundled documentation.
-- Checking Snowflake credential detection so the CLI can warn when secrets are
-  absent.
 - Confirming the entry point honours the `--skip-launch` flag without invoking
   external binaries.

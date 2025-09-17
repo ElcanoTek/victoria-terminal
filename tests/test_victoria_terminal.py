@@ -50,16 +50,7 @@ def test_run_setup_wizard_updates_env_file(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     env: dict[str, str] = {}
-    responses = iter(
-        [
-            "openrouter-key",
-            "acct",
-            "user",
-            "password",
-            "warehouse",
-            "role",
-        ]
-    )
+    responses = iter(["openrouter-key"])
     monkeypatch.setattr(
         entrypoint.console,
         "input",
@@ -73,33 +64,16 @@ def test_run_setup_wizard_updates_env_file(
     env_path = tmp_path / entrypoint.ENV_FILENAME
     values = entrypoint.parse_env_file(env_path)
 
-    expected = {
-        "OPENROUTER_API_KEY": "openrouter-key",
-        "SNOWFLAKE_ACCOUNT": "acct",
-        "SNOWFLAKE_USER": "user",
-        "SNOWFLAKE_PASSWORD": "password",
-        "SNOWFLAKE_WAREHOUSE": "warehouse",
-        "SNOWFLAKE_ROLE": "role",
-    }
-
-    for key, value in expected.items():
-        assert env[key] == value
-        assert values[key] == value
+    assert env["OPENROUTER_API_KEY"] == "openrouter-key"
+    assert values == {"OPENROUTER_API_KEY": "openrouter-key"}
 
 
 def test_run_setup_wizard_force_keeps_existing(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    env = {
-        "OPENROUTER_API_KEY": "configured",
-        "SNOWFLAKE_ACCOUNT": "acct",
-        "SNOWFLAKE_USER": "user",
-        "SNOWFLAKE_PASSWORD": "password",
-        "SNOWFLAKE_WAREHOUSE": "warehouse",
-        "SNOWFLAKE_ROLE": "role",
-    }
+    env = {"OPENROUTER_API_KEY": "configured"}
 
-    responses = iter(["", "", "", "", "", ""])
+    responses = iter([""])
     monkeypatch.setattr(
         entrypoint.console, "input", lambda prompt, password=False: next(responses)
     )
@@ -115,7 +89,6 @@ def test_run_setup_wizard_skips_when_complete(
     tmp_path: Path, mocker: pytest.MockFixture
 ) -> None:
     env = {"OPENROUTER_API_KEY": "configured"}
-    env.update({key: "value" for key in entrypoint.SNOWFLAKE_ENV_VARS})
 
     input_mock = mocker.patch.object(entrypoint.console, "input")
 
@@ -150,11 +123,6 @@ def test_substitute_env_uses_process_environment(monkeypatch: pytest.MonkeyPatch
 def test_generate_crush_config_substitutes_env(tmp_path: Path) -> None:
     env_values = {
         "OPENROUTER_API_KEY": "test-key",
-        "SNOWFLAKE_ACCOUNT": "acct",
-        "SNOWFLAKE_USER": "user",
-        "SNOWFLAKE_PASSWORD": "password",
-        "SNOWFLAKE_WAREHOUSE": "warehouse",
-        "SNOWFLAKE_ROLE": "role",
         "VICTORIA_HOME": str(tmp_path),
     }
 
@@ -172,24 +140,11 @@ def test_generate_crush_config_substitutes_env(tmp_path: Path) -> None:
     assert "typescript" not in data["lsp"]
 
     motherduck_cfg = data["mcp"]["motherduck"]
-    assert motherduck_cfg["command"] == "python"
-    assert motherduck_cfg["args"][-1] == str(tmp_path / "adtech.duckdb")
-
-    snowflake_cfg = data["mcp"]["snowflake"]
-    assert snowflake_cfg["command"] == "python"
-    assert snowflake_cfg["args"] == [
-        "-m",
-        "mcp_snowflake_server",
-        "--account",
-        "acct",
-        "--warehouse",
-        "warehouse",
-        "--user",
-        "user",
-        "--password",
-        "password",
-        "--role",
-        "role",
+    assert motherduck_cfg["command"] == "uvx"
+    assert motherduck_cfg["args"] == [
+        "mcp-server-motherduck",
+        "--db-path",
+        str(tmp_path / "adtech.duckdb"),
     ]
 
 
@@ -215,21 +170,6 @@ def test_ensure_app_home_copies_support_files(tmp_path: Path, mocker: pytest.Moc
     assert result == destination
     assert copied.exists()
     assert copied.read_text(encoding="utf-8") == "documentation"
-
-
-def test_snowflake_env_missing_reports_missing_values() -> None:
-    env = {
-        "SNOWFLAKE_ACCOUNT": "acct",
-        "SNOWFLAKE_USER": "user",
-    }
-
-    missing = entrypoint.snowflake_env_missing(env)
-
-    assert missing == [
-        "SNOWFLAKE_PASSWORD",
-        "SNOWFLAKE_WAREHOUSE",
-        "SNOWFLAKE_ROLE",
-    ]
 
 
 def test_parse_args_accepts_custom_app_home(tmp_path: Path) -> None:
@@ -259,7 +199,6 @@ def test_main_honours_skip_launch(
     load_environment = mocker.patch("victoria_terminal.load_environment")
     run_wizard = mocker.patch("victoria_terminal.run_setup_wizard")
     generate_config = mocker.patch("victoria_terminal.generate_crush_config")
-    mocker.patch("victoria_terminal.check_snowflake_credentials")
     mocker.patch("victoria_terminal.remove_local_duckdb")
     mocker.patch("victoria_terminal.info")
     mocker.patch("victoria_terminal.preflight_crush")
@@ -286,7 +225,6 @@ def test_main_with_reconfigure_forces_wizard(
     mocker.patch("victoria_terminal.load_environment")
     run_wizard = mocker.patch("victoria_terminal.run_setup_wizard")
     mocker.patch("victoria_terminal.generate_crush_config")
-    mocker.patch("victoria_terminal.check_snowflake_credentials")
     mocker.patch("victoria_terminal.remove_local_duckdb")
     mocker.patch("victoria_terminal.info")
     mocker.patch("victoria_terminal.preflight_crush")

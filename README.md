@@ -92,7 +92,7 @@ Windows users should keep the commands on a single line and use `$env:USERPROFIL
 The container entry point (`victoria_terminal.py`) guides the initial setup:
 
 - If it detects configuration files in `~/Victoria`, it reuses them automatically.
-- Otherwise it prompts for essentials—OpenRouter API keys and optional Snowflake credentials—and saves them to `~/Victoria/.env`.
+- Otherwise it prompts for essentials—OpenRouter API keys—and saves them to `~/Victoria/.env`.
 
 Re-run the configuration wizard at any time without launching the UI:
 
