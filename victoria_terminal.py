@@ -236,7 +236,7 @@ def run_setup_wizard(
             )
         else:
             prompt_text = "OpenRouter API key (press Enter to skip): "
-        value = _prompt_value(prompt_text, secret=True)
+        value = _prompt_value(prompt_text)
         if value:
             store_value("OPENROUTER_API_KEY", value)
         elif openrouter_key:
