@@ -146,7 +146,9 @@ Follow this path if you plan to modify Victoria or run the automated tests.
 ### Clone the repository and set up a virtual environment
 
 ```bash
-git clone https://github.com/elcanotek/victoria-terminal.git
+git clone https://github.com/ElcanoTek/victoria-terminal.git
+# Or use SSH
+git clone git@github.com:ElcanoTek/victoria-terminal.git
 cd victoria-terminal
 
 python -m venv .venv

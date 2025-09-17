@@ -36,8 +36,10 @@ For local development, we strongly recommend using a virtual environment to isol
 2.  **Setup**:
     ```bash
     # Clone the repository
-    git clone https://github.com/elcanotek/victoria.git
-    cd victoria
+    git clone https://github.com/ElcanoTek/victoria-terminal.git
+    # Or use SSH
+    git clone git@github.com:ElcanoTek/victoria-terminal.git
+    cd victoria-terminal
 
     # Create and activate a virtual environment
     python -m venv .venv
