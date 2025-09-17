@@ -1,4 +1,4 @@
-"""Tests for the victoria_entrypoint module."""
+"""Tests for the victoria_terminal module."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-import victoria_entrypoint as entrypoint
+import victoria_terminal as entrypoint
 
 
 def test_parse_env_file_handles_comments(tmp_path: Path) -> None:
@@ -206,8 +206,8 @@ def test_ensure_app_home_copies_support_files(tmp_path: Path, mocker: pytest.Moc
 
     destination = tmp_path / "dest"
 
-    mocker.patch("victoria_entrypoint.SUPPORT_FILES", (Path("sample.txt"),))
-    mocker.patch("victoria_entrypoint.resource_path", return_value=support_file)
+    mocker.patch("victoria_terminal.SUPPORT_FILES", (Path("sample.txt"),))
+    mocker.patch("victoria_terminal.resource_path", return_value=support_file)
 
     result = entrypoint.ensure_app_home(app_home=destination)
 
@@ -251,19 +251,19 @@ def test_main_honours_skip_launch(
 ) -> None:
     monkeypatch.delenv("VICTORIA_HOME", raising=False)
 
-    mocker.patch("victoria_entrypoint.initialize_colorama")
-    mocker.patch("victoria_entrypoint.banner")
+    mocker.patch("victoria_terminal.initialize_colorama")
+    mocker.patch("victoria_terminal.banner")
     ensure_app_home = mocker.patch(
-        "victoria_entrypoint.ensure_app_home", side_effect=lambda path: path
+        "victoria_terminal.ensure_app_home", side_effect=lambda path: path
     )
-    load_environment = mocker.patch("victoria_entrypoint.load_environment")
-    run_wizard = mocker.patch("victoria_entrypoint.run_setup_wizard")
-    generate_config = mocker.patch("victoria_entrypoint.generate_crush_config")
-    mocker.patch("victoria_entrypoint.check_snowflake_credentials")
-    mocker.patch("victoria_entrypoint.remove_local_duckdb")
-    mocker.patch("victoria_entrypoint.info")
-    mocker.patch("victoria_entrypoint.preflight_crush")
-    launch_crush = mocker.patch("victoria_entrypoint.launch_crush")
+    load_environment = mocker.patch("victoria_terminal.load_environment")
+    run_wizard = mocker.patch("victoria_terminal.run_setup_wizard")
+    generate_config = mocker.patch("victoria_terminal.generate_crush_config")
+    mocker.patch("victoria_terminal.check_snowflake_credentials")
+    mocker.patch("victoria_terminal.remove_local_duckdb")
+    mocker.patch("victoria_terminal.info")
+    mocker.patch("victoria_terminal.preflight_crush")
+    launch_crush = mocker.patch("victoria_terminal.launch_crush")
 
     entrypoint.main(["--skip-launch", "--app-home", str(tmp_path)])
 
@@ -280,17 +280,17 @@ def test_main_with_reconfigure_forces_wizard(
 ) -> None:
     monkeypatch.delenv("VICTORIA_HOME", raising=False)
 
-    mocker.patch("victoria_entrypoint.initialize_colorama")
-    mocker.patch("victoria_entrypoint.banner")
-    mocker.patch("victoria_entrypoint.ensure_app_home", side_effect=lambda path: path)
-    mocker.patch("victoria_entrypoint.load_environment")
-    run_wizard = mocker.patch("victoria_entrypoint.run_setup_wizard")
-    mocker.patch("victoria_entrypoint.generate_crush_config")
-    mocker.patch("victoria_entrypoint.check_snowflake_credentials")
-    mocker.patch("victoria_entrypoint.remove_local_duckdb")
-    mocker.patch("victoria_entrypoint.info")
-    mocker.patch("victoria_entrypoint.preflight_crush")
-    mocker.patch("victoria_entrypoint.launch_crush")
+    mocker.patch("victoria_terminal.initialize_colorama")
+    mocker.patch("victoria_terminal.banner")
+    mocker.patch("victoria_terminal.ensure_app_home", side_effect=lambda path: path)
+    mocker.patch("victoria_terminal.load_environment")
+    run_wizard = mocker.patch("victoria_terminal.run_setup_wizard")
+    mocker.patch("victoria_terminal.generate_crush_config")
+    mocker.patch("victoria_terminal.check_snowflake_credentials")
+    mocker.patch("victoria_terminal.remove_local_duckdb")
+    mocker.patch("victoria_terminal.info")
+    mocker.patch("victoria_terminal.preflight_crush")
+    mocker.patch("victoria_terminal.launch_crush")
 
     entrypoint.main([
         "--skip-launch",
