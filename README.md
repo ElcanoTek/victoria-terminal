@@ -17,11 +17,12 @@ Victoria is Elcano's AI agent for navigating programmatic advertising datasets. 
 
 ## 🚀 Quick Start for Analysts & Traders
 
-Follow these steps if you primarily want to run Victoria to analyze advertising data.
+New to containers? No problem. This section walks you through the minimum steps needed to launch Victoria and start asking questions about your data.
 
-### 1. Install Podman
+### 1. Check your prerequisites
 
-Victoria relies on Podman for containerized execution. Install it from [podman.io](https://podman.io) or your system's package manager before proceeding.
+1. **Install Podman** from [podman.io](https://podman.io) or your operating system's package manager.
+2. **Verify Podman works** by running `podman --version`. If you see a version number, you're ready to go.
 
 > [!IMPORTANT]
 > If you install the podman-cli make sure the Podman machine is running before continuing. After installation, run the following from a Terminal:
@@ -31,9 +32,9 @@ Victoria relies on Podman for containerized execution. Install it from [podman.i
 > ```
 > Podman Desktop performs these steps automatically the first time it launches.
 
-### 2. Prepare the shared workspace
+### 2. Create the shared workspace folder
 
-Create the directory that the container will use to share configuration and project files with your host operating system:
+Victoria stores configuration and credentials in a folder that is mounted into the container. Create it once and reuse it for every upgrade:
 
 * **macOS / Linux**
   ```bash
@@ -48,7 +49,7 @@ Create the directory that the container will use to share configuration and proj
   mkdir %USERPROFILE%\Victoria
   ```
 
-### 3. Pull the correct image for your platform
+### 3. Confirm your CPU architecture
 
 Victoria publishes multi-architecture tags. If you're unsure which CPU architecture your Podman host is using, check it with:
 
@@ -60,8 +61,8 @@ Use the table below to pull (or update) the matching image and run it. Re-runnin
 
 | Platform | CPU architecture | Pull / update | Run |
 | --- | --- | --- | --- |
-| Linux or macOS (Intel/AMD) | `x86_64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest` | `podman run --rm -it -v ~/Victoria:/root/Victoria ghcr.io/elcanotek/victoria-terminal:latest` |
-| macOS (Apple silicon) | `arm64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest-arm64` | `podman run --rm -it -v ~/Victoria:/root/Victoria ghcr.io/elcanotek/victoria-terminal:latest-arm64` |
+| macOS or Linux (Intel/AMD) | `x86_64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest` | `podman run --rm -it -v ~/Victoria:/root/Victoria ghcr.io/elcanotek/victoria-terminal:latest` |
+| macOS or Linux (Arm64) | `arm64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest-arm64` | `podman run --rm -it -v ~/Victoria:/root/Victoria ghcr.io/elcanotek/victoria-terminal:latest-arm64` |
 | Windows PowerShell (Intel/AMD) | `x86_64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest` | `podman run --rm -it -v "$env:USERPROFILE/Victoria:/root/Victoria" ghcr.io/elcanotek/victoria-terminal:latest` |
 | Windows PowerShell (Arm64) | `arm64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest-arm64` | `podman run --rm -it -v "$env:USERPROFILE/Victoria:/root/Victoria" ghcr.io/elcanotek/victoria-terminal:latest-arm64` |
 
@@ -145,8 +146,8 @@ Follow this path if you plan to modify Victoria or run the automated tests.
 ### Clone the repository and set up a virtual environment
 
 ```bash
-git clone https://github.com/elcanotek/victoria.git
-cd victoria
+git clone https://github.com/elcanotek/victoria-terminal.git
+cd victoria-terminal
 
 python -m venv .venv
 source .venv/bin/activate
