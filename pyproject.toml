@@ -6,7 +6,7 @@ target-version = ["py38"]
 [tool.isort]
 profile = "black"
 line_length = 100
-known_first_party = ["victoria_entrypoint"]
+known_first_party = ["victoria_terminal"]
 
 
 [tool.flake8]

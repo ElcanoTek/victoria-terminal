@@ -77,7 +77,7 @@ podman run --rm -it \
   ghcr.io/elcanotek/victoria-terminal:latest
 ```
 
-To pass command-line options directly to the entry point script (`victoria_entrypoint.py`), append them after a `--` separator:
+To pass command-line options directly to the entry point script (`victoria_terminal.py`), append them after a `--` separator:
 
 ```bash
 podman run --rm -it \
@@ -89,7 +89,7 @@ Windows users should keep the commands on a single line and use `$env:USERPROFIL
 
 ### 4. Configure on first run
 
-The container entry point (`victoria_entrypoint.py`) guides the initial setup:
+The container entry point (`victoria_terminal.py`) guides the initial setup:
 
 - If it detects configuration files in `~/Victoria`, it reuses them automatically.
 - Otherwise it prompts for essentials—OpenRouter API keys and optional Snowflake credentials—and saves them to `~/Victoria/.env`.

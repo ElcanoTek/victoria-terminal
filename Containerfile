@@ -17,4 +17,4 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-ENTRYPOINT ["python3", "/workspace/victoria_entrypoint.py"]
+CMD ["python3", "/workspace/victoria_terminal.py"]
