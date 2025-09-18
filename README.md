@@ -15,11 +15,19 @@ Victoria is Elcano's AI agent for navigating programmatic advertising datasets. 
 
 ---
 
-## 🚀 Quick Start for Analysts & Traders
+## 🚀 Installation Streams
 
-New to containers? No problem. This section walks you through the minimum steps needed to launch Victoria and start asking questions about your data.
+Victoria supports three installation flows depending on how much automation you want. Use the summary below to pick the path that matches your workflow, then jump to the detailed instructions.
 
-### 1. Check your prerequisites
+| Stream | Best for | What you get |
+| --- | --- | --- |
+| [Stream 1 – Guided helper script](#stream-1--guided-helper-script) | Analysts and traders who want the quickest setup | Installs Podman prerequisites, provisions the shared workspace, pulls the right image, and adds a `victoria` command to your shell profile. |
+| [Stream 2 – Manual Podman commands](#stream-2--manual-podman-commands) | Operators who prefer to copy/paste each command | Step-by-step Podman instructions for creating the workspace, pulling images, running the container, and passing options. |
+| [Stream 3 – Build from source](#stream-3--build-from-source) | Contributors and teams customizing Victoria | Clone the repository, create a Python environment, and build/test the container locally. |
+
+### Before you begin
+
+All Podman-based streams (1 and 2) require a working Podman installation.
 
 1. **Install Podman** from [podman.io](https://podman.io) or your operating system's package manager.
 2. **Verify Podman works** by running `podman --version`. If you see a version number, you're ready to go.
@@ -32,9 +40,9 @@ New to containers? No problem. This section walks you through the minimum steps 
 > ```
 > Podman Desktop performs these steps automatically the first time it launches.
 
-### 2. (Optional) Use the helper script
+### Stream 1 – Guided helper script
 
-Once Podman is installed, you can let Victoria wire up the remaining pieces for you. The helper scripts below validate that Podman is ready, make sure your `~/Victoria` workspace exists, detect the Podman host architecture (using `podman info` when available with a local fallback), pull the matching container image tag, and add a reusable `victoria` command to your shell profile.
+Let Victoria wire up the remaining pieces for you. The helper scripts validate that Podman is ready, ensure your `~/Victoria` workspace exists, detect the host architecture (using `podman info` when available with a local fallback), pull the matching container image tag, and add a reusable `victoria` command to your shell profile.
 
 * **macOS / Linux**
   ```bash
@@ -57,11 +65,13 @@ After the helper finishes, open a new terminal session (or reload your profile w
 victoria
 ```
 
-The helper keeps the `victoria` command up to date for you, so there's no need to copy the longer `podman run` incantation each time.
-
 Re-run the script any time you want to refresh the alias. It will not reinstall Podman for you, but it will remind you to start `podman machine` on macOS and Windows if needed.
 
-### 3. Create the shared workspace folder
+### Stream 2 – Manual Podman commands
+
+Prefer to copy/paste the commands yourself? Follow the steps below to mirror what the helper script does behind the scenes.
+
+#### Create the shared workspace folder
 
 Victoria stores configuration and credentials in a folder that is mounted into the container. Create it once and reuse it for every upgrade:
 
@@ -78,7 +88,7 @@ Victoria stores configuration and credentials in a folder that is mounted into t
   mkdir %USERPROFILE%\Victoria
   ```
 
-### 4. Confirm your CPU architecture
+#### Pull the right image for your architecture
 
 Victoria publishes multi-architecture tags. If you're unsure which CPU architecture your Podman host is using, check it with:
 
@@ -116,7 +126,7 @@ podman run --rm -it \
 
 Windows users should keep the commands on a single line and use `$env:USERPROFILE/Victoria` in place of `~/Victoria`.
 
-### 5. Configure on first run
+#### Configure on first run
 
 The container's default command (`victoria_terminal.py`) guides the initial setup:
 
@@ -136,7 +146,58 @@ You can also point the default command at an alternate shared location with `--s
 > [!TIP]
 > Swap in the image tag that matches your architecture (from the table above) and adjust the host path syntax for your platform. Windows PowerShell users should run the command on a single line with `$env:USERPROFILE/Victoria`.
 
-### 6. Choose an AI model in Crush
+### Stream 3 – Build from source
+
+Follow this path if you plan to modify Victoria, integrate it into a custom workflow, or contribute changes upstream.
+
+#### Clone the repository and set up a virtual environment
+
+```bash
+git clone https://github.com/ElcanoTek/victoria-terminal.git
+# Or use SSH
+git clone git@github.com:ElcanoTek/victoria-terminal.git
+cd victoria-terminal
+
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+#### Run tests and linters on the host
+
+With the virtual environment activated, run the automated checks via [Nox](https://nox.thea.codes/):
+
+```bash
+nox -s lint
+nox -s tests
+```
+
+Both sessions create (and reuse) virtual environments so the commands can also be executed on a clean workstation without manually activating `.venv`. If you prefer to iterate inside the existing environment, you can still execute individual tools directly, for example `pytest` or `flake8`.
+
+#### Build and test the container locally
+
+Use Podman to build the development image and run commands inside it:
+
+```bash
+podman build -t victoria-terminal .
+
+# optionally run pytest
+podman run --rm -it \
+  victoria-terminal pytest
+
+# run the terminal agent
+podman run --rm -it \
+  -v ~/Victoria:/root/Victoria \
+  victoria-terminal
+```
+
+Both approaches share the same source tree and configuration files stored in `~/Victoria`.
+
+#### Continuous delivery pipeline
+
+Every push to `main` triggers a GitHub Actions workflow that rebuilds the Podman image and publishes it to `ghcr.io/elcanotek/victoria-terminal`. The published image is what production users run, so CI keeps dependencies and CLI tooling up to date.
+
+### Choose an AI model in Crush
 
 When testing **Victoria** in the terminal, we recommend the following models. They have been vetted for compatibility, reliability, and cost.
 
@@ -165,65 +226,6 @@ When testing **Victoria** in the terminal, we recommend the following models. Th
 > - Selecting a model outside this list is unsupported and may produce unreliable results.
 > - Victoria remembers the last model you selected and loads it automatically on the next launch.
 > - To compare results across models, switch models and **restart Victoria** so each model begins with a fresh context.
-
----
-
-## 🛠️ Developer & Contributor Guide
-
-Follow this path if you plan to modify Victoria or run the automated tests.
-
-### Clone the repository and set up a virtual environment
-
-```bash
-git clone https://github.com/ElcanoTek/victoria-terminal.git
-# Or use SSH
-git clone git@github.com:ElcanoTek/victoria-terminal.git
-cd victoria-terminal
-
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
-
-### Run tests and linters on the host
-
-With the virtual environment activated, run the automated checks via
-[Nox](https://nox.thea.codes/):
-
-```bash
-nox -s lint
-nox -s tests
-```
-
-Both sessions create (and reuse) virtual environments so the commands can also
-be executed on a clean workstation without manually activating `.venv`. If you
-prefer to iterate inside the existing environment, you can still execute
-individual tools directly, for example `pytest` or `flake8`.
-
-### Build and test the container locally
-
-Use Podman to build the development image and run commands inside it:
-
-```bash
-podman build -t victoria-terminal .
-
-#optionally run pytest
-podman run --rm -it \
-  victoria-terminal pytest
-
-#run the terminal agent
-podman run --rm -it \
-  -v ~/Victoria:/root/Victoria \
-  victoria-terminal
-```
-
-Both approaches share the same source tree and configuration files stored in `~/Victoria`.
-
-### Continuous delivery pipeline
-
-Every push to `main` triggers a GitHub Actions workflow that rebuilds the Podman image and publishes it to `ghcr.io/elcanotek/victoria-terminal`. The published image is what production users run, so CI keeps dependencies and CLI tooling up to date.
-
----
 
 ## 🤝 Contributing
 
