@@ -407,7 +407,6 @@ def _display_colorama_tips(*, initial_bullets: bool = True) -> None:
 
 def _animate_tips_colorama() -> None:
     for i in range(1, len(TIPS_BULLETS) + 1):
-        _display_colorama_tips(initial_bullets=False)
         # redraw with partial checkmarks
         _clear_basic()
         print(f"{Fore.WHITE}{Style.BRIGHT}{'Victoria Terminal'.center(80)}{Style.RESET_ALL}\n")
