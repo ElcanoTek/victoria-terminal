@@ -708,7 +708,7 @@ def launch_crush(*, app_home: Path = APP_HOME) -> None:
         )
         sys.exit(1)
     except Exception as exc:  # pragma: no cover - runtime errors
-        err(f"Failed to continue: {exc}")
+        err(f"Failed to launch Crush: {exc}")
         sys.exit(1)
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
