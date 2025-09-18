@@ -197,36 +197,6 @@ Both approaches share the same source tree and configuration files stored in `~/
 
 Every push to `main` triggers a GitHub Actions workflow that rebuilds the Podman image and publishes it to `ghcr.io/elcanotek/victoria-terminal`. The published image is what production users run, so CI keeps dependencies and CLI tooling up to date.
 
-### Choose an AI model in Crush
-
-When testing **Victoria** in the terminal, we recommend the following models. They have been vetted for compatibility, reliability, and cost.
-
-| **Model Name**           | **How It Appears in Crush (under ✅ Configured)** |
-|-------------------------|---------------------------------------------------|
-| ChatGPT 5               | `OpenAI: GPT-5`                                   |
-| ChatGPT 5 Mini          | `OpenAI: GPT-5 Mini`                              |
-| xAI Grok Code Fast 1    | `xAI: Grok Code Fast 1`                           |
-| Google Gemini 2.5 Pro   | `Google: Gemini 2.5 Pro`                          |
-| Google Gemini 2.5 Flash | `Google: Gemini 2.5 Flash`                        |
-
-**Selecting a model:**
-
-1. Launch Victoria in your terminal.
-2. Press **`Ctrl+P`** to open the command menu.
-3. Choose **“Select Model.”**
-4. Use the search bar to find a recommended model (for example, type `GPT-5` or `Gemini 2.5`).
-5. Under the **✅ Configured** heading, pick one of the models from the table above.
-
-<p align="left">
-  <img src="assets/select_model.png" alt="Select Model in Crush" width="300" />
-</p>
-
-> [!NOTE]
-> - These five models are the only ones approved for Victoria at this time.
-> - Selecting a model outside this list is unsupported and may produce unreliable results.
-> - Victoria remembers the last model you selected and loads it automatically on the next launch.
-> - To compare results across models, switch models and **restart Victoria** so each model begins with a fresh context.
-
 ## 🤝 Contributing
 
 We welcome contributions to Victoria! Review our [Contributing Guidelines](CONTRIBUTING.md) for code style, testing expectations, and the pull-request process.

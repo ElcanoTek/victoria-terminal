@@ -17,4 +17,7 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+RUN mkdir -p /root/.local/share/crush \
+    && cp configs/crush/crush.local.json /root/.local/share/crush/crush.json
+
 CMD ["python3", "/workspace/victoria_terminal.py"]
