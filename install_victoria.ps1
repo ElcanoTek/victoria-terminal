@@ -1,4 +1,10 @@
 #!/usr/bin/env pwsh
+param(
+    [switch] $Help,
+    [Parameter(ValueFromRemainingArguments = $true)]
+    [string[]] $ExtraArgs
+)
+
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
@@ -15,12 +21,6 @@ This helper validates Podman, prepares the shared Victoria workspace, and
 installs a reusable `victoria` command in your PowerShell profile.
 '@
 }
-
-param(
-    [switch] $Help,
-    [Parameter(ValueFromRemainingArguments = $true)]
-    [string[]] $ExtraArgs
-)
 
 if ($Help) {
     Show-Help
