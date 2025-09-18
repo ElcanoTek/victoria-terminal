@@ -117,7 +117,7 @@ $functionBlockLines = @(
     '    )',
     "    & podman pull $image",
     '    if ($LASTEXITCODE -ne 0) {',
-    "        Write-Warning \"Victoria setup: unable to pull $image. Make sure Podman is running (start 'podman machine' if applicable).\"",
+    "        Write-Warning `"Victoria setup: unable to pull $image. Make sure Podman is running (start 'podman machine' if applicable).`"",
     '        return',
     '    }',
     '    & podman run --rm -it `',
