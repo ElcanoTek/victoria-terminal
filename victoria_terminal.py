@@ -161,7 +161,7 @@ def banner_sequence() -> None:
         _wait_for_enter_rich("Press Enter to continue...")
         _display_rich_tips(initial_bullets=True)
         _animate_tips_rich()
-        _wait_for_enter_rich("Press Enter to launch CRUSH...")
+        _wait_for_enter_rich("Press Enter to continue...")
         _spinner_rich("Launching CRUSH…", duration=1.8)
         console.clear()
         return
@@ -172,7 +172,7 @@ def banner_sequence() -> None:
         _wait_for_enter_basic("Press Enter to continue...")
         _display_colorama_tips(initial_bullets=True)
         _animate_tips_colorama()
-        _wait_for_enter_basic("Press Enter to launch CRUSH...")
+        _wait_for_enter_basic("Press Enter to continue...")
         _spinner_colorama("Launching CRUSH…", duration=1.5)
         _clear_basic()
         return
@@ -183,7 +183,7 @@ def banner_sequence() -> None:
     _display_basic_tips(initial_bullets=True)
     time.sleep(0.8)
     _display_basic_tips(initial_bullets=False)  # swap to checkmarks
-    _wait_for_enter_basic("Press Enter to launch CRUSH...")
+    _wait_for_enter_basic("Press Enter to continue...")
     time.sleep(0.8)  # minimal spinner stand-in
     _clear_basic()
 
@@ -696,7 +696,7 @@ def launch_crush(*, app_home: Path = APP_HOME) -> None:
         )
         sys.exit(1)
     except Exception as exc:  # pragma: no cover - runtime errors
-        err(f"Failed to launch Crush: {exc}")
+        err(f"Failed to continue: {exc}")
         sys.exit(1)
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
