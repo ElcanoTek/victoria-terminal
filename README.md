@@ -9,7 +9,7 @@ Victoria is Elcano's AI agent for navigating programmatic advertising datasets. 
 ## 🔐 Security & Licensing at a Glance
 
 - **Container-first distribution.** Victoria ships as a Podman image that packages Python, the `crush` CLI, and all dependencies. Running in a container isolates the agent from the host OS while still allowing controlled file sharing via `~/Victoria`.
-- **Secrets stay in your workspace.** Credentials are written to `~/Victoria/.env`, mounted into the container at runtime. The entry point can regenerate or update this file without embedding secrets in the image.
+- **Secrets stay in your workspace.** Credentials are written to `~/Victoria/.env`, mounted into the container at runtime. The container's default command can regenerate or update this file without embedding secrets in the image.
 - **Transparent builds.** GitHub Actions automatically builds and publishes the container to `ghcr.io/elcanotek/victoria-terminal`, ensuring every release is reproducible and verified in CI.
 - **Open, source-available code.** The repository is available for review and contribution under the [Elastic License 2.0](LICENSE), so teams can audit changes and collaborate while retaining commercial protections.
 
@@ -100,19 +100,19 @@ podman run --rm -it \
   ghcr.io/elcanotek/victoria-terminal:latest
 ```
 
-To pass command-line options directly to the entry point script (`victoria_terminal.py`), append them after a `--` separator:
+To pass command-line options directly to the container's default command (`victoria_terminal.py`), append them after a `--` separator:
 
 ```bash
 podman run --rm -it \
   -v ~/Victoria:/root/Victoria \
-  ghcr.io/elcanotek/victoria-terminal:latest -- --course 2
+  ghcr.io/elcanotek/victoria-terminal:latest -- --reconfigure --skip-launch
 ```
 
 Windows users should keep the commands on a single line and use `$env:USERPROFILE/Victoria` in place of `~/Victoria`.
 
 ### 5. Configure on first run
 
-The container entry point (`victoria_terminal.py`) guides the initial setup:
+The container's default command (`victoria_terminal.py`) guides the initial setup:
 
 - If it detects configuration files in `~/Victoria`, it reuses them automatically.
 - Otherwise it prompts for essentials—OpenRouter API keys—and saves them to `~/Victoria/.env`.
@@ -125,7 +125,7 @@ podman run --rm -it \
   ghcr.io/elcanotek/victoria-terminal:latest -- --reconfigure --skip-launch
 ```
 
-You can also point the entry point at an alternate shared location with `--shared-home /path/to/shared/Victoria`.
+You can also point the default command at an alternate shared location with `--shared-home /path/to/shared/Victoria`.
 
 > [!TIP]
 > Swap in the image tag that matches your architecture (from the table above) and adjust the host path syntax for your platform. Windows PowerShell users should run the command on a single line with `$env:USERPROFILE/Victoria`.
