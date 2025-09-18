@@ -130,17 +130,28 @@ VICTORIA_TEXT = """
 
 TIPS_BULLETS = [
     "• Put data files in the Victoria folder",
-    "• Select one of these models (ones you tested)",
-    "• Ask any question you like (example question)",
+    "• Select one of these approved models:",
+    "   - OpenAI: GPT-5",
+    "   - OpenAI: GPT-5 Mini",
+    "   - xAI: Grok Code Fast 1",
+    "   - Google: Gemini 2.5 Pro",
+    "   - Google: Gemini 2.5 Flash",
+    "• Ask any question you like (e.g., \"Hey Victoria, Analyze the top-performing sites for this campaign\")",
     "• Report bugs to the support channel or the GitHub repo",
 ]
 
 TIPS_CHECKED = [
     "✅ Put data files in the Victoria folder",
-    "✅ Select one of these models (ones you tested)",
-    "✅ Ask any question you like (example question)",
+    "✅ Select one of these approved models:",
+    "   - OpenAI: GPT-5",
+    "   - OpenAI: GPT-5 Mini",
+    "   - xAI: Grok Code Fast 1",
+    "   - Google: Gemini 2.5 Pro",
+    "   - Google: Gemini 2.5 Flash",
+    "✅ Ask any question you like (e.g., \"Hey Victoria, Analyze the top-performing sites for this campaign\")",
     "✅ Report bugs to the support channel or the GitHub repo",
 ]
+
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Intro Sequence (two screens + enter between each)                             |
