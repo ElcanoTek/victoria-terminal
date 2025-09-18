@@ -49,37 +49,9 @@ Let Victoria wire up the remaining pieces for you. The helper scripts validate t
   curl -fsSL https://raw.githubusercontent.com/ElcanoTek/victoria-terminal/main/install_victoria.sh | bash
   ```
 * **Windows (PowerShell)**
-
-  **Quick method – run the helper directly**
-
-  1. Open PowerShell or Terminal (preferably as an administrator).
-  2. Paste the command below to download and run the script in one step:
-
-     ```powershell
-     & ([scriptblock]::Create((irm 'https://raw.githubusercontent.com/ElcanoTek/victoria-terminal/main/install_victoria.ps1')))
-     ```
-
-  > [!NOTE]
-  > If PowerShell warns about running an unsigned script, temporarily bypass the policy for the current session:
-  > ```powershell
-  > powershell -NoProfile -ExecutionPolicy Bypass -Command "& { & ([scriptblock]::Create((irm 'https://raw.githubusercontent.com/ElcanoTek/victoria-terminal/main/install_victoria.ps1'))) }"
-  > ```
-  > Swap `powershell` for `pwsh` when PowerShell 7+ is installed.
-
-  **Traditional method – download first, run locally**
-
-  1. Download the installer script to a folder of your choice:
-
-     ```powershell
-     Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/ElcanoTek/victoria-terminal/main/install_victoria.ps1' -OutFile '.\install_victoria.ps1'
-     ```
-  2. (Optional) Review the script in your editor.
-  3. Run it from PowerShell:
-
-     ```powershell
-     Set-ExecutionPolicy Bypass -Scope Process -Force
-     .\install_victoria.ps1
-     ```
+  ```powershell
+  & ([scriptblock]::Create((irm 'https://raw.githubusercontent.com/ElcanoTek/victoria-terminal/main/install_victoria.ps1')))
+  ```
 
 After the helper finishes, open a new terminal session (or reload your profile with `source ~/.bashrc`, `source ~/.zshrc`, or `. $PROFILE`) and start Victoria with a single command:
 
