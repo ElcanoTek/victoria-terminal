@@ -90,11 +90,8 @@ def section(title: str) -> None:  # pragma: no cover - simple wrapper
 
 # Optional capability flags
 try:
-    from rich.console import Console as _RichConsole  # noqa
-    from rich.panel import Panel as _RichPanel  # noqa
-    from rich.text import Text as _RichText  # noqa
-    from rich.align import Align as _RichAlign  # noqa
-    from rich.live import Live as _RichLive  # noqa
+    # Check if Rich is available
+    import rich
     HAS_RICH = True
 except Exception:
     HAS_RICH = False
