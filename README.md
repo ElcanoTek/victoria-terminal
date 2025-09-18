@@ -45,6 +45,12 @@ Once Podman is installed, you can let Victoria wire up the remaining pieces for 
   irm https://raw.githubusercontent.com/ElcanoTek/victoria-terminal/main/install_victoria.ps1 | iex
   ```
 
+> [!NOTE]
+> If PowerShell warns about running an unsigned script, launch it once with a temporary bypass:
+> ```powershell
+> pwsh -NoProfile -ExecutionPolicy Bypass -Command "& { irm 'https://raw.githubusercontent.com/ElcanoTek/victoria-terminal/main/install_victoria.ps1' | iex }"
+> ```
+
 After the helper finishes, open a new terminal session (or reload your profile with `source ~/.bashrc`, `source ~/.zshrc`, or `. $PROFILE`) and start Victoria with a single command:
 
 ```bash
