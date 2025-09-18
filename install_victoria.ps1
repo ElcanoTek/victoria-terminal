@@ -27,6 +27,10 @@ if ($Help) {
     exit 0
 }
 
+if ($null -eq $ExtraArgs) {
+    $ExtraArgs = @()
+}
+
 if ($ExtraArgs.Count -gt 0) {
     Write-Error "This script does not accept arguments."
     Show-Help
