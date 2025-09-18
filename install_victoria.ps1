@@ -107,26 +107,27 @@ if ($null -ne $content) {
     }
 }
 
-$functionBlock = @"
-
-$startMarker
-function Invoke-Victoria {
-    param(
-        [Parameter(ValueFromRemainingArguments = $true)]
-        [string[]] $Args
-    )
-    & podman pull $image
-    if ($LASTEXITCODE -ne 0) {
-        Write-Warning "Victoria setup: unable to pull $image. Make sure Podman is running (start 'podman machine' if applicable)."
-        return
-    }
-    & podman run --rm -it `
-        -v `"$env:USERPROFILE/Victoria:/root/Victoria`" `
-        $image @Args
-}
-Set-Alias victoria Invoke-Victoria
-$endMarker
-"@
+$functionBlockLines = @(
+    $startMarker,
+    '',
+    'function Invoke-Victoria {',
+    '    param(',
+    '        [Parameter(ValueFromRemainingArguments = $true)]',
+    '        [string[]] $Args',
+    '    )',
+    "    & podman pull $image",
+    '    if ($LASTEXITCODE -ne 0) {',
+    "        Write-Warning \"Victoria setup: unable to pull $image. Make sure Podman is running (start 'podman machine' if applicable).\"",
+    '        return',
+    '    }',
+    '    & podman run --rm -it `',
+    '        -v `"$env:USERPROFILE/Victoria:/root/Victoria`" `',
+    "        $image @Args",
+    '}',
+    'Set-Alias victoria Invoke-Victoria',
+    $endMarker
+)
+$functionBlock = ($functionBlockLines -join [Environment]::NewLine) + [Environment]::NewLine
 Add-Content -Path $profilePath -Value $functionBlock
 
 Write-Info "Added 'victoria' alias to $profilePath"
