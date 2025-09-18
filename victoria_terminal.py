@@ -99,12 +99,6 @@ try:
 except Exception:
     HAS_RICH = False
 
-try:
-    import colorama as _ColoramaCheck  # noqa
-    HAS_COLORAMA = True
-except Exception:
-    HAS_COLORAMA = False
-
 TERMINAL_PROMPT = ">_"
 
 COMPACT_SHIP_ASCII_BASE = [
