@@ -27,7 +27,7 @@ Victoria supports three installation flows depending on how much automation you 
 
 ### Before you begin
 
-All Podman-based streams (1 and 2) require a working Podman installation.
+Victoria requires a working Podman installation for every stream. Install and validate Podman before continuing with any setup path.
 
 1. **Install Podman** from [podman.io](https://podman.io) or your operating system's package manager.
 2. **Verify Podman works** by running `podman --version`. If you see a version number, you're ready to go.
