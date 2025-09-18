@@ -32,7 +32,30 @@ New to containers? No problem. This section walks you through the minimum steps 
 > ```
 > Podman Desktop performs these steps automatically the first time it launches.
 
-### 2. Create the shared workspace folder
+### 2. (Optional) Use the helper script
+
+Once Podman is installed, you can let Victoria wire up the remaining pieces for you. The helper scripts below validate that Podman is ready, make sure your `~/Victoria` workspace exists, detect the Podman host architecture (using `podman info` when available with a local fallback), pull the matching container image tag, and add a reusable `victoria` command to your shell profile.
+
+* **macOS / Linux**
+  ```bash
+  curl -fsSL https://raw.githubusercontent.com/ElcanoTek/victoria-terminal/main/install_victoria.sh | bash
+  ```
+* **Windows (PowerShell)**
+  ```powershell
+  irm https://raw.githubusercontent.com/ElcanoTek/victoria-terminal/main/install_victoria.ps1 | iex
+  ```
+
+After the helper finishes, open a new terminal session (or reload your profile with `source ~/.bashrc`, `source ~/.zshrc`, or `. $PROFILE`) and start Victoria with a single command:
+
+```bash
+victoria
+```
+
+The helper keeps the `victoria` command up to date for you, so there's no need to copy the longer `podman run` incantation each time.
+
+Re-run the script any time you want to refresh the alias. It will not reinstall Podman for you, but it will remind you to start `podman machine` on macOS and Windows if needed.
+
+### 3. Create the shared workspace folder
 
 Victoria stores configuration and credentials in a folder that is mounted into the container. Create it once and reuse it for every upgrade:
 
@@ -49,7 +72,7 @@ Victoria stores configuration and credentials in a folder that is mounted into t
   mkdir %USERPROFILE%\Victoria
   ```
 
-### 3. Confirm your CPU architecture
+### 4. Confirm your CPU architecture
 
 Victoria publishes multi-architecture tags. If you're unsure which CPU architecture your Podman host is using, check it with:
 
@@ -87,7 +110,7 @@ podman run --rm -it \
 
 Windows users should keep the commands on a single line and use `$env:USERPROFILE/Victoria` in place of `~/Victoria`.
 
-### 4. Configure on first run
+### 5. Configure on first run
 
 The container entry point (`victoria_terminal.py`) guides the initial setup:
 
@@ -107,7 +130,7 @@ You can also point the entry point at an alternate shared location with `--share
 > [!TIP]
 > Swap in the image tag that matches your architecture (from the table above) and adjust the host path syntax for your platform. Windows PowerShell users should run the command on a single line with `$env:USERPROFILE/Victoria`.
 
-### 5. Choose an AI model in Crush
+### 6. Choose an AI model in Crush
 
 When testing **Victoria** in the terminal, we recommend the following models. They have been vetted for compatibility, reliability, and cost.
 
