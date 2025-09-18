@@ -186,13 +186,19 @@ def test_parse_args_sets_reconfigure_flag() -> None:
     assert args.reconfigure is True
 
 
+def test_parse_args_sets_no_banner_flag() -> None:
+    args = entrypoint.parse_args(["--no-banner"])
+
+    assert args.no_banner is True
+
+
 def test_main_honours_skip_launch(
     tmp_path: Path, mocker: pytest.MockFixture, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.delenv("VICTORIA_HOME", raising=False)
 
     mocker.patch("victoria_terminal.initialize_colorama")
-    mocker.patch("victoria_terminal.banner")
+    banner_sequence = mocker.patch("victoria_terminal.banner_sequence")
     ensure_app_home = mocker.patch(
         "victoria_terminal.ensure_app_home", side_effect=lambda path: path
     )
@@ -212,6 +218,7 @@ def test_main_honours_skip_launch(
     run_wizard.assert_called_once_with(app_home=tmp_path, force=False)
     generate_config.assert_called_once_with(app_home=tmp_path)
     launch_crush.assert_not_called()
+    banner_sequence.assert_called_once_with()
 
 
 def test_main_with_reconfigure_forces_wizard(
@@ -220,7 +227,7 @@ def test_main_with_reconfigure_forces_wizard(
     monkeypatch.delenv("VICTORIA_HOME", raising=False)
 
     mocker.patch("victoria_terminal.initialize_colorama")
-    mocker.patch("victoria_terminal.banner")
+    banner_sequence = mocker.patch("victoria_terminal.banner_sequence")
     mocker.patch("victoria_terminal.ensure_app_home", side_effect=lambda path: path)
     mocker.patch("victoria_terminal.load_environment")
     run_wizard = mocker.patch("victoria_terminal.run_setup_wizard")
@@ -238,3 +245,25 @@ def test_main_with_reconfigure_forces_wizard(
     ])
 
     run_wizard.assert_called_once_with(app_home=tmp_path, force=True)
+    banner_sequence.assert_called_once_with()
+
+
+def test_main_skips_banner_when_flag_set(
+    tmp_path: Path, mocker: pytest.MockFixture, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.delenv("VICTORIA_HOME", raising=False)
+
+    mocker.patch("victoria_terminal.initialize_colorama")
+    banner_sequence = mocker.patch("victoria_terminal.banner_sequence")
+    mocker.patch("victoria_terminal.ensure_app_home", side_effect=lambda path: path)
+    mocker.patch("victoria_terminal.load_environment")
+    mocker.patch("victoria_terminal.run_setup_wizard")
+    mocker.patch("victoria_terminal.generate_crush_config")
+    mocker.patch("victoria_terminal.remove_local_duckdb")
+    mocker.patch("victoria_terminal.info")
+    mocker.patch("victoria_terminal.preflight_crush")
+    mocker.patch("victoria_terminal.launch_crush")
+
+    entrypoint.main(["--skip-launch", "--no-banner", "--app-home", str(tmp_path)])
+
+    banner_sequence.assert_not_called()
