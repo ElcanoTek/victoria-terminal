@@ -198,6 +198,7 @@ def banner_sequence() -> None:
     time.sleep(0.8)  # minimal spinner stand-in
     _clear_basic()
 
+
 # ── Rich implementations ─────────────────────────────────────────────────────
 
 def _ship_renderable(wave_offset: int = 0) -> Text:
@@ -732,6 +733,11 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         help="Prepare configuration without launching Crush.",
     )
     parser.add_argument(
+        "--no-banner",
+        action="store_true",
+        help="Skip the animated launch banner (useful for non-interactive runs).",
+    )
+    parser.add_argument(
         "--version",
         action="version",
         version=f"%(prog)s {__version__}",
@@ -747,7 +753,8 @@ def main(argv: Sequence[str] | None = None) -> None:
     os.environ["VICTORIA_HOME"] = str(app_home)
 
     # Intro: two screens with Enter between each, spinner before launch
-    banner_sequence()
+    if not args.no_banner:
+        banner_sequence()
 
     ensure_app_home(app_home)
     load_environment(app_home)
