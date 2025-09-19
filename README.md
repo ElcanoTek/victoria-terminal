@@ -1,6 +1,9 @@
 # Victoria Terminal
 
-<img src="assets/VictoriaTerminal.png" alt="Victoria Icon" width="200" />
+[![CI](https://github.com/ElcanoTek/victoria-terminal/actions/workflows/ci.yml/badge.svg)](https://github.com/ElcanoTek/victoria-terminal/actions/workflows/ci.yml)
+[![Container Image](https://github.com/ElcanoTek/victoria-terminal/actions/workflows/container-image.yml/badge.svg)](https://github.com/ElcanoTek/victoria-terminal/actions/workflows/container-image.yml)
+[![License: Elastic License 2.0](https://img.shields.io/badge/license-Elastic%20License%202.0-blue.svg)](LICENSE)
+[![Contact](https://img.shields.io/badge/contact-brad%40elcanotek.com-informational.svg)](mailto:brad@elcanotek.com)
 
 ![Victoria Terminal Demo](assets/victoria.gif)
 
