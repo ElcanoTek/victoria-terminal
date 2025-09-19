@@ -2,6 +2,8 @@
 
 <img src="assets/VictoriaTerminal.png" alt="Victoria Icon" width="200" />
 
+![Victoria Terminal Demo](assets/victoria.gif)
+
 Victoria is Elcano's AI agent for navigating programmatic advertising datasets. Traders can ask natural-language questions of CSVs, Excel workbooks, and SQL-queryable sources to surface insights, spot trends, and optimize campaigns without leaving the terminal.
 
 ---
