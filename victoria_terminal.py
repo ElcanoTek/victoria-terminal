@@ -132,6 +132,201 @@ TIPS_CHECKED = [
 ]
 
 
+LICENSE_ACCEPTANCE_KEY = "VICTORIA_LICENSE_ACCEPTED"
+_LICENSE_ACCEPTED_VALUES = {"yes", "true", "1", "accepted"}
+LICENSE_NOTICE_TITLE = "Victoria Terminal License Agreement"
+LICENSE_FILE_NAME = "LICENSE"
+LICENSE_NOTICE_REMINDER = (
+    "You must accept these terms to continue. Type 'accept' to agree or 'decline' to exit."
+)
+LICENSE_ACCEPT_PROMPT = "Type 'accept' to agree or 'decline' to exit: "
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# License acceptance helpers                                                    |
+# ──────────────────────────────────────────────────────────────────────────────
+
+def _resolve_app_home(app_home: Path | None = None) -> Path:
+    if app_home is not None:
+        return app_home
+    env_home = os.environ.get("VICTORIA_HOME")
+    if env_home:
+        return Path(env_home).expanduser()
+    return APP_HOME
+
+
+_LICENSE_TEXT_CACHE: str | None = None
+
+
+def _get_license_text() -> str:
+    global _LICENSE_TEXT_CACHE
+    if _LICENSE_TEXT_CACHE is not None:
+        return _LICENSE_TEXT_CACHE
+
+    script_dir = Path(__file__).resolve().parent
+    candidates = (
+        script_dir / LICENSE_FILE_NAME,
+        Path.cwd() / LICENSE_FILE_NAME,
+        _resolve_app_home() / LICENSE_FILE_NAME,
+    )
+    for candidate in candidates:
+        if candidate.is_file():
+            _LICENSE_TEXT_CACHE = candidate.read_text(encoding="utf-8")
+            return _LICENSE_TEXT_CACHE
+
+    candidate_list = ", ".join(str(path) for path in candidates)
+    raise FileNotFoundError(
+        "Victoria Terminal requires the LICENSE file to display the agreement. "
+        f"Expected to find it in one of: {candidate_list}"
+    )
+
+
+def _is_license_accepted(*, app_home: Path | None = None) -> bool:
+    value = os.environ.get(LICENSE_ACCEPTANCE_KEY, "").strip().lower()
+    if value in _LICENSE_ACCEPTED_VALUES:
+        return True
+    resolved_home = _resolve_app_home(app_home)
+    env_path = resolved_home / ENV_FILENAME
+    if not env_path.exists():
+        return False
+    stored_value = parse_env_file(env_path).get(LICENSE_ACCEPTANCE_KEY, "")
+    if stored_value:
+        os.environ.setdefault(LICENSE_ACCEPTANCE_KEY, stored_value)
+    return stored_value.strip().lower() in _LICENSE_ACCEPTED_VALUES
+
+
+def _persist_license_acceptance(*, app_home: Path | None = None) -> None:
+    resolved_home = _resolve_app_home(app_home)
+    env_path = resolved_home / ENV_FILENAME
+    env_path.parent.mkdir(parents=True, exist_ok=True)
+    if not env_path.exists():
+        env_path.touch()
+    set_key(str(env_path), LICENSE_ACCEPTANCE_KEY, "yes")
+    os.environ[LICENSE_ACCEPTANCE_KEY] = "yes"
+
+
+def _display_license_notice_rich() -> None:
+    console.clear()
+    title = Text(LICENSE_NOTICE_TITLE, style="bold bright_white")
+    reminder = Text(LICENSE_NOTICE_REMINDER, style="bright_yellow")
+    license_text = Text(_get_license_text().rstrip(), style="bright_white")
+    content = Group(
+        Align.center(title),
+        Text("\n"),
+        license_text,
+        Text("\n"),
+        Align.left(reminder),
+    )
+    panel = Panel(content, border_style="bright_cyan", padding=(1, 2))
+    console.print(panel)
+
+
+def _display_license_notice_colorama() -> None:
+    _clear_basic()
+    license_text = _get_license_text().rstrip()
+    try:
+        print(f"{Fore.WHITE}{Style.BRIGHT}{LICENSE_NOTICE_TITLE.center(80)}{Style.RESET_ALL}\n")
+        for line in license_text.splitlines():
+            print(f"{Fore.WHITE}{line}{Style.RESET_ALL}")
+        print()
+        print(f"{Fore.YELLOW}{LICENSE_NOTICE_REMINDER}{Style.RESET_ALL}")
+        print()
+    except Exception:
+        print(LICENSE_NOTICE_TITLE.center(80))
+        print()
+        print(license_text)
+        print()
+        print(LICENSE_NOTICE_REMINDER)
+        print()
+
+
+def _display_license_notice_basic() -> None:
+    _clear_basic()
+    print(LICENSE_NOTICE_TITLE.center(80))
+    print()
+    print(_get_license_text())
+    print()
+    print(LICENSE_NOTICE_REMINDER)
+    print()
+
+
+def _prompt_license_response(mode: str) -> str:
+    try:
+        if mode == "rich":
+            return console.input(f"[cyan]{LICENSE_ACCEPT_PROMPT}[/cyan]").strip()
+        if mode == "colorama":
+            try:
+                return input(f"{Fore.CYAN}{LICENSE_ACCEPT_PROMPT}{Style.RESET_ALL}").strip()
+            except Exception:
+                return input(LICENSE_ACCEPT_PROMPT).strip()
+        return input(LICENSE_ACCEPT_PROMPT).strip()
+    except (KeyboardInterrupt, EOFError):
+        _handle_license_decline(mode, cancelled=True)
+        return ""
+
+
+def _notify_invalid_response(mode: str) -> None:
+    message = "Please respond with 'accept' or 'decline'."
+    if mode == "rich":
+        console.print(f"[yellow]{message}[/yellow]")
+    else:
+        try:
+            print(f"{Fore.YELLOW}{message}{Style.RESET_ALL}")
+        except Exception:
+            print(message)
+
+
+def _acknowledge_license_acceptance(mode: str) -> None:
+    message = "License accepted. Continuing startup..."
+    if mode == "rich":
+        console.print(f"[green]{message}[/green]")
+    else:
+        try:
+            print(f"{Fore.GREEN}{message}{Style.RESET_ALL}")
+        except Exception:
+            print(message)
+    time.sleep(1.0)
+
+
+def _handle_license_decline(mode: str, *, cancelled: bool = False) -> None:
+    if cancelled:
+        message = "Victoria launch cancelled before accepting the license."
+    else:
+        message = "Victoria Terminal requires license acceptance to continue. Exiting."
+    if mode == "rich":
+        console.print(f"[red]{message}[/red]")
+    else:
+        try:
+            print(f"{Fore.RED}{message}{Style.RESET_ALL}")
+        except Exception:
+            print(message)
+    sys.exit(0)
+
+
+def _ensure_license_acceptance(mode: str, *, app_home: Path | None = None) -> None:
+    resolved_home = _resolve_app_home(app_home)
+    if _is_license_accepted(app_home=resolved_home):
+        return
+    display_map = {
+        "rich": _display_license_notice_rich,
+        "colorama": _display_license_notice_colorama,
+        "basic": _display_license_notice_basic,
+    }
+    display = display_map.get(mode, _display_license_notice_basic)
+    display()
+    accept_responses = {"accept", "a", "yes", "y"}
+    decline_responses = {"decline", "d", "no", "n"}
+    while True:
+        response = _prompt_license_response(mode).lower()
+        if response in accept_responses:
+            _persist_license_acceptance(app_home=resolved_home)
+            _acknowledge_license_acceptance(mode)
+            break
+        if response in decline_responses:
+            _handle_license_decline(mode)
+        _notify_invalid_response(mode)
+
+
 # ──────────────────────────────────────────────────────────────────────────────
 # Intro Sequence (two screens + enter between each)                             |
 # ──────────────────────────────────────────────────────────────────────────────
@@ -143,6 +338,7 @@ def banner_sequence() -> None:
       2) 'Victoria Terminal' + Tips animate to checkmarks → press Enter
       3) Show short spinner → proceed to launch
     """
+    app_home = _resolve_app_home()
     use_rich = HAS_RICH and hasattr(console, "is_terminal") and console.is_terminal and sys.stdout.isatty()
 
     if use_rich:
@@ -152,17 +348,19 @@ def banner_sequence() -> None:
         _display_rich_tips(initial_bullets=True)
         _animate_tips_rich()
         _wait_for_enter_rich("Press Enter to continue...")
+        _ensure_license_acceptance("rich", app_home=app_home)
         _spinner_rich("Launching CRUSH…", duration=1.8)
         console.clear()
         return
 
-    if HAS_COLORAMA:
+    if 'Fore' in globals() and 'Style' in globals():
         _display_colorama_welcome()
         _animate_waves_colorama(duration=1.2)
         _wait_for_enter_basic("Press Enter to continue...")
         _display_colorama_tips(initial_bullets=True)
         _animate_tips_colorama()
         _wait_for_enter_basic("Press Enter to continue...")
+        _ensure_license_acceptance("colorama", app_home=app_home)
         _spinner_colorama("Launching CRUSH…", duration=1.5)
         _clear_basic()
         return
@@ -174,6 +372,7 @@ def banner_sequence() -> None:
     time.sleep(0.8)
     _display_basic_tips(initial_bullets=False)  # swap to checkmarks
     _wait_for_enter_basic("Press Enter to continue...")
+    _ensure_license_acceptance("basic", app_home=app_home)
     time.sleep(0.8)  # minimal spinner stand-in
     _clear_basic()
 
