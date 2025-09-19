@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/ElcanoTek/victoria-terminal/actions/workflows/ci.yml/badge.svg)](https://github.com/ElcanoTek/victoria-terminal/actions/workflows/ci.yml)
 [![Container Image](https://github.com/ElcanoTek/victoria-terminal/actions/workflows/container-image.yml/badge.svg)](https://github.com/ElcanoTek/victoria-terminal/actions/workflows/container-image.yml)
-[![License: Elastic License 2.0](https://img.shields.io/badge/license-Elastic%20License%202.0-blue.svg)](LICENSE)
+[![License: Proprietary](https://img.shields.io/badge/license-Proprietary-red.svg)](LICENSE)  
 [![Contact](https://img.shields.io/badge/contact-brad%40elcanotek.com-informational.svg)](mailto:brad@elcanotek.com)
 
 <img src="assets/victoria.gif" alt="Victoria Terminal Demo" width="650">
@@ -16,7 +16,7 @@ Victoria is Elcano's AI agent for navigating programmatic advertising datasets. 
 - **Container-first distribution.** Victoria ships as a Podman image that packages Python, the `crush` CLI, and all dependencies. Running in a container isolates the agent from the host OS while still allowing controlled file sharing via `~/Victoria`.
 - **Secrets stay in your workspace.** Credentials are written to `~/Victoria/.env`, mounted into the container at runtime. The container's default command can regenerate or update this file without embedding secrets in the image.
 - **Transparent builds.** GitHub Actions automatically builds and publishes the container to `ghcr.io/elcanotek/victoria-terminal`, ensuring every release is reproducible and verified in CI.
-- **Open, source-available code.** The repository is available for review and contribution under the [Elastic License 2.0](LICENSE), so teams can audit changes and collaborate while retaining commercial protections.
+- **Publicly-visible source code.** The repository is publicly available for review and evaluation. All usage is subject to the proprietary license. See [LICENSE](LICENSE) for details.
 
 
 ## 🛠️ Prerequisites
