@@ -13,6 +13,15 @@ Victoria is Elcano's AI agent for navigating programmatic advertising datasets. 
 - **Transparent builds.** GitHub Actions automatically builds and publishes the container to `ghcr.io/elcanotek/victoria-terminal`, ensuring every release is reproducible and verified in CI.
 - **Open, source-available code.** The repository is available for review and contribution under the [Elastic License 2.0](LICENSE), so teams can audit changes and collaborate while retaining commercial protections.
 
+
+## 🛠️ Prerequisites
+
+Victoria requires a working Podman installation for every stream. Install and validate Podman before continuing with any setup path.
+
+1. **macOS & Windows:** Download Podman Desktop from [podman.io](https://podman.io) for the fastest installation path.
+2. **Linux:** Install Podman with your distribution's package manager to ensure it stays updated with system packages.
+3. **Verify Podman works** by running `podman --version`. If you see a version number, you're ready to go.
+
 ---
 
 ## 🚀 Installation Streams
@@ -24,21 +33,6 @@ Victoria supports three installation flows depending on how much automation you 
 | [Stream 1 – Guided helper script](#stream-1--guided-helper-script) | Analysts and traders who want the quickest setup | Installs Podman prerequisites, provisions the shared workspace, pulls the right image, and adds a `victoria` command to your shell profile. |
 | [Stream 2 – Manual Podman commands](#stream-2--manual-podman-commands) | Operators who prefer to copy/paste each command | Step-by-step Podman instructions for creating the workspace, pulling images, running the container, and passing options. |
 | [Stream 3 – Build from source](#stream-3--build-from-source) | Contributors and teams customizing Victoria | Clone the repository, create a Python environment, and build/test the container locally. |
-
-### Before you begin
-
-Victoria requires a working Podman installation for every stream. Install and validate Podman before continuing with any setup path.
-
-1. **Install Podman** from [podman.io](https://podman.io) or your operating system's package manager.
-2. **Verify Podman works** by running `podman --version`. If you see a version number, you're ready to go.
-
-> [!IMPORTANT]
-> If you install the podman-cli make sure the Podman machine is running before continuing. After installation, run the following from a Terminal:
-> ```powershell
-> podman machine init   # first run only
-> podman machine start
-> ```
-> Podman Desktop performs these steps automatically the first time it launches.
 
 ### Stream 1 – Guided helper script
 
