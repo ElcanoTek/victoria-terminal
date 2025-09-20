@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/ElcanoTek/victoria-terminal/actions/workflows/ci.yml/badge.svg)](https://github.com/ElcanoTek/victoria-terminal/actions/workflows/ci.yml)
 [![Container Image](https://github.com/ElcanoTek/victoria-terminal/actions/workflows/container-image.yml/badge.svg)](https://github.com/ElcanoTek/victoria-terminal/actions/workflows/container-image.yml)
-[![License: Proprietary](https://img.shields.io/badge/license-Proprietary-red.svg)](LICENSE)  
+[![License: BUSL-1.1](https://img.shields.io/badge/license-BUSL--1.1-blue.svg)](LICENSE)
 [![Contact](https://img.shields.io/badge/contact-brad%40elcanotek.com-informational.svg)](mailto:brad@elcanotek.com)
 
 <img src="assets/victoria.gif" alt="Victoria Terminal Demo" width="650">
@@ -16,7 +16,8 @@ Victoria is Elcano's AI agent for navigating programmatic advertising datasets. 
 - **Container-first distribution.** Victoria ships as a Podman image that packages Python, the `crush` CLI, and all dependencies. Running in a container isolates the agent from the host OS while still allowing controlled file sharing via `~/Victoria`.
 - **Secrets stay in your workspace.** Credentials are written to `~/Victoria/.env`, mounted into the container at runtime. The container's default command can regenerate or update this file without embedding secrets in the image.
 - **Transparent builds.** GitHub Actions automatically builds and publishes the container to `ghcr.io/elcanotek/victoria-terminal`, ensuring every release is reproducible and verified in CI.
-- **Publicly-visible source code.** The repository is publicly available for review and evaluation. All usage is subject to the proprietary license. See [LICENSE](LICENSE) for details.
+- **Publicly-visible source code.** The repository is publicly available for review and evaluation. All usage is subject to the Victoria Terminal Business Source License (BUSL-1.1), a source-available license. See [LICENSE](LICENSE) for details.
+- **Contributor license agreement.** Submitting a patch, issue, or other material constitutes acceptance of the [ElcanoTek Contributor License Agreement](CLA.md), which grants ElcanoTek full rights to use, commercialize, and relicense all Contributions.
 
 
 ## 🛠️ Prerequisites
@@ -118,7 +119,7 @@ podman run --rm -it \
 ```
 
 > [!IMPORTANT]
-> Non-interactive runs that skip the launch banner must pass `--acccept-license` (for example, together with `--no-banner`). Using this flag automatically accepts the Victoria Terminal license as detailed in [LICENSE](LICENSE).
+> Non-interactive runs that skip the launch banner must pass `--acccept-license` (for example, together with `--no-banner`). Using this flag automatically accepts the Victoria Terminal Business Source License described in [LICENSE](LICENSE).
 
 Windows users should keep the commands on a single line and use `$env:USERPROFILE/Victoria` in place of `~/Victoria`.
 
