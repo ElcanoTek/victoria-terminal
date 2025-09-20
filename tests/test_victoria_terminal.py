@@ -192,6 +192,12 @@ def test_parse_args_sets_no_banner_flag() -> None:
     assert args.no_banner is True
 
 
+def test_parse_args_sets_acccept_license_flag() -> None:
+    args = entrypoint.parse_args(["--acccept-license"])
+
+    assert args.acccept_license is True
+
+
 def test_main_honours_skip_launch(
     tmp_path: Path, mocker: pytest.MockFixture, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -263,7 +269,45 @@ def test_main_skips_banner_when_flag_set(
     mocker.patch("victoria_terminal.info")
     mocker.patch("victoria_terminal.preflight_crush")
     mocker.patch("victoria_terminal.launch_crush")
+    persist_acceptance = mocker.patch("victoria_terminal._persist_license_acceptance")
 
-    entrypoint.main(["--skip-launch", "--no-banner", "--app-home", str(tmp_path)])
+    entrypoint.main(
+        [
+            "--skip-launch",
+            "--no-banner",
+            "--acccept-license",
+            "--app-home",
+            str(tmp_path),
+        ]
+    )
 
     banner_sequence.assert_not_called()
+    persist_acceptance.assert_called_once_with(app_home=tmp_path)
+
+
+def test_main_no_banner_requires_license_acceptance(
+    tmp_path: Path, mocker: pytest.MockFixture, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.delenv("VICTORIA_HOME", raising=False)
+
+    mocker.patch("victoria_terminal.initialize_colorama")
+    mocker.patch("victoria_terminal.ensure_app_home")
+    mocker.patch("victoria_terminal.load_environment")
+    mocker.patch("victoria_terminal.run_setup_wizard")
+    mocker.patch("victoria_terminal.generate_crush_config")
+    mocker.patch("victoria_terminal.remove_local_duckdb")
+    mocker.patch("victoria_terminal.info")
+    mocker.patch("victoria_terminal.preflight_crush")
+    mocker.patch("victoria_terminal.launch_crush")
+    err = mocker.patch("victoria_terminal.err")
+
+    with pytest.raises(SystemExit) as excinfo:
+        entrypoint.main([
+            "--skip-launch",
+            "--no-banner",
+            "--app-home",
+            str(tmp_path),
+        ])
+
+    assert excinfo.value.code == 2
+    err.assert_called_once()

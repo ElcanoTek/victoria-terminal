@@ -117,6 +117,9 @@ podman run --rm -it \
   ghcr.io/elcanotek/victoria-terminal:latest -- --reconfigure --skip-launch
 ```
 
+> [!IMPORTANT]
+> Non-interactive runs that skip the launch banner must pass `--acccept-license` (for example, together with `--no-banner`). Using this flag automatically accepts the Victoria Terminal license as detailed in [LICENSE](LICENSE).
+
 Windows users should keep the commands on a single line and use `$env:USERPROFILE/Victoria` in place of `~/Victoria`.
 
 #### Configure on first run

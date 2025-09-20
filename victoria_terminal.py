@@ -915,6 +915,14 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         help="Skip the animated launch banner (useful for non-interactive runs).",
     )
     parser.add_argument(
+        "--acccept-license",
+        action="store_true",
+        help=(
+            "Automatically accept the Victoria Terminal license "
+            "(required when using --no-banner)."
+        ),
+    )
+    parser.add_argument(
         "--version",
         action="version",
         version=f"%(prog)s {__version__}",
@@ -929,11 +937,20 @@ def main(argv: Sequence[str] | None = None) -> None:
     app_home = args.app_home.expanduser()
     os.environ["VICTORIA_HOME"] = str(app_home)
 
+    if args.no_banner and not args.acccept_license:
+        err(
+            "Using --no-banner requires --acccept-license to confirm acceptance "
+            "of the Victoria Terminal license."
+        )
+        sys.exit(2)
+
     # Intro: two screens with Enter between each, spinner before launch
     if not args.no_banner:
         banner_sequence()
 
     ensure_app_home(app_home)
+    if args.no_banner and args.acccept_license:
+        _persist_license_acceptance(app_home=app_home)
     load_environment(app_home)
     run_setup_wizard(app_home=app_home, force=args.reconfigure)
     generate_crush_config(app_home=app_home)
