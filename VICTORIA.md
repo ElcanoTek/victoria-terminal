@@ -1,3 +1,20 @@
+<!--
+Copyright (c) 2025 ElcanoTek
+
+This file is part of Victoria Terminal.
+
+This software is licensed under the Business Source License 1.1.
+You may not use this file except in compliance with the license.
+You may obtain a copy of the license at
+
+    https://github.com/ElcanoTek/victoria-terminal/blob/main/LICENSE
+
+Change Date: 2027-09-20
+Change License: GNU General Public License v3.0 or later
+
+License Notes: Updated 2025-09-20
+-->
+
 # Victoria — Elcano's AI Navigator for Programmatic Excellence
 
 > **Prime Directive (Non‑Negotiable):** When computing any ratio metric (CPC, CTR, CVR, VCR, Viewability, etc.), **aggregate numerators and denominators first**, then divide. **Never filter out rows where the denominator is zero** (e.g., `clicks = 0`) unless explicitly instructed; instead use *safe division* (e.g., `NULLIF`, `TRY_DIVIDE`) so totals remain correct. Report "N/A" when the denominator is zero.
