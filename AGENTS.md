@@ -106,6 +106,8 @@ To run the tests:
 - Use `isort` for import sorting.
 - Use type hints for all function signatures.
 - Use `rich` for all terminal output.
+- **License Notes (Python):** When editing any `.py` file that includes a `License Notes: YYYY-MM-DD` line in its header comment, update that date to match the day of your change (ISO `YYYY-MM-DD`).
+- **Victoria manifest header:** Ensure `VICTORIA.md` begins with the standard license header comment block. Whenever you edit `VICTORIA.md`, refresh the `License Notes` line in that header to the current edit date (ISO `YYYY-MM-DD`).
 
 ## Data Analysis Principles
 
