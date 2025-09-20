@@ -4,6 +4,10 @@ First off, thank you for considering contributing to Victoria! We welcome all co
 
 This document provides guidelines for developers who want to contribute to the project.
 
+## Contributor License Agreement
+
+By submitting a Contribution you agree to the terms of the [ElcanoTek Contributor License Agreement](CLA.md). The CLA grants ElcanoTek a perpetual, worldwide right to use, modify, commercialize, and relicense your Contribution in any manner. If you do not agree to those terms, do not submit Contributions.
+
 ## Development Environment
 
 Victoria is distributed as a container image and contributors are encouraged to
