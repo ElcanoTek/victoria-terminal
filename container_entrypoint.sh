@@ -8,7 +8,10 @@ if [[ $# -eq 0 ]]; then
     exec "${DEFAULT_CMD[@]}"
 fi
 
-# Handle a bare `--` that may be used to separate Podman options.
+# Handle a bare `--` separator used to distinguish container options from application arguments.
+# This follows standard Unix conventions where `--` signals the end of options processing.
+# Using `--` is the recommended way to pass arguments to Victoria to avoid confusion
+# between Podman container options and Victoria application flags.
 if [[ "$1" == "--" ]]; then
     shift
 fi

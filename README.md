@@ -102,26 +102,38 @@ Use the table below to pull (or update) the matching image and run it. Re-runnin
 > [!NOTE]
 > The run commands are shown on a single line to work in PowerShell and other shells without additional escaping. On macOS and Linux you can add `\` line continuations if you prefer.
 
-On macOS and Linux you can split the run command across multiple lines for readability (the example below shows the `x86_64` tag; swap in the tag from the table above if you are on Arm64):
+#### Best Practices for Argument Passing
+
+When passing arguments to Victoria inside the container, always use the `--` separator to clearly distinguish between container options and application arguments:
 
 ```bash
-podman run --rm -it \
-  -v ~/Victoria:/root/Victoria \
-  ghcr.io/elcanotek/victoria-terminal:latest
+# Correct: Arguments after -- go to Victoria
+podman run --rm -it -v ~/Victoria:/root/Victoria ghcr.io/elcanotek/victoria-terminal:latest -- --reconfigure --skip-launch
+
+# Avoid: Ambiguous argument parsing
+podman run --rm -it -v ~/Victoria:/root/Victoria ghcr.io/elcanotek/victoria-terminal:latest --reconfigure --skip-launch
 ```
 
-To pass command-line options directly to the container's default command (`victoria_terminal.py`), append them after the image name with a literal `--` separator.
+The `--` separator ensures that:
+- Container runtime options (like `--rm`, `-it`, `-v`) are processed by Podman
+- Application arguments (like `--reconfigure`, `--skip-launch`) are passed to Victoria
+- No confusion occurs between container and application flags
+
+On macOS and Linux you can split the run command across multiple lines for readability (the example below shows the `x86_64` tag; swap in the tag from the table above if you are on Arm64):
 
 ```bash
 podman run --rm -it \
   -v ~/Victoria:/root/Victoria \
   ghcr.io/elcanotek/victoria-terminal:latest -- --reconfigure --skip-launch
 ```
-
 > [!IMPORTANT]
-> Non-interactive runs that skip the launch banner must pass `--acccept-license` (for example, together with `--no-banner`). Using this flag automatically accepts the Victoria Terminal Business Source License described in [LICENSE](LICENSE).
+> Non-interactive runs that skip the launch banner must pass `--accept-license` (for example, together with `--no-banner`). Using this flag automatically accepts the Victoria Terminal Business Source License described in [LICENSE](LICENSE).
 
-Windows users should keep the commands on a single line and use `$env:USERPROFILE/Victoria` in place of `~/Victoria`.
+Windows users should keep the commands on a single line and use `$env:USERPROFILE/Victoria` in place of `~/Victoria`:
+
+```powershell
+podman run --rm -it -v "$env:USERPROFILE/Victoria:/root/Victoria" ghcr.io/elcanotek/victoria-terminal:latest -- --reconfigure --skip-launch
+```
 
 #### Configure on first run
 
@@ -197,4 +209,3 @@ Every push to `main` triggers a GitHub Actions workflow that rebuilds the Podman
 ## 🤝 Contributing
 
 We welcome contributions to Victoria! Review our [Contributing Guidelines](CONTRIBUTING.md) for code style, testing expectations, and the pull-request process.
-
