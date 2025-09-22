@@ -110,7 +110,7 @@ podman run --rm -it \
   ghcr.io/elcanotek/victoria-terminal:latest
 ```
 
-To pass command-line options directly to the container's default command (`victoria_terminal.py`), append them after a `--` separator:
+To pass command-line options directly to the container's default command (`victoria_terminal.py`), append them after the image name with a literal `--` separator.
 
 ```bash
 podman run --rm -it \

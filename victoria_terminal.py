@@ -903,6 +903,13 @@ def launch_crush(*, app_home: Path = APP_HOME) -> None:
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     """Parse CLI arguments for the entry point."""
+    if argv is None:
+        argv_list: list[str] = list(sys.argv[1:])
+    else:
+        argv_list = list(argv)
+
+    sanitized_args = [arg for arg in argv_list if arg != "--"]
+
     parser = argparse.ArgumentParser(
         description=("Victoria container entry point. Ensures configuration exists and launches Crush.")
     )
@@ -940,7 +947,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         action="version",
         version=f"%(prog)s {__version__}",
     )
-    return parser.parse_args(argv)
+    return parser.parse_args(sanitized_args)
 
 def main(argv: Sequence[str] | None = None) -> None:
     """Entry point for launching the Victoria terminal."""

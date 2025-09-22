@@ -198,6 +198,13 @@ def test_parse_args_sets_reconfigure_flag() -> None:
     assert args.reconfigure is True
 
 
+def test_parse_args_ignores_double_dash_separator() -> None:
+    args = entrypoint.parse_args(["--", "--reconfigure", "--skip-launch"])
+
+    assert args.reconfigure is True
+    assert args.skip_launch is True
+
+
 def test_parse_args_sets_no_banner_flag() -> None:
     args = entrypoint.parse_args(["--no-banner"])
 
