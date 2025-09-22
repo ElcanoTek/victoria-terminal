@@ -18,6 +18,8 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 COPY . .
 
 RUN mkdir -p /root/.local/share/crush \
-    && cp configs/crush/crush.local.json /root/.local/share/crush/crush.json
+    && cp configs/crush/crush.local.json /root/.local/share/crush/crush.json \
+    && install -Dm755 container_entrypoint.sh /usr/local/bin/container-entrypoint.sh
 
+ENTRYPOINT ["/usr/local/bin/container-entrypoint.sh"]
 CMD ["python3", "/workspace/victoria_terminal.py"]
