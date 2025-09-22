@@ -733,7 +733,8 @@ def run_setup_wizard(
         env_map.setdefault(key, value)
 
     needs_openrouter = not env_map.get("OPENROUTER_API_KEY")
-    if not (force or needs_openrouter):
+    needs_gamma = not env_map.get("GAMMA_API_KEY")
+    if not (force or needs_openrouter or needs_gamma):
         return False
 
     section("Victoria setup wizard")
@@ -777,6 +778,27 @@ def run_setup_wizard(
         else:
             warn("Continuing without an OpenRouter API key. Remote models remain unavailable.")
 
+    gamma_key = env_map.get("GAMMA_API_KEY")
+    if force or not gamma_key:
+        warn(
+            "Provide your Gamma API key to enable presentation generation. "
+            "Press Enter to keep the existing key or skip for now."
+        )
+        if gamma_key:
+            masked = _mask_secret(gamma_key)
+            prompt_text = (
+                f"Gamma API key [{masked}] (press Enter to keep current): "
+            )
+        else:
+            prompt_text = "Gamma API key (press Enter to skip): "
+        value = _prompt_value(prompt_text)
+        if value:
+            store_value("GAMMA_API_KEY", value)
+        elif gamma_key:
+            info("Keeping existing Gamma API key.")
+        else:
+            warn("Continuing without a Gamma API key. Presentation generation will be unavailable.")
+
     if updated:
         good(f"Setup complete. Updated values saved to {env_path}.")
     else:
@@ -785,6 +807,11 @@ def run_setup_wizard(
     if not env_map.get("OPENROUTER_API_KEY"):
         warn(
             "Remote model access is disabled until an OpenRouter API key is configured."
+        )
+    
+    if not env_map.get("GAMMA_API_KEY"):
+        warn(
+            "Presentation generation is disabled until a Gamma API key is configured."
         )
 
     return updated
