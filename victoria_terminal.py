@@ -679,6 +679,7 @@ def parse_env_file(path: Path) -> dict[str, str]:
     return {key: str(value) for key, value in values.items() if value is not None}
 
 REQUIRED_ENV_KEYS = ("OPENROUTER_API_KEY",)
+BROWSERBASE_ENV_KEY = "SMITHERY_BROWSERBASE_URL"
 
 
 def load_environment(
@@ -754,6 +755,21 @@ def substitute_env(obj: Any, env: Mapping[str, str] | None = None) -> Any:
         return _DEF_ENV_PATTERN.sub(repl, obj)
     return obj
 
+
+def _is_browserbase_enabled(env_map: Mapping[str, str]) -> bool:
+    value = env_map.get(BROWSERBASE_ENV_KEY)
+    if value is None:
+        return False
+    trimmed = value.strip()
+    if not trimmed:
+        return False
+    if trimmed.startswith("${") and trimmed.endswith("}"):
+        return False
+    if "<" in trimmed or ">" in trimmed:
+        return False
+    return True
+
+
 def generate_crush_config(
     *,
     app_home: Path = APP_HOME,
@@ -765,7 +781,12 @@ def generate_crush_config(
     if not template.exists():
         raise FileNotFoundError(f"Missing Crush template at {template}")
     config = _read_json(template)
-    resolved = substitute_env(config, env)
+    env_map = env or os.environ
+    if not _is_browserbase_enabled(env_map):
+        mcp_config = config.get("mcp")
+        if isinstance(mcp_config, dict):
+            mcp_config.pop("browserbase", None)
+    resolved = substitute_env(config, env_map)
     output_path = app_home / CRUSH_CONFIG_NAME
     _write_json(output_path, resolved)
     good(f"Configuration written to {output_path}")
