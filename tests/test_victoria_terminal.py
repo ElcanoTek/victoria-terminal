@@ -54,23 +54,32 @@ def test_load_environment_preserves_existing_values(tmp_path: Path) -> None:
     assert custom_env["SHARED"] == "existing"
 
 
-def test_load_environment_returns_empty_when_file_absent(tmp_path: Path) -> None:
-    assert entrypoint.load_environment(app_home=tmp_path, env={}) == {}
-
-
-def test_run_setup_wizard_warns_when_env_missing(
+def test_load_environment_returns_empty_when_file_absent(
     tmp_path: Path, mocker: pytest.MockFixture
 ) -> None:
+    warn = mocker.patch.object(entrypoint, "warn")
+
+    assert entrypoint.load_environment(app_home=tmp_path, env={}) == {}
+    warn.assert_called_once()
+
+
+def test_load_environment_reports_missing_keys(
+    tmp_path: Path, mocker: pytest.MockFixture
+) -> None:
+    env_path = tmp_path / entrypoint.ENV_FILENAME
+    env_path.write_text("# empty file\n", encoding="utf-8")
     env: dict[str, str] = {}
     warn = mocker.patch.object(entrypoint, "warn")
 
-    updated = entrypoint.run_setup_wizard(app_home=tmp_path, env=env)
+    entrypoint.load_environment(app_home=tmp_path, env=env)
 
-    warn.assert_called_once()
-    assert updated is False
+    warn.assert_called_with(
+        "The following API keys are missing. Update your .env file to enable "
+        "these integrations: OPENROUTER_API_KEY"
+    )
 
 
-def test_run_setup_wizard_loads_values_from_env_file(
+def test_load_environment_uses_values_from_env_file(
     tmp_path: Path, mocker: pytest.MockFixture
 ) -> None:
     env_path = tmp_path / entrypoint.ENV_FILENAME
@@ -79,28 +88,11 @@ def test_run_setup_wizard_loads_values_from_env_file(
     info = mocker.patch.object(entrypoint, "info")
     warn = mocker.patch.object(entrypoint, "warn")
 
-    updated = entrypoint.run_setup_wizard(app_home=tmp_path, env=env)
+    entrypoint.load_environment(app_home=tmp_path, env=env)
 
-    assert updated is False
     assert env["OPENROUTER_API_KEY"] == "from-file"
-    info.assert_called_once_with(f"Using API keys from {env_path}.")
+    info.assert_any_call(f"Using API keys from {env_path}.")
     warn.assert_not_called()
-
-
-def test_run_setup_wizard_reports_missing_keys(
-    tmp_path: Path, mocker: pytest.MockFixture
-) -> None:
-    env_path = tmp_path / entrypoint.ENV_FILENAME
-    env_path.write_text("# empty file\n", encoding="utf-8")
-    env: dict[str, str] = {}
-    warn = mocker.patch.object(entrypoint, "warn")
-
-    entrypoint.run_setup_wizard(app_home=tmp_path, env=env)
-
-    warn.assert_called_with(
-        "The following API keys are missing. Update your .env file to enable "
-        "these integrations: OPENROUTER_API_KEY"
-    )
 
 
 def test_substitute_env_handles_nested_structures() -> None:
@@ -199,20 +191,12 @@ def test_parse_args_accepts_custom_app_home(tmp_path: Path) -> None:
     args = entrypoint.parse_args(["--app-home", str(tmp_path), "--skip-launch"])
 
     assert args.app_home == tmp_path
-    assert args.reconfigure is False
     assert args.skip_launch is True
 
 
-def test_parse_args_sets_reconfigure_flag() -> None:
-    args = entrypoint.parse_args(["--reconfigure"])
-
-    assert args.reconfigure is True
-
-
 def test_parse_args_ignores_double_dash_separator() -> None:
-    args = entrypoint.parse_args(["--", "--reconfigure", "--skip-launch"])
+    args = entrypoint.parse_args(["--", "--skip-launch"])
 
-    assert args.reconfigure is True
     assert args.skip_launch is True
 
 
@@ -239,7 +223,6 @@ def test_main_honours_skip_launch(
         "victoria_terminal.ensure_app_home", side_effect=lambda path: path
     )
     load_environment = mocker.patch("victoria_terminal.load_environment")
-    run_wizard = mocker.patch("victoria_terminal.run_setup_wizard")
     generate_config = mocker.patch("victoria_terminal.generate_crush_config")
     mocker.patch("victoria_terminal.remove_local_duckdb")
     mocker.patch("victoria_terminal.info")
@@ -251,36 +234,8 @@ def test_main_honours_skip_launch(
     assert os.environ["VICTORIA_HOME"] == str(tmp_path)
     ensure_app_home.assert_called_once_with(tmp_path)
     load_environment.assert_called_once_with(tmp_path)
-    run_wizard.assert_called_once_with(app_home=tmp_path, force=False)
     generate_config.assert_called_once_with(app_home=tmp_path)
     launch_crush.assert_not_called()
-    banner_sequence.assert_called_once_with()
-
-
-def test_main_with_reconfigure_forces_wizard(
-    tmp_path: Path, mocker: pytest.MockFixture, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.delenv("VICTORIA_HOME", raising=False)
-
-    mocker.patch("victoria_terminal.initialize_colorama")
-    banner_sequence = mocker.patch("victoria_terminal.banner_sequence")
-    mocker.patch("victoria_terminal.ensure_app_home", side_effect=lambda path: path)
-    mocker.patch("victoria_terminal.load_environment")
-    run_wizard = mocker.patch("victoria_terminal.run_setup_wizard")
-    mocker.patch("victoria_terminal.generate_crush_config")
-    mocker.patch("victoria_terminal.remove_local_duckdb")
-    mocker.patch("victoria_terminal.info")
-    mocker.patch("victoria_terminal.preflight_crush")
-    mocker.patch("victoria_terminal.launch_crush")
-
-    entrypoint.main([
-        "--skip-launch",
-        "--reconfigure",
-        "--app-home",
-        str(tmp_path),
-    ])
-
-    run_wizard.assert_called_once_with(app_home=tmp_path, force=True)
     banner_sequence.assert_called_once_with()
 
 
@@ -293,7 +248,6 @@ def test_main_skips_banner_when_flag_set(
     banner_sequence = mocker.patch("victoria_terminal.banner_sequence")
     mocker.patch("victoria_terminal.ensure_app_home", side_effect=lambda path: path)
     mocker.patch("victoria_terminal.load_environment")
-    mocker.patch("victoria_terminal.run_setup_wizard")
     mocker.patch("victoria_terminal.generate_crush_config")
     mocker.patch("victoria_terminal.remove_local_duckdb")
     mocker.patch("victoria_terminal.info")
@@ -323,7 +277,6 @@ def test_main_no_banner_requires_license_acceptance(
     mocker.patch("victoria_terminal.initialize_colorama")
     mocker.patch("victoria_terminal.ensure_app_home")
     mocker.patch("victoria_terminal.load_environment")
-    mocker.patch("victoria_terminal.run_setup_wizard")
     mocker.patch("victoria_terminal.generate_crush_config")
     mocker.patch("victoria_terminal.remove_local_duckdb")
     mocker.patch("victoria_terminal.info")

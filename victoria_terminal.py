@@ -678,6 +678,9 @@ def parse_env_file(path: Path) -> dict[str, str]:
     values = dotenv_values(path)
     return {key: str(value) for key, value in values.items() if value is not None}
 
+REQUIRED_ENV_KEYS = ("OPENROUTER_API_KEY",)
+
+
 def load_environment(
     app_home: Path = APP_HOME,
     env: MutableMapping[str, str] | None = None,
@@ -685,39 +688,23 @@ def load_environment(
     """Load environment variables from ``.env`` without overriding existing values."""
     env_path = app_home / ENV_FILENAME
     if not env_path.exists():
-        return {}
-    values = parse_env_file(env_path)
-    if env is None:
-        load_dotenv(env_path, override=False)
-    target_env: MutableMapping[str, str] = env if env is not None else os.environ
-    for key, value in values.items():
-        target_env.setdefault(key, value)
-    info(f"Loaded environment variables from {env_path}")
-    return values
-
-def run_setup_wizard(
-    *,
-    app_home: Path = APP_HOME,
-    env: MutableMapping[str, str] | None = None,
-    force: bool = False,
-) -> bool:
-    """Validate that required secrets exist in ``.env`` without prompting."""
-    env_map = env if env is not None else os.environ
-    env_path = app_home / ENV_FILENAME
-    env_path.parent.mkdir(parents=True, exist_ok=True)
-
-    if not env_path.exists():
         warn(
             "No configuration file found. Provide a pre-populated .env file at "
             f"{env_path} to enable remote providers."
         )
-        return False
+        return {}
 
-    existing_values = parse_env_file(env_path)
-    for key, value in existing_values.items():
-        env_map.setdefault(key, value)
+    values = parse_env_file(env_path)
+    if env is None:
+        load_dotenv(env_path, override=False)
 
-    missing_keys = [key for key in ("OPENROUTER_API_KEY",) if not env_map.get(key)]
+    target_env: MutableMapping[str, str] = env if env is not None else os.environ
+    for key, value in values.items():
+        target_env.setdefault(key, value)
+
+    info(f"Loaded environment variables from {env_path}")
+
+    missing_keys = [key for key in REQUIRED_ENV_KEYS if not target_env.get(key)]
     if missing_keys:
         warn(
             "The following API keys are missing. Update your .env file to enable "
@@ -726,15 +713,7 @@ def run_setup_wizard(
     else:
         info(f"Using API keys from {env_path}.")
 
-    return False
-
-def prompt_for_missing_credentials(
-    *,
-    app_home: Path = APP_HOME,
-    env: MutableMapping[str, str] | None = None,
-) -> bool:
-    """Backward compatible wrapper for :func:`run_setup_wizard`."""
-    return run_setup_wizard(app_home=app_home, env=env)
+    return values
 
 def ensure_app_home(app_home: Path = APP_HOME) -> Path:
     """Ensure the Victoria home directory exists with bundled documentation."""
@@ -863,11 +842,6 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         help=("Directory to use for Victoria configuration (defaults to ~/Victoria or $VICTORIA_HOME)."),
     )
     parser.add_argument(
-        "--reconfigure",
-        action="store_true",
-        help="Run the setup wizard even if credentials already exist.",
-    )
-    parser.add_argument(
         "--skip-launch",
         action="store_true",
         help="Prepare configuration without launching Crush.",
@@ -915,7 +889,6 @@ def main(argv: Sequence[str] | None = None) -> None:
     if args.no_banner and args.acccept_license:
         _persist_license_acceptance(app_home=app_home)
     load_environment(app_home)
-    run_setup_wizard(app_home=app_home, force=args.reconfigure)
     generate_crush_config(app_home=app_home)
     remove_local_duckdb(app_home=app_home)
     info(
