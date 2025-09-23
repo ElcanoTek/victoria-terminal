@@ -28,7 +28,7 @@ from pathlib import Path
 from typing import Any, Mapping, MutableMapping, Sequence
 
 from colorama import init as colorama_init
-from dotenv import dotenv_values, load_dotenv
+from dotenv import dotenv_values, load_dotenv, set_key
 from rich.console import Console, Group
 from rich.panel import Panel
 from rich.text import Text
