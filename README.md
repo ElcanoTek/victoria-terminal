@@ -22,6 +22,17 @@ Victoria is Elcano's AI agent for navigating programmatic advertising datasets. 
 
 ## 🛠️ Prerequisites
 
+
+## 🖥️ Terminal Compatibility
+
+Victoria renders a richly styled terminal experience. For the best results, use a modern, standards-compliant terminal emulator.
+
+- **macOS:** We recommend [Ghostty](https://ghostty.org). The built-in macOS Terminal has known issues (such as broken copy/paste) that we do not plan to address.
+- **Linux:** We recommend [Ghostty](https://ghostty.org) for its modern feature set and broad standards support.
+- **Windows:** We recommend the [Windows Terminal](https://aka.ms/terminal).
+
+Pick the emulator that fits your platform best—Victoria relies on OSC-52, 24-bit color, and other modern capabilities that legacy terminals often lack.
+
 Victoria requires a working Podman installation for every stream. Install and validate Podman before continuing with any setup path.
 
 1. **macOS & Windows:** Download Podman Desktop from [podman.io](https://podman.io) for the fastest installation path.
