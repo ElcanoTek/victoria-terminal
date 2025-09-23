@@ -157,55 +157,8 @@ You can also point the default command at an alternate shared location with `--s
 
 ### Stream 3 – Build from source
 
-Follow this path if you plan to modify Victoria, integrate it into a custom workflow, or contribute changes upstream.
-
-#### Clone the repository and set up a virtual environment
-
-```bash
-git clone https://github.com/ElcanoTek/victoria-terminal.git
-# Or use SSH
-git clone git@github.com:ElcanoTek/victoria-terminal.git
-cd victoria-terminal
-
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
-
-#### Run tests and linters on the host
-
-With the virtual environment activated, run the automated checks via [Nox](https://nox.thea.codes/):
-
-```bash
-nox -s lint
-nox -s tests
-```
-
-Both sessions create (and reuse) virtual environments so the commands can also be executed on a clean workstation without manually activating `.venv`. If you prefer to iterate inside the existing environment, you can still execute individual tools directly, for example `pytest` or `flake8`.
-
-#### Build and test the container locally
-
-Use Podman to build the development image and run commands inside it:
-
-```bash
-podman build -t victoria-terminal .
-
-# optionally run pytest
-podman run --rm -it \
-  victoria-terminal pytest
-
-# run the terminal agent
-podman run --rm -it \
-  -v ~/Victoria:/root/Victoria \
-  victoria-terminal
-```
-
-Both approaches share the same source tree and configuration files stored in `~/Victoria`.
-
-#### Continuous delivery pipeline
-
-Every push to `main` triggers a GitHub Actions workflow that rebuilds the Podman image and publishes it to `ghcr.io/elcanotek/victoria-terminal`. The published image is what production users run, so CI keeps dependencies and CLI tooling up to date.
+Follow this path if you plan to modify Victoria, integrate it into a custom workflow, or contribute changes upstream. The end-to-end development workflow—including rebuilding the container, updating shared templates, and verifying changes—is documented in detail in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## 🤝 Contributing
 
-We welcome contributions to Victoria! Review our [Contributing Guidelines](CONTRIBUTING.md) for code style, testing expectations, and the pull-request process.
+We welcome contributions to Victoria! Review our [Contributing Guidelines](CONTRIBUTING.md) for the full development workflow, workspace anatomy, and pull-request expectations.
