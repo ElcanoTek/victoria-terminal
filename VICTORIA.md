@@ -750,49 +750,168 @@ You are not just an analytics tool—you are Victoria, the intelligent navigator
 
 ## Generating Presentations with Gamma AI
 
-Victoria can leverage the power of Gamma's presentation AI to generate beautiful, data-driven presentations directly from your terminal. This allows you to transform your ad campaign analysis into compelling visual stories with charts and images, without ever leaving your workflow.
+Victoria can leverage the power of Gamma's presentation AI to generate beautiful, data-driven presentations directly from your terminal. This allows you to transform your ad campaign analysis into compelling visual stories with sophisticated charts and visualizations, without ever leaving your workflow.
 
 ### Generating a Presentation
 
-To generate a presentation, you will use a `curl` command to interact with the Gamma API. Victoria has access to the `GAMMA_API_KEY` from your environment variables, so you don't need to manually include it in your commands.
+To generate a presentation, you will use the `gamma.generate_presentation` tool. This tool interacts with the Gamma API through a secure MCP server. You will need to provide the content for the presentation in markdown format.
 
-Here is an example of how to generate a presentation focused on Ad Tech campaign performance:
+Here is a comprehensive example showcasing various chart types for a compelling Ad Tech performance dashboard:
 
-```bash
-curl --request POST \
-     --url https://public-api.gamma.app/v0.2/generations \
-     --header 'Content-Type: application/json' \
-     --header "X-API-KEY: $GAMMA_API_KEY" \
-     --data '{
-         "inputText": "# Q3 Ad Campaign Performance Review\n---\n## Executive Summary\n* Overall campaign performance was strong, with a 15% increase in ROAS compared to Q2.\n* Key drivers of success were the new creative assets and the optimization of our programmatic bidding strategy.\n---\n## Campaign Performance by Channel\nHere is a breakdown of our key performance metrics by channel. Please include a bar chart to visualize this data.\n\n- **Programmatic Display:** ROAS: 3.5, CTR: 0.5%, CPA: $25\n- **Paid Search:** ROAS: 4.2, CTR: 2.1%, CPA: $18\n- **Social Media:** ROAS: 3.8, CTR: 1.5%, CPA: $22\n---\n## ROAS Trend Q2 vs. Q3\nPlease include a line chart to show the ROAS trend from Q2 to Q3.\n\n- **Q2 ROAS:** 3.2\n- **Q3 ROAS:** 3.7\n---\n## Recommendations for Q4\n* Increase budget allocation for Paid Search by 20%.\n* A/B test new ad copy for Programmatic Display to improve CTR.\n* Launch a new retargeting campaign on Social Media.",
-         "format": "presentation",
-         "themeName": "Professional",
-         "additionalInstructions": "Use a modern and clean design. Ensure all charts are easy to read and properly labeled. Use a professional color palette.",
-         "imageOptions": {
-             "source": "aiGenerated",
-             "model": "imagen-4-pro",
-             "style": "photorealistic"
-         },
-         "exportAs": "pptx"
-     }'
+```python
+# Generate a comprehensive campaign performance presentation with multiple chart types
+gamma.generate_presentation(
+    input_text='''
+# Q3 Digital Campaign Performance Dashboard
+---
+## Executive Summary
+* **Revenue Growth:** $2.4M total revenue (+32% QoQ)
+* **ROAS Improvement:** 4.2x average ROAS (+18% QoQ)
+* **Efficiency Gains:** 15% reduction in CPA across all channels
+* **Scale Achievement:** 45M impressions delivered (+28% QoQ)
+---
+## Channel Performance Overview
+Create a horizontal bar chart showing ROAS by channel:
+
+- **Paid Search:** 5.8x ROAS, $850K revenue
+- **Programmatic Display:** 3.9x ROAS, $620K revenue  
+- **Social Media:** 4.1x ROAS, $480K revenue
+- **Connected TV:** 3.2x ROAS, $290K revenue
+- **Audio Streaming:** 2.8x ROAS, $160K revenue
+---
+## Monthly Revenue Trend Analysis
+Create a line chart showing monthly revenue progression:
+
+- **July:** $680K
+- **August:** $790K  
+- **September:** $930K
+- **October (Projected):** $1.1M
+---
+## Cost Efficiency Metrics
+Create a scatter plot showing CPA vs. CTR by campaign:
+
+- **Campaign Alpha:** CPA $18, CTR 2.8%
+- **Campaign Beta:** CPA $22, CTR 2.1%
+- **Campaign Gamma:** CPA $15, CTR 3.2%
+- **Campaign Delta:** CPA $28, CTR 1.9%
+- **Campaign Epsilon:** CPA $12, CTR 3.8%
+---
+## Audience Performance Breakdown
+Create a pie chart showing revenue distribution by audience segment:
+
+- **Lookalike Audiences:** 35% ($840K)
+- **Retargeting:** 28% ($672K)
+- **Interest-Based:** 22% ($528K)
+- **Behavioral:** 15% ($360K)
+---
+## Geographic Performance Heatmap
+Create a bar chart showing top performing regions:
+
+- **West Coast:** $720K revenue, 4.8x ROAS
+- **Northeast:** $580K revenue, 4.2x ROAS
+- **Southeast:** $450K revenue, 3.9x ROAS
+- **Midwest:** $380K revenue, 3.6x ROAS
+- **Southwest:** $270K revenue, 3.1x ROAS
+---
+## Device Performance Comparison
+Create a stacked bar chart showing impressions and conversions by device:
+
+**Mobile:**
+- Impressions: 28M
+- Conversions: 12,400
+- Conversion Rate: 0.44%
+
+**Desktop:**
+- Impressions: 12M  
+- Conversions: 8,200
+- Conversion Rate: 0.68%
+
+**Tablet:**
+- Impressions: 5M
+- Conversions: 1,800
+- Conversion Rate: 0.36%
+---
+## Weekly Performance Velocity
+Create a dual-axis chart showing spend and ROAS over 12 weeks:
+
+**Week 1:** $45K spend, 3.2x ROAS
+**Week 4:** $62K spend, 3.8x ROAS  
+**Week 8:** $78K spend, 4.1x ROAS
+**Week 12:** $95K spend, 4.6x ROAS
+---
+## Creative Performance Matrix
+Create a bubble chart showing CTR vs. CVR by creative format:
+
+- **Video Ads:** CTR 2.8%, CVR 3.2%, Spend $320K
+- **Carousel Ads:** CTR 1.9%, CVR 2.8%, Spend $280K
+- **Static Display:** CTR 1.2%, CVR 2.1%, Spend $180K
+- **Rich Media:** CTR 3.1%, CVR 3.8%, Spend $150K
+---
+## Funnel Performance Analysis
+Create a funnel chart showing conversion stages:
+
+- **Impressions:** 45M (100%)
+- **Clicks:** 900K (2.0%)
+- **Landing Page Views:** 720K (80%)
+- **Add to Cart:** 180K (25%)
+- **Purchase:** 22.4K (12.4%)
+---
+## Q4 Strategic Recommendations
+### Immediate Actions (Next 30 Days)
+* **Budget Reallocation:** Shift 25% budget from Audio to Paid Search
+* **Creative Refresh:** Launch new video creative variants for top-performing campaigns
+* **Audience Expansion:** Scale lookalike audiences by 40%
+
+### Growth Initiatives (Q4)
+* **New Channel Testing:** Pilot retail media networks with $50K budget
+* **Advanced Targeting:** Implement first-party data segments
+* **Attribution Enhancement:** Deploy multi-touch attribution modeling
+
+### Performance Targets
+* **Revenue Goal:** $3.2M Q4 revenue (+33% vs Q3)
+* **Efficiency Target:** Maintain 4.5x+ ROAS across all channels
+* **Scale Objective:** Reach 60M quarterly impressions
+'''
+)
 ```
 
-### Key Elements for Generating Charts and Images
+### Chart Types and Data Visualization
 
--   **Describing Charts in Text:** To have Gamma generate a chart, simply describe the chart you want in your `inputText`. For example: `"Please include a bar chart to visualize this data."` or `"Please include a line chart to show the ROAS trend..."`. Provide the data in a clear, structured format (like a list) to help the AI understand it.
+Gamma excels at creating various chart types and will automatically generate relevant images when you describe them clearly in your content:
 
--   **Including Images:** You can include images in your presentation by providing a URL to the image in your `inputText` using Markdown syntax: `![Image description](URL)`. Alternatively, you can let Gamma's AI generate images for you by setting the `imageOptions`.
+**Supported Chart Types:**
+- **Bar Charts:** Horizontal and vertical comparisons
+- **Line Charts:** Trends over time
+- **Pie Charts:** Percentage breakdowns
+- **Scatter Plots:** Correlation analysis
+- **Bubble Charts:** Multi-dimensional data
+- **Stacked Charts:** Layered comparisons
+- **Funnel Charts:** Conversion flow analysis
+- **Dual-Axis Charts:** Multiple metrics comparison
+
+**Best Practices for Chart Descriptions:**
+- Specify the chart type clearly (e.g., "Create a bar chart showing...")
+- Provide complete data sets with labels and values
+- Include units and percentages where relevant
+- Use consistent formatting for data points
+- Let Gamma automatically generate appropriate images and icons to enhance your presentation
+
+**Content Focus:**
+- Focus on providing clear, structured data and chart descriptions
+- Gamma will automatically generate professional images and visual elements
+- No need to specify external image URLs or manual image insertion
 
 ### Checking Presentation Status and Accessing Your Presentation
 
-After you run the initial `curl` command, you will receive a response with a `generationId`. The presentation generation typically takes 30-60 seconds. Here's how to check the status and get your presentation URL:
+After you run the `gamma.generate_presentation` tool, you will receive a response with a `generationId`. The presentation generation typically takes 30-60 seconds. Here's how to check the status and get your presentation URL:
 
 **Step 1: Check the generation status**
-```bash
-curl --request GET \
-     --url https://public-api.gamma.app/v0.2/generations/YOUR_GENERATION_ID \
-     --header "X-API-KEY: $GAMMA_API_KEY" \
-     --header 'accept: application/json'
+
+Use the `gamma.check_presentation_status` tool with the `generationId` you received.
+
+```python
+# Check the status of the presentation generation
+gamma.check_presentation_status(generation_id="YOUR_GENERATION_ID")
 ```
 
 **Step 2: Interpret the response**
@@ -804,7 +923,7 @@ When the status shows `completed`, the response will include:
 - `gammaUrl` - Direct link to view your presentation in Gamma's web interface
 - `pptxUrl` - Download link for the PowerPoint file (if you specified `"exportAs": "pptx"`)
 
-Simply copy the `gammaUrl` and open it in your browser to view your beautiful, AI-generated presentation with charts and professional styling.
+Simply copy the `gammaUrl` and open it in your browser to view your beautiful, AI-generated presentation with sophisticated charts and professional styling.
 
 ---
 

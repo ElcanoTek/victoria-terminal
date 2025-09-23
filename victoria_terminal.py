@@ -680,6 +680,7 @@ def parse_env_file(path: Path) -> dict[str, str]:
 
 REQUIRED_ENV_KEYS = ("OPENROUTER_API_KEY",)
 BROWSERBASE_ENV_KEY = "SMITHERY_BROWSERBASE_URL"
+GAMMA_ENV_KEY = "GAMMA_API_KEY"
 
 
 def load_environment(
@@ -770,6 +771,20 @@ def _is_browserbase_enabled(env_map: Mapping[str, str]) -> bool:
     return True
 
 
+def _is_gamma_enabled(env_map: Mapping[str, str]) -> bool:
+    value = env_map.get(GAMMA_ENV_KEY)
+    if value is None:
+        return False
+    trimmed = value.strip()
+    if not trimmed:
+        return False
+    if trimmed.startswith("${") and trimmed.endswith("}"):
+        return False
+    if "<" in trimmed or ">" in trimmed:
+        return False
+    return True
+
+
 def generate_crush_config(
     *,
     app_home: Path = APP_HOME,
@@ -786,6 +801,10 @@ def generate_crush_config(
         mcp_config = config.get("mcp")
         if isinstance(mcp_config, dict):
             mcp_config.pop("browserbase", None)
+    if not _is_gamma_enabled(env_map):
+        mcp_config = config.get("mcp")
+        if isinstance(mcp_config, dict):
+            mcp_config.pop("gamma", None)
     resolved = substitute_env(config, env_map)
     output_path = app_home / CRUSH_CONFIG_NAME
     _write_json(output_path, resolved)
