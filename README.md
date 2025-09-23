@@ -7,43 +7,40 @@
 
 <img src="assets/victoria.gif" alt="Victoria Terminal Demo" width="650">
 
-Victoria is Elcano's AI agent for navigating programmatic advertising datasets. Traders can ask natural-language questions of CSVs, Excel workbooks, and SQL-queryable sources to surface insights, spot trends, and optimize campaigns without leaving the terminal.
+Victoria is Elcano's AI agent for navigating programmatic advertising datasets. Ask natural-language questions of CSVs, Excel workbooks, and SQL-queryable sources to surface insights without leaving the terminal.
 
 ---
 
-## 🔐 Security & Licensing at a Glance
+## 🔐 Security and licensing overview
 
-- **Container-first distribution.** Victoria ships as a Podman image that packages Python, the `crush` CLI, and all dependencies. Running in a container isolates the agent from the host OS while still allowing controlled file sharing via `~/Victoria`.
-- **Secrets stay in your workspace.** Credentials are read from `~/Victoria/.env`, mounted into the container at runtime. Ship a fully-populated file with the API keys your team needs and Victoria will consume them without writing new secrets back to disk.
-- **Transparent builds.** GitHub Actions automatically builds and publishes the container to `ghcr.io/elcanotek/victoria-terminal`, ensuring every release is reproducible and verified in CI.
-- **Publicly-visible source code.** The repository is publicly available for review and evaluation. All usage is subject to the Victoria Terminal Business Source License (BUSL-1.1), a source-available license. See [LICENSE](LICENSE) for details.
-- **Contributor license agreement.** Submitting a patch, issue, or other material constitutes acceptance of the [ElcanoTek Contributor License Agreement](CLA.md), which grants ElcanoTek full rights to use, commercialize, and relicense all Contributions.
+- **Container-first distribution.** Victoria ships as a Podman image that packages Python, the `crush` CLI, and required dependencies. The container isolates the agent from the host OS while still allowing controlled file sharing via `~/Victoria`.
+- **Secrets stay in your workspace.** Credentials are read from `~/Victoria/.env`, mounted into the container at runtime. Provide a fully populated file with the API keys your team needs and Victoria consumes them without persisting new secrets.
+- **Transparent builds.** GitHub Actions builds and publishes the container to `ghcr.io/elcanotek/victoria-terminal`, ensuring every release is reproducible and verified in CI.
+- **Source-available license.** Usage is governed by the Victoria Terminal Business Source License (BUSL-1.1). See [LICENSE](LICENSE) for details.
+- **Contributor license agreement.** Submitting a patch, issue, or other material constitutes acceptance of the [ElcanoTek Contributor License Agreement](CLA.md).
 
+## 🛠️ Requirements
 
-## 🛠️ Prerequisites
+### Terminal support
 
+Victoria renders a richly styled terminal experience. Use a modern, standards-compliant emulator that supports OSC-52 and 24-bit color.
 
-## 🖥️ Terminal Compatibility
+- **macOS:** [Ghostty](https://ghostty.org) provides the best results. The built-in macOS Terminal has known limitations such as unreliable copy and paste.
+- **Linux:** [Ghostty](https://ghostty.org) offers broad standards support.
+- **Windows:** Use [Windows Terminal](https://aka.ms/terminal).
 
-Victoria renders a richly styled terminal experience. For the best results, use a modern, standards-compliant terminal emulator.
+### Podman
 
-- **macOS:** We recommend [Ghostty](https://ghostty.org). The built-in macOS Terminal has known issues (such as broken copy/paste) that we do not plan to address.
-- **Linux:** We recommend [Ghostty](https://ghostty.org) for its modern feature set and broad standards support.
-- **Windows:** We recommend the [Windows Terminal](https://aka.ms/terminal).
+Podman is required for every installation option. Install it first, then verify the setup with `podman --version`.
 
-Pick the emulator that fits your platform best—Victoria relies on OSC-52, 24-bit color, and other modern capabilities that legacy terminals often lack.
-
-Victoria requires a working Podman installation for every stream. Install and validate Podman before continuing with any setup path.
-
-1. **macOS & Windows:** Download Podman Desktop from [podman.io](https://podman.io) for the fastest installation path.
-2. **Linux:** Install Podman with your distribution's package manager to ensure it stays updated with system packages.
-3. **Verify Podman works** by running `podman --version`. If you see a version number, you're ready to go.
+1. **macOS and Windows:** Install Podman Desktop from [podman.io](https://podman.io).
+2. **Linux:** Install Podman with your distribution's package manager.
 
 ---
 
-## 🚀 Installation Streams
+## 🚀 Installation options
 
-Victoria supports three installation flows depending on how much automation you want. Use the summary below to pick the path that matches your workflow, then jump to the detailed instructions.
+Victoria supports three installation flows. Use the summary below to pick the path that matches your workflow, then jump to the detailed instructions.
 
 | Stream | Best for | What you get |
 | --- | --- | --- |
@@ -53,7 +50,7 @@ Victoria supports three installation flows depending on how much automation you 
 
 ### Stream 1 – Guided helper script
 
-Let Victoria wire up the remaining pieces for you. The helper scripts validate that Podman is ready, ensure your `~/Victoria` workspace exists, detect the host architecture (using `podman info` when available with a local fallback), pull the matching container image tag, and add a reusable `victoria` command to your shell profile.
+Let Victoria wire up the remaining pieces for you. The helper scripts validate Podman, ensure your `~/Victoria` workspace exists, detect the host architecture, pull the matching container image tag, and add a reusable `victoria` command to your shell profile.
 
 * **macOS / Linux**
   ```bash
@@ -70,11 +67,11 @@ After the helper finishes, open a new terminal session (or reload your profile w
 victoria
 ```
 
-Re-run the script any time you want to refresh the alias. It will not reinstall Podman for you, but it will remind you to start `podman machine` on macOS and Windows if needed.
+Re-run the script any time you want to refresh the alias. It will not reinstall Podman, but it will remind you to start `podman machine` on macOS and Windows if needed.
 
 ### Stream 2 – Manual Podman commands
 
-Prefer to copy/paste the commands yourself? Follow the steps below to mirror what the helper script does behind the scenes.
+Prefer to copy and paste the commands yourself? Follow the steps below to mirror what the helper script does behind the scenes.
 
 #### Create the shared workspace folder
 
@@ -126,9 +123,9 @@ podman run --rm -it -v ~/Victoria:/root/Victoria ghcr.io/elcanotek/victoria-term
 ```
 
 The `--` separator ensures that:
-- Container runtime options (like `--rm`, `-it`, `-v`) are processed by Podman
-- Application arguments (like `--skip-launch`) are passed to Victoria
-- No confusion occurs between container and application flags
+- Container runtime options (like `--rm`, `-it`, `-v`) are processed by Podman.
+- Application arguments (like `--skip-launch`) are passed to Victoria.
+- Container and application flags remain unambiguous.
 
 On macOS and Linux you can split the run command across multiple lines for readability (the example below shows the `x86_64` tag; swap in the tag from the table above if you are on Arm64):
 
@@ -164,11 +161,11 @@ podman run --rm -it \
 You can also point the default command at an alternate shared location with `--shared-home /path/to/shared/Victoria`.
 
 > [!IMPORTANT]
-> Victoria no longer prompts for API keys. Ship a curated `.env` file with every deployment so users can drop it into their `~/Victoria` folder and get started immediately.
+> Victoria no longer prompts for API keys. Provide a curated `.env` file with every deployment so users can drop it into their `~/Victoria` folder and get started immediately.
 
 ##### Managing the `.env` file
 
-Victoria reads every environment variable defined in `~/Victoria/.env` and exposes it to the terminal session. We recommend bundling a template that documents each key alongside a fully configured variant for production use.
+Victoria reads every environment variable defined in `~/Victoria/.env` and exposes it to the terminal session. Bundle a template that documents each key alongside a fully configured variant for production use.
 
 Use the provided `example.env` file as a template:
 
@@ -186,7 +183,7 @@ GAMMA_API_KEY="sk-gamma-your-api-key-here"
 ```
 
 - Keep comments in the file to describe why a key is needed or where to request it.
-- Sensitive values should only be distributed through secure channels—Victoria simply reads them at runtime.
+- Distribute sensitive values through secure channels—Victoria simply reads them at runtime.
 - To rotate a credential, update the `.env` file on the host and restart the container; no interactive wizard is required.
 
 > [!TIP]
