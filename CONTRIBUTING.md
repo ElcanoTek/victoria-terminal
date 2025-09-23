@@ -141,6 +141,32 @@ podman run --rm -it \
 Nox manages its own virtual environments, so you can run the command from a
 fresh checkout without pre-creating `.venv`.
 
+### Running pytest in Podman
+
+Use the same locally built image to execute the automated test suite. Passing
+`pytest` after `--` hands control to the tool inside the container while still
+mounting your workspace and source tree changes:
+
+```bash
+podman run --rm -it \
+  -v ~/Victoria:/root/Victoria \
+  victoria-terminal -- pytest
+```
+
+The entrypoint sets the repository root as the working directory, so the command
+discovers tests in `tests/` automatically. To target a specific module or test
+function, append the usual pytest selectors:
+
+```bash
+podman run --rm -it \
+  -v ~/Victoria:/root/Victoria \
+  victoria-terminal -- pytest tests/test_victoria_terminal.py -k "happy_path"
+```
+
+When a failure needs closer inspection, drop into an interactive shell (see
+below) and run `pytest` directly so you can iterate on fixes without repeatedly
+starting new containers.
+
 ## Advanced Debugging
 
 When a bug only reproduces in the container, drop into an interactive shell
