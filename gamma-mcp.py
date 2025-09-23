@@ -7,16 +7,10 @@ Runs within the Victoria Terminal container environment.
 """
 
 import os
-import sys
 from typing import Any, Dict, Optional
 
-try:
-    import httpx
-    from mcp.server.fastmcp import FastMCP
-except ImportError as e:
-    print(f"Error: Missing required dependency: {e}", file=sys.stderr)
-    print("Please ensure the container has mcp and httpx installed", file=sys.stderr)
-    sys.exit(1)
+import httpx
+from mcp.server.fastmcp import FastMCP
 
 # Initialize FastMCP server
 mcp = FastMCP("gamma")
