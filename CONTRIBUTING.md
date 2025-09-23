@@ -8,138 +8,152 @@ This document provides guidelines for developers who want to contribute to the p
 
 By submitting a Contribution you agree to the terms of the [ElcanoTek Contributor License Agreement](CLA.md). The CLA grants ElcanoTek a perpetual, worldwide right to use, modify, commercialize, and relicense your Contribution in any manner. If you do not agree to those terms, do not submit Contributions.
 
-## Development Environment
+## Development Workflow
 
-Victoria is distributed as a container image and contributors are encouraged to
-develop, lint, and test inside that environment. Podman is the only hard
+Victoria is distributed as a container image and contributors are expected to
+build and run that image locally during development. Podman is the only hard
 requirement.
 
-### 1. Install and validate Podman
-
-1. Install Podman (or Podman Desktop) for your platform. The quickest path for
-   macOS and Windows is [podman.io](https://podman.io); Linux users should rely
-   on their distribution packages.
-2. Confirm Podman is working:
+1. **Install and validate Podman.** macOS and Windows users can install Podman
+   Desktop from [podman.io](https://podman.io); Linux users should use their
+   distribution packages. Confirm the installation with `podman --version`.
+2. **Clone the repository** and change into it. All build commands run from the
+   repository root.
+3. **Build the development image.** The Containerfile is the source of truth for
+   dependencies and tooling:
 
    ```bash
-   podman --version
+   podman build -t victoria-terminal .
    ```
 
-### 2. Provision the shared workspace
+   Rebuild whenever you update Python dependencies, adjust the `Containerfile`,
+   or need the container to pick up local source code changes.
 
-Victoria mounts `~/Victoria` from the host into the container to share
-configuration, credentials, and cached data. Create it once and reuse it for
-every run:
+4. **Run the development image.** Mount your shared workspace and pass optional
+   arguments after `--` to forward them to the entrypoint:
+
+   ```bash
+   podman run --rm -it \
+     -v ~/Victoria:/root/Victoria \
+     victoria-terminal
+
+   # Run automated linting
+   podman run --rm -it \
+     -v ~/Victoria:/root/Victoria \
+     victoria-terminal -- nox -s lint
+   ```
+
+   Windows users should keep the command on a single line and replace
+   `~/Victoria` with `$env:USERPROFILE/Victoria`.
+
+5. **Optional virtual environment.** If you must experiment outside Podman,
+   create a local virtual environment with `python -m venv .venv`, install
+   `requirements.txt`, and rebuild the container once you are satisfied with the
+   changes. Treat this as a temporary escape hatch; the container remains the
+   source of truth.
+
+> [!TIP]
+> Append `-- --reconfigure --skip-launch` to trigger the configuration wizard
+> without launching the terminal UI. This is useful when validating environment
+> variables or first-run flows.
+
+## Workspace Anatomy
+
+Victoria splits responsibilities between the host and the Podman container. A
+clear understanding of the shared files prevents accidental data loss.
+
+### Host: `~/Victoria`
+
+* **`.env`** — Stores all secrets (API keys, Snowflake credentials). Victoria
+  reads from this file on startup and never bakes secrets into the container.
+* **Working assets** — Drop CSVs or other source files here so Victoria can load
+  them. The agent writes analysis outputs, transformed files, and exports back
+  into the same folder.
+* **`Victoria.md`** — Regenerated on every run. Treat this as ephemeral output
+  summarizing the capabilities of the current build. Any manual edits will be
+  overwritten.
+* **`Crush.json`** — Configuration for the Crush agent template. The runtime
+  rewrites it when the crush configuration changes.
+
+Create the workspace once and reuse it for every run:
 
 ```bash
 mkdir -p ~/Victoria
 ```
 
-On Windows PowerShell use:
+On Windows PowerShell:
 
 ```powershell
 New-Item -ItemType Directory -Path "$env:USERPROFILE/Victoria" -Force
 ```
 
-### 3. Build the development container
+Because this directory is mounted into the container, edits from either side are
+visible immediately. Keep a backup of anything that should not be replaced by
+Victoria's automated writers.
 
-Contributors are expected to build the Podman image locally. From the
-repository root run:
+### Podman Container: source tree and runtime
+
+* **Application code** lives inside the container filesystem. Editing Python
+  modules or templates requires a container rebuild (`podman build -t
+  victoria-terminal .`) before the changes take effect.
+* **Templates and manifests** (including the Crush template and `Victoria.md`)
+  ship in the image. Use the rebuild cycle to propagate any updates into the
+  runtime environment.
+* **Nox, pytest, and development tooling** are preinstalled via the
+  `Containerfile`. Running them through `podman run ... -- nox -s <session>`
+  ensures consistency with CI.
+
+## Extending Victoria's Functionality
+
+Adding new capabilities typically touches both configuration and documentation:
+
+1. **Update the Crush template** in `configs/crush/` (or the relevant template
+   directory) so the agent understands the new commands or behaviors.
+2. **Revise `Victoria.md`** to explain the new skills. Remember that `Victoria.md`
+   is regenerated on every run, so build automation should own these updates.
+3. **Rebuild the container** so the Podman runtime picks up code and template
+   changes.
+4. **Document user-facing changes** if the host workflow needs new files or
+   environment variables.
+
+Commit related updates together so reviewers can reason about the full feature
+addition.
+
+## Tooling & Linting
+
+Victoria follows Python best practices with automated formatting and linting:
+
+* **[Black](https://black.readthedocs.io/)** — Code formatter for consistent style.
+* **[isort](https://pycqa.github.io/isort/)** — Import organizer aligned with Black.
+* **[flake8](https://flake8.pycqa.org/)** — Enforces PEP 8 compliance and highlights
+  common mistakes.
+
+These tools run through [Nox](https://nox.thea.codes/) sessions defined in
+`noxfile.py`. Because the container ships with the tooling installed, invoke them
+directly via Podman:
 
 ```bash
-podman build -t victoria-terminal .
-```
-
-Rebuild any time you change dependencies or modify the `Containerfile`.
-
-> [!TIP]
-> If you need a quicker bootstrap while investigating an issue, you can still
-> pull the published image via `podman pull
-> ghcr.io/elcanotek/victoria-terminal:latest`. Replace the tag with
-> `latest-arm64` on Apple Silicon.
-
-### 4. Run the development container
-
-Use the locally built image for day-to-day development. Mount the shared
-workspace and optionally pass arguments after `--` to reach the entrypoint:
-
-```bash
-podman run --rm -it \
-  -v ~/Victoria:/root/Victoria \
-  victoria-terminal
-
-# Run the automated formatting and lint checks
 podman run --rm -it \
   -v ~/Victoria:/root/Victoria \
   victoria-terminal -- nox -s lint
+```
 
-# Run the pytest suite
+Nox manages its own virtual environments, so you can run the command from a
+fresh checkout without pre-creating `.venv`.
+
+## Testing (Optional Locally)
+
+End-to-end verification happens automatically in GitHub Actions. Local test runs
+are optional but useful when iterating on complex changes:
+
+```bash
 podman run --rm -it \
   -v ~/Victoria:/root/Victoria \
   victoria-terminal -- nox -s tests
 ```
 
-> [!TIP]
-> Append `-- --reconfigure --skip-launch` to trigger the configuration wizard
-> without launching the terminal UI. Windows users should keep the command on a
-> single line and use `$env:USERPROFILE/Victoria` for the volume mount.
-
-Both commands reuse the mounted workspace so cached configuration and shared
-credentials remain available.
-
-### 5. Optional: iterate outside the container
-
-If you need to experiment with dependencies before baking them into the image,
-work from a local virtual environment and rebuild as needed:
-
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-
-# make local changes, then rebuild the container
-podman build -t victoria-terminal .
-```
-
-## Code Quality & Linting
-
-Victoria follows Python best practices with automated code formatting and linting. The project uses:
-
-- **[Black](https://black.readthedocs.io/)**: Code formatter for consistent style
-- **[isort](https://pycqa.github.io/isort/)**: Import statement organizer
-- **[flake8](https://flake8.pycqa.org/)**: Linter for PEP8 compliance and code quality
-
-### Running Linting Tools
-
-The repository ships with a [Nox](https://nox.thea.codes/) configuration that
-invokes Black, isort, and flake8 with the project's settings (100 character line
-length, Black import ordering, and PEP 8 checks). When using the container the
-tools are already available. If you are iterating in a local virtual
-environment, install the dependencies from `requirements.txt` first.
-
-```bash
-podman run --rm -it \
-  -v ~/Victoria:/root/Victoria \
-  victoria-terminal -- nox -s lint
-```
-
-Nox manages its own virtual environments by default, so these commands can be
-executed from a clean checkout without activating `.venv` first.
-
-## Testing
-
-The test suite is located in the `tests/` directory and uses `pytest`.
-
-To run the tests:
-
-1.  **Set up your environment**: Either work inside the Podman container (recommended) or install the development dependencies from `requirements.txt` in your local virtual environment.
-2.  **Run the suite**: Execute the tests through Nox, which installs
-    dependencies and enables coverage measurement out of the box:
-    ```bash
-    podman run --rm -it \
-      -v ~/Victoria:/root/Victoria \
-      victoria-terminal -- nox -s tests
-    ```
+Use local pytest invocations only if you understand the impact; otherwise rely on
+the Nox session above for parity with CI.
 
 ## On-Demand GitHub Actions
 
