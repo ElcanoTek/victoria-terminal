@@ -58,57 +58,49 @@ def test_load_environment_returns_empty_when_file_absent(tmp_path: Path) -> None
     assert entrypoint.load_environment(app_home=tmp_path, env={}) == {}
 
 
-def test_run_setup_wizard_updates_env_file(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    env: dict[str, str] = {}
-    responses = iter(["openrouter-key"])
-    monkeypatch.setattr(
-        entrypoint.console,
-        "input",
-        lambda prompt, password=False: next(responses),
-    )
-
-    updated = entrypoint.run_setup_wizard(app_home=tmp_path, env=env)
-
-    assert updated is True
-
-    env_path = tmp_path / entrypoint.ENV_FILENAME
-    values = entrypoint.parse_env_file(env_path)
-
-    assert env["OPENROUTER_API_KEY"] == "openrouter-key"
-    assert values == {"OPENROUTER_API_KEY": "openrouter-key"}
-
-
-def test_run_setup_wizard_force_keeps_existing(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    env = {"OPENROUTER_API_KEY": "configured"}
-
-    responses = iter([""])
-    monkeypatch.setattr(
-        entrypoint.console, "input", lambda prompt, password=False: next(responses)
-    )
-
-    updated = entrypoint.run_setup_wizard(app_home=tmp_path, env=env, force=True)
-
-    assert updated is False
-    assert env["OPENROUTER_API_KEY"] == "configured"
-    assert not (tmp_path / entrypoint.ENV_FILENAME).exists()
-
-
-def test_run_setup_wizard_skips_when_complete(
+def test_run_setup_wizard_warns_when_env_missing(
     tmp_path: Path, mocker: pytest.MockFixture
 ) -> None:
-    env = {"OPENROUTER_API_KEY": "configured"}
-
-    input_mock = mocker.patch.object(entrypoint.console, "input")
+    env: dict[str, str] = {}
+    warn = mocker.patch.object(entrypoint, "warn")
 
     updated = entrypoint.run_setup_wizard(app_home=tmp_path, env=env)
 
-    input_mock.assert_not_called()
+    warn.assert_called_once()
     assert updated is False
-    assert not (tmp_path / entrypoint.ENV_FILENAME).exists()
+
+
+def test_run_setup_wizard_loads_values_from_env_file(
+    tmp_path: Path, mocker: pytest.MockFixture
+) -> None:
+    env_path = tmp_path / entrypoint.ENV_FILENAME
+    env_path.write_text("OPENROUTER_API_KEY=from-file\n", encoding="utf-8")
+    env: dict[str, str] = {}
+    info = mocker.patch.object(entrypoint, "info")
+    warn = mocker.patch.object(entrypoint, "warn")
+
+    updated = entrypoint.run_setup_wizard(app_home=tmp_path, env=env)
+
+    assert updated is False
+    assert env["OPENROUTER_API_KEY"] == "from-file"
+    info.assert_called_once_with(f"Using API keys from {env_path}.")
+    warn.assert_not_called()
+
+
+def test_run_setup_wizard_reports_missing_keys(
+    tmp_path: Path, mocker: pytest.MockFixture
+) -> None:
+    env_path = tmp_path / entrypoint.ENV_FILENAME
+    env_path.write_text("# empty file\n", encoding="utf-8")
+    env: dict[str, str] = {}
+    warn = mocker.patch.object(entrypoint, "warn")
+
+    entrypoint.run_setup_wizard(app_home=tmp_path, env=env)
+
+    warn.assert_called_with(
+        "The following API keys are missing. Update your .env file to enable "
+        "these integrations: OPENROUTER_API_KEY"
+    )
 
 
 def test_substitute_env_handles_nested_structures() -> None:

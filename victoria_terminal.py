@@ -28,7 +28,7 @@ from pathlib import Path
 from typing import Any, Mapping, MutableMapping, Sequence
 
 from colorama import init as colorama_init
-from dotenv import dotenv_values, load_dotenv, set_key
+from dotenv import dotenv_values, load_dotenv
 from rich.console import Console, Group
 from rich.panel import Panel
 from rich.text import Text
@@ -695,99 +695,38 @@ def load_environment(
     info(f"Loaded environment variables from {env_path}")
     return values
 
-def _prompt_value(prompt: str, *, secret: bool = False) -> str | None:
-    """Prompt the user for a value, returning ``None`` when skipped."""
-    try:
-        response = console.input(prompt, password=secret)
-    except EOFError:
-        warn("Input stream closed; continuing without updating the value.")
-        return None
-    value = response.strip()
-    return value or None
-
-def _mask_secret(value: str) -> str:
-    """Return a partially masked version of ``value`` for display purposes."""
-    if not value:
-        return ""
-    if len(value) <= 4:
-        return "•" * len(value)
-    visible = min(4, len(value) - 2)
-    prefix = value[: visible // 2]
-    suffix = value[-(visible - len(prefix)) :]
-    masked_length = max(len(value) - len(prefix) - len(suffix), 0)
-    return f"{prefix}{'•' * masked_length}{suffix}"
-
 def run_setup_wizard(
     *,
     app_home: Path = APP_HOME,
     env: MutableMapping[str, str] | None = None,
     force: bool = False,
 ) -> bool:
-    """Guide the user through configuring credentials in ``.env``."""
+    """Validate that required secrets exist in ``.env`` without prompting."""
     env_map = env if env is not None else os.environ
     env_path = app_home / ENV_FILENAME
     env_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if not env_path.exists():
+        warn(
+            "No configuration file found. Provide a pre-populated .env file at "
+            f"{env_path} to enable remote providers."
+        )
+        return False
 
     existing_values = parse_env_file(env_path)
     for key, value in existing_values.items():
         env_map.setdefault(key, value)
 
-    needs_openrouter = not env_map.get("OPENROUTER_API_KEY")
-    if not (force or needs_openrouter):
-        return False
-
-    section("Victoria setup wizard")
-    info(
-        "Victoria stores configuration in your shared workspace so future runs can reuse it."
-    )
-    info(
-        "On your host computer this folder is typically [bold]~/Victoria[/bold]. "
-        f"Inside the container it is mounted at: [bold]{app_home}[/bold]"
-    )
-    info(f"Secrets will be written to [bold]{env_path}[/bold].")
-
-    updated = False
-
-    def store_value(key: str, value: str) -> None:
-        nonlocal updated
-        env_map[key] = value
-        env_path.touch(exist_ok=True)
-        set_key(str(env_path), key, value)
-        good(f"Stored {key} in {env_path}")
-        updated = True
-
-    openrouter_key = env_map.get("OPENROUTER_API_KEY")
-    if force or not openrouter_key:
+    missing_keys = [key for key in ("OPENROUTER_API_KEY",) if not env_map.get(key)]
+    if missing_keys:
         warn(
-            "Provide your OpenRouter API key to enable remote models. "
-            "Press Enter to keep the existing key or skip for now."
+            "The following API keys are missing. Update your .env file to enable "
+            f"these integrations: {', '.join(missing_keys)}"
         )
-        if openrouter_key:
-            masked = _mask_secret(openrouter_key)
-            prompt_text = (
-                f"OpenRouter API key [{masked}] (press Enter to keep current): "
-            )
-        else:
-            prompt_text = "OpenRouter API key (press Enter to skip): "
-        value = _prompt_value(prompt_text)
-        if value:
-            store_value("OPENROUTER_API_KEY", value)
-        elif openrouter_key:
-            info("Keeping existing OpenRouter API key.")
-        else:
-            warn("Continuing without an OpenRouter API key. Remote models remain unavailable.")
-
-    if updated:
-        good(f"Setup complete. Updated values saved to {env_path}.")
     else:
-        info("No changes were made to existing credentials.")
+        info(f"Using API keys from {env_path}.")
 
-    if not env_map.get("OPENROUTER_API_KEY"):
-        warn(
-            "Remote model access is disabled until an OpenRouter API key is configured."
-        )
-
-    return updated
+    return False
 
 def prompt_for_missing_credentials(
     *,

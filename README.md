@@ -14,7 +14,7 @@ Victoria is Elcano's AI agent for navigating programmatic advertising datasets. 
 ## 🔐 Security & Licensing at a Glance
 
 - **Container-first distribution.** Victoria ships as a Podman image that packages Python, the `crush` CLI, and all dependencies. Running in a container isolates the agent from the host OS while still allowing controlled file sharing via `~/Victoria`.
-- **Secrets stay in your workspace.** Credentials are written to `~/Victoria/.env`, mounted into the container at runtime. The container's default command can regenerate or update this file without embedding secrets in the image.
+- **Secrets stay in your workspace.** Credentials are read from `~/Victoria/.env`, mounted into the container at runtime. Ship a fully-populated file with the API keys your team needs and Victoria will consume them without writing new secrets back to disk.
 - **Transparent builds.** GitHub Actions automatically builds and publishes the container to `ghcr.io/elcanotek/victoria-terminal`, ensuring every release is reproducible and verified in CI.
 - **Publicly-visible source code.** The repository is publicly available for review and evaluation. All usage is subject to the Victoria Terminal Business Source License (BUSL-1.1), a source-available license. See [LICENSE](LICENSE) for details.
 - **Contributor license agreement.** Submitting a patch, issue, or other material constitutes acceptance of the [ElcanoTek Contributor License Agreement](CLA.md), which grants ElcanoTek full rights to use, commercialize, and relicense all Contributions.
@@ -137,12 +137,12 @@ podman run --rm -it -v "$env:USERPROFILE/Victoria:/root/Victoria" ghcr.io/elcano
 
 #### Configure on first run
 
-The container's default command (`victoria_terminal.py`) guides the initial setup:
+The container's default command (`victoria_terminal.py`) now assumes you provide a ready-to-use `.env` file inside `~/Victoria`.
 
-- If it detects configuration files in `~/Victoria`, it reuses them automatically.
-- Otherwise it prompts for essentials—OpenRouter API keys—and saves them to `~/Victoria/.env`.
+- If `~/Victoria/.env` exists, Victoria loads the environment variables and launches immediately.
+- If the file is missing—or lacks a required key—it logs a warning that calls out which integrations will be unavailable until the `.env` file is updated.
 
-Re-run the configuration wizard at any time without launching the UI:
+Use the `--reconfigure` flag to re-run the validation checks without launching the UI:
 
 ```bash
 podman run --rm -it \
@@ -151,6 +151,26 @@ podman run --rm -it \
 ```
 
 You can also point the default command at an alternate shared location with `--shared-home /path/to/shared/Victoria`.
+
+> [!IMPORTANT]
+> Victoria no longer prompts for API keys. Ship a curated `.env` file with every deployment so users can drop it into their `~/Victoria` folder and get started immediately.
+
+##### Managing the `.env` file
+
+Victoria reads every environment variable defined in `~/Victoria/.env` and exposes it to the terminal session. We recommend bundling a template that documents each key alongside a fully configured variant for production use.
+
+```dotenv
+# victoria/.env
+OPENROUTER_API_KEY="sk-or-..."
+MOTHERDUCK_TOKEN="your_motherduck_token"
+SNOWFLAKE_ACCOUNT="your_account"
+SNOWFLAKE_USER="your_user"
+SNOWFLAKE_PASSWORD="your_password"
+```
+
+- Keep comments in the file to describe why a key is needed or where to request it.
+- Sensitive values should only be distributed through secure channels—Victoria simply reads them at runtime.
+- To rotate a credential, update the `.env` file on the host and restart the container; no interactive wizard is required.
 
 > [!TIP]
 > Swap in the image tag that matches your architecture (from the table above) and adjust the host path syntax for your platform. Windows PowerShell users should run the command on a single line with `$env:USERPROFILE/Victoria`.
