@@ -159,6 +159,15 @@ You can also point the default command at an alternate shared location with `--s
 
 Victoria reads every environment variable defined in `~/Victoria/.env` and exposes it to the terminal session. We recommend bundling a template that documents each key alongside a fully configured variant for production use.
 
+Use the provided `example.env` file as a template:
+
+```bash
+# Copy the example file and customize it
+cp example.env ~/Victoria/.env
+```
+
+Example configuration:
+
 ```dotenv
 # victoria/.env
 OPENROUTER_API_KEY="sk-or-..."
@@ -166,6 +175,7 @@ MOTHERDUCK_TOKEN="your_motherduck_token"
 SNOWFLAKE_ACCOUNT="your_account"
 SNOWFLAKE_USER="your_user"
 SNOWFLAKE_PASSWORD="your_password"
+GAMMA_API_KEY="sk-gamma-your-api-key-here"
 ```
 
 - Keep comments in the file to describe why a key is needed or where to request it.
