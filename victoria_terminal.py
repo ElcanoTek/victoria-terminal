@@ -742,7 +742,11 @@ def ensure_app_home(app_home: Path = APP_HOME) -> Path:
     for relative in SUPPORT_FILES:
         src = resource_path(relative)
         dest = app_home / relative.name
-        if src.exists() and not dest.exists():
+        if not src.exists():
+            continue
+
+        should_overwrite = relative.name == VICTORIA_FILE
+        if should_overwrite or not dest.exists():
             shutil.copy2(src, dest)
     return app_home
 
