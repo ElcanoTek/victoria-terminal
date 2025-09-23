@@ -179,6 +179,10 @@ SNOWFLAKE_PASSWORD="your_password"
 
 Follow this path if you plan to modify Victoria, integrate it into a custom workflow, or contribute changes upstream. The end-to-end development workflow—including rebuilding the container, updating shared templates, and verifying changes—is documented in detail in [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## 🐞 Advanced debugging
+
+Need to inspect Victoria from the inside? The [advanced debugging section](CONTRIBUTING.md#advanced-debugging) walks through launching an interactive shell with `podman xyz bash`, explains why changes inside the container are ephemeral, and highlights the key diagnostics to collect before you exit.
+
 ## 🤝 Contributing
 
 We welcome contributions to Victoria! Review our [Contributing Guidelines](CONTRIBUTING.md) for the full development workflow, workspace anatomy, and pull-request expectations.
