@@ -28,3 +28,8 @@ seaborn
 sqlalchemy
 statsmodels
 xlsxwriter
+
+httpx
+mcp[cli]
+
+colorama
