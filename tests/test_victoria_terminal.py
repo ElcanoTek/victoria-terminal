@@ -176,6 +176,25 @@ def test_ensure_app_home_copies_support_files(tmp_path: Path, mocker: pytest.Moc
     assert copied.read_text(encoding="utf-8") == "documentation"
 
 
+def test_ensure_app_home_overwrites_victoria_manifest(tmp_path: Path, mocker: pytest.MockFixture) -> None:
+    source_dir = tmp_path / "source"
+    source_dir.mkdir()
+    manifest = source_dir / "VICTORIA.md"
+    manifest.write_text("container version", encoding="utf-8")
+
+    destination = tmp_path / "dest"
+    destination.mkdir()
+    existing_manifest = destination / "VICTORIA.md"
+    existing_manifest.write_text("host edits", encoding="utf-8")
+
+    mocker.patch("victoria_terminal.SUPPORT_FILES", (Path("VICTORIA.md"),))
+    mocker.patch("victoria_terminal.resource_path", return_value=manifest)
+
+    entrypoint.ensure_app_home(app_home=destination)
+
+    assert existing_manifest.read_text(encoding="utf-8") == "container version"
+
+
 def test_parse_args_accepts_custom_app_home(tmp_path: Path) -> None:
     args = entrypoint.parse_args(["--app-home", str(tmp_path), "--skip-launch"])
 
