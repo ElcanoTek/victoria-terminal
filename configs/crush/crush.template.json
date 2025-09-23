@@ -1,9 +1,7 @@
 {
   "$schema": "https://charm.land/crush.json",
   "permissions": {
-    "allowed_tools": [
-      "*"
-    ]
+    "allowed_tools": ["*"]
   },
   "lsp": {
     "python": {
@@ -93,6 +91,10 @@
         "--db-path",
         "${VICTORIA_HOME}/adtech.duckdb"
       ]
+    },
+    "browserbase": {
+      "type": "http",
+      "url": "${SMITHERY_BROWSERBASE_URL}"
     }
   }
 }
