@@ -69,10 +69,10 @@ clear understanding of the shared files prevents accidental data loss.
 * **Working assets** — Drop CSVs or other source files here so Victoria can load
   them. The agent writes analysis outputs, transformed files, and exports back
   into the same folder.
-* **`Victoria.md`** — Regenerated on every run. Treat this as ephemeral output
+* **`VICTORIA.md`** — Regenerated on every run. Treat this as ephemeral output
   summarizing the capabilities of the current build. Any manual edits will be
   overwritten.
-* **`Crush.json`** — Configuration for the Crush agent template. The runtime
+* **`crush.template.json`** — Configuration for the Crush agent template. The runtime
   rewrites it when the crush configuration changes.
 
 Create the workspace once and reuse it for every run:
@@ -96,7 +96,7 @@ Victoria's automated writers.
 * **Application code** lives inside the container filesystem. Editing Python
   modules or templates requires a container rebuild (`podman build -t
   victoria-terminal .`) before the changes take effect.
-* **Templates and manifests** (including the Crush template and `Victoria.md`)
+* **Templates and manifests** (including the Crush template and `VICTORIA.md`)
   ship in the image. Use the rebuild cycle to propagate any updates into the
   runtime environment.
 * **Nox, pytest, and development tooling** are preinstalled via the
@@ -109,7 +109,7 @@ Adding new capabilities typically touches both configuration and documentation:
 
 1. **Update the Crush template** in `configs/crush/` (or the relevant template
    directory) so the agent understands the new commands or behaviors.
-2. **Revise `Victoria.md`** to explain the new skills. Remember that `Victoria.md`
+2. **Revise `VICTORIA.md`** to explain the new skills. Remember that `VICTORIA.md`
    is regenerated on every run, so build automation should own these updates.
 3. **Rebuild the container** so the Podman runtime picks up code and template
    changes.
