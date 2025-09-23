@@ -142,6 +142,57 @@ def test_generate_crush_config_substitutes_env(tmp_path: Path) -> None:
         "--db-path",
         str(tmp_path / "adtech.duckdb"),
     ]
+    assert "browserbase" not in data["mcp"]
+
+
+def test_generate_crush_config_includes_browserbase_when_configured(tmp_path: Path) -> None:
+    env_values = {
+        "OPENROUTER_API_KEY": "test-key",
+        "VICTORIA_HOME": str(tmp_path),
+        "SMITHERY_BROWSERBASE_URL": "https://server.smithery.ai/@agent/browserbase",
+    }
+
+    template = entrypoint.resource_path(entrypoint.CRUSH_TEMPLATE)
+    output = entrypoint.generate_crush_config(
+        app_home=tmp_path, env=env_values, template_path=template
+    )
+
+    data = json.loads(output.read_text(encoding="utf-8"))
+    browserbase_cfg = data["mcp"].get("browserbase")
+    assert browserbase_cfg is not None
+    assert browserbase_cfg["url"] == env_values["SMITHERY_BROWSERBASE_URL"]
+
+
+def test_generate_crush_config_ignores_placeholder_browserbase_url(tmp_path: Path) -> None:
+    env_values = {
+        "OPENROUTER_API_KEY": "test-key",
+        "VICTORIA_HOME": str(tmp_path),
+        "SMITHERY_BROWSERBASE_URL": "https://<your-personal-smithery-url-here>",
+    }
+
+    template = entrypoint.resource_path(entrypoint.CRUSH_TEMPLATE)
+    output = entrypoint.generate_crush_config(
+        app_home=tmp_path, env=env_values, template_path=template
+    )
+
+    data = json.loads(output.read_text(encoding="utf-8"))
+    assert "browserbase" not in data["mcp"]
+
+
+def test_generate_crush_config_ignores_blank_browserbase_url(tmp_path: Path) -> None:
+    env_values = {
+        "OPENROUTER_API_KEY": "test-key",
+        "VICTORIA_HOME": str(tmp_path),
+        "SMITHERY_BROWSERBASE_URL": "   ",
+    }
+
+    template = entrypoint.resource_path(entrypoint.CRUSH_TEMPLATE)
+    output = entrypoint.generate_crush_config(
+        app_home=tmp_path, env=env_values, template_path=template
+    )
+
+    data = json.loads(output.read_text(encoding="utf-8"))
+    assert "browserbase" not in data["mcp"]
 
 
 def test_generate_crush_config_missing_template_raises(tmp_path: Path) -> None:
