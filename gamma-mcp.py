@@ -20,21 +20,19 @@ GAMMA_API_BASE = "https://public-api.gamma.app/v0.2"
 USER_AGENT = "victoria-terminal/1.0"
 
 
-async def make_gamma_request(
-    method: str, url: str, json: Optional[Dict[str, Any]] = None
-) -> Dict[str, Any]:
+async def make_gamma_request(method: str, url: str, json: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Make a request to the Gamma API with proper error handling."""
     api_key = os.environ.get("GAMMA_API_KEY")
     if not api_key:
         return {"error": "GAMMA_API_KEY environment variable not set"}
-    
+
     headers = {
         "User-Agent": USER_AGENT,
         "Content-Type": "application/json",
         "X-API-KEY": api_key,
         "accept": "application/json",
     }
-    
+
     async with httpx.AsyncClient() as client:
         try:
             if method.upper() == "POST":
@@ -53,7 +51,9 @@ async def make_gamma_request(
 async def generate_presentation(
     input_text: str,
     theme_name: str = "Professional",
-    additional_instructions: str = "Use a modern and clean design. Ensure all charts are easy to read and properly labeled.",
+    additional_instructions: str = (
+        "Use a modern and clean design. Ensure all charts are easy to read " "and properly labeled."
+    ),
     export_as: str = "pptx",
 ) -> Dict[str, Any]:
     """

@@ -27,15 +27,15 @@ import time
 from pathlib import Path
 from typing import Any, Mapping, MutableMapping, Sequence
 
-from colorama import init as colorama_init
-from dotenv import dotenv_values, load_dotenv, set_key
-from rich.console import Console, Group
-from rich.panel import Panel
-from rich.text import Text
-from rich.align import Align
-from rich.live import Live
 import colorama
 from colorama import Fore, Style
+from colorama import init as colorama_init
+from dotenv import dotenv_values, load_dotenv, set_key
+from rich.align import Align
+from rich.console import Console, Group
+from rich.live import Live
+from rich.panel import Panel
+from rich.text import Text
 
 # Initialize colorama and rich console
 colorama.init(autoreset=True)
@@ -81,30 +81,38 @@ else:
         "folder": "📁",
     }
 
+
 def info(message: str) -> None:  # pragma: no cover - simple wrapper
     console.print(f"[cyan]{ICONS['info']} {message}")
+
 
 def good(message: str) -> None:  # pragma: no cover - simple wrapper
     console.print(f"[green]{ICONS['good']} {message}")
 
+
 def warn(message: str) -> None:  # pragma: no cover - simple wrapper
     console.print(f"[yellow]{ICONS['warn']} {message}")
 
+
 def err(message: str) -> None:  # pragma: no cover - simple wrapper
     console.print(f"[red]{ICONS['bad']} {message}")
+
 
 def handle_error(exc: Exception) -> None:
     """Print an error message and exit."""
     err(f"An unexpected error occurred: {exc}")
     sys.exit(1)
 
+
 def section(title: str) -> None:  # pragma: no cover - simple wrapper
     console.rule(f"[bold yellow]{title}")
+
 
 # Optional capability flags
 try:
     # Check if Rich is available
-    import rich
+    import rich  # noqa: F401
+
     HAS_RICH = True
 except Exception:
     HAS_RICH = False
@@ -112,19 +120,19 @@ except Exception:
 TERMINAL_PROMPT = ">_"
 
 COMPACT_SHIP_ASCII_BASE = [
-"              |    |    |                ",
-"             )_)  )_)  )_)               ",
-"            )___))___))___)\\             ",
-"           )____)____)_____)\\\\           ",
-"         _____|____|____|____\\\\\\__       ",
-"---------\\                   /---------  ",
-"  ^^^^^ ^^^^^^^^^^^^^^^^^^^^^           ",
-"    ^^^^      ^^^^     ^^^    ^^        ",
-"         ^^^^      ^^^               ",
+    "              |    |    |                ",
+    "             )_)  )_)  )_)               ",
+    "            )___))___))___)\\             ",
+    "           )____)____)_____)\\\\           ",
+    "         _____|____|____|____\\\\\\__       ",
+    "---------\\                   /---------  ",
+    "  ^^^^^ ^^^^^^^^^^^^^^^^^^^^^           ",
+    "    ^^^^      ^^^^     ^^^    ^^        ",
+    "         ^^^^      ^^^               ",
 ]
 
 VICTORIA_TEXT = """
-██╗   ██╗██╗ ██████╗████████╗ ██████╗ ██████╗ ██╗ █████╗ 
+██╗   ██╗██╗ ██████╗████████╗ ██████╗ ██████╗ ██╗ █████╗
 ██║   ██║██║██╔════╝╚══██╔══╝██╔═══██╗██╔══██╗██║██╔══██╗
 ██║   ██║██║██║        ██║   ██║   ██║██████╔╝██║███████║
 ╚██╗ ██╔╝██║██║        ██║   ██║   ██║██╔══██╗██║██╔══██║
@@ -134,13 +142,13 @@ VICTORIA_TEXT = """
 
 TIPS_BULLETS = [
     "• Put data files in the Victoria folder",
-    "• Ask any question you like (e.g., \"Hey Victoria, Analyze the top-performing sites for this campaign\")",
+    '• Ask any question you like (e.g., "Hey Victoria, Analyze the top-performing sites for this campaign")',
     "• Report bugs to the support channel or the GitHub repo",
 ]
 
 TIPS_CHECKED = [
     "✅ Put data files in the Victoria folder",
-    "✅ Ask any question you like (e.g., \"Hey Victoria, Analyze the top-performing sites for this campaign\")",
+    '✅ Ask any question you like (e.g., "Hey Victoria, Analyze the top-performing sites for this campaign")',
     "✅ Report bugs to the support channel or the GitHub repo",
 ]
 
@@ -149,15 +157,14 @@ LICENSE_ACCEPTANCE_KEY = "VICTORIA_LICENSE_ACCEPTED"
 _LICENSE_ACCEPTED_VALUES = {"yes", "true", "1", "accepted"}
 LICENSE_NOTICE_TITLE = "Victoria Terminal License Agreement"
 LICENSE_FILE_NAME = "LICENSE"
-LICENSE_NOTICE_REMINDER = (
-    "You must accept these terms to continue. Type 'accept' to agree or 'decline' to exit."
-)
+LICENSE_NOTICE_REMINDER = "You must accept these terms to continue. Type 'accept' to agree or 'decline' to exit."
 LICENSE_ACCEPT_PROMPT = "Type 'accept' to agree or 'decline' to exit: "
 
 
 # ──────────────────────────────────────────────────────────────────────────────
 # License acceptance helpers                                                    |
 # ──────────────────────────────────────────────────────────────────────────────
+
 
 def _resolve_app_home(app_home: Path | None = None) -> Path:
     if app_home is not None:
@@ -344,6 +351,7 @@ def _ensure_license_acceptance(mode: str, *, app_home: Path | None = None) -> No
 # Intro Sequence (two screens + enter between each)                             |
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 def banner_sequence() -> None:
     """
     Show the intro sequence:
@@ -366,7 +374,7 @@ def banner_sequence() -> None:
         console.clear()
         return
 
-    if 'Fore' in globals() and 'Style' in globals():
+    if "Fore" in globals() and "Style" in globals():
         _display_colorama_welcome()
         _animate_waves_colorama(duration=1.2)
         _wait_for_enter_basic("Press Enter to continue...")
@@ -392,6 +400,7 @@ def banner_sequence() -> None:
 
 # ── Rich implementations ─────────────────────────────────────────────────────
 
+
 def _ship_renderable(wave_offset: int = 0) -> Text:
     # Build ship art with shifting waves
     lines = COMPACT_SHIP_ASCII_BASE.copy()
@@ -402,6 +411,7 @@ def _ship_renderable(wave_offset: int = 0) -> Text:
             line = lines[idx].strip()
             lines[idx] = f"{padding}{line}"
     return Text("\n".join(lines), style="bright_cyan")
+
 
 def _display_rich_welcome() -> None:
     console.clear()
@@ -437,6 +447,7 @@ def _display_rich_welcome() -> None:
     )
     console.print(panel)
     console.print()
+
 
 def _animate_waves_rich(duration: float = 1.8) -> None:
     """Short wave animation before the first Enter prompt."""
@@ -477,6 +488,7 @@ def _animate_waves_rich(duration: float = 1.8) -> None:
             console.print(panel)
             time.sleep(0.06)
 
+
 def _display_rich_tips(*, initial_bullets: bool = True) -> None:
     console.clear()
     title = Text("Victoria Terminal", style="bold bright_white")
@@ -504,6 +516,7 @@ def _display_rich_tips(*, initial_bullets: bool = True) -> None:
     )
     console.print(panel)
     console.print()
+
 
 def _animate_tips_rich() -> None:
     """Animate bullets → checkmarks, one by one."""
@@ -539,18 +552,20 @@ def _animate_tips_rich() -> None:
             console.print(panel)
             time.sleep(0.35)
 
+
 def _spinner_rich(message: str, duration: float = 1.8) -> None:
-    spinner_frames = ["⠋","⠙","⠹","⠸","⠼","⠴","⠦","⠧","⠇","⠏"]
+    spinner_frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
     start = time.time()
     idx = 0
     with Live(refresh_per_second=16, console=console, screen=False):
         while time.time() - start < duration:
             line = Text(f"{spinner_frames[idx % len(spinner_frames)]} {message}", style="cyan")
-            panel = Panel(Align.center(line), border_style="bright_cyan", padding=(1,2))
+            panel = Panel(Align.center(line), border_style="bright_cyan", padding=(1, 2))
             console.clear()
             console.print(panel)
             idx += 1
             time.sleep(0.07)
+
 
 def _wait_for_enter_rich(prompt: str) -> None:
     try:
@@ -561,7 +576,9 @@ def _wait_for_enter_rich(prompt: str) -> None:
         console.print("\n[yellow]Startup cancelled[/yellow]")
         sys.exit(0)
 
+
 # ── Colorama implementations ──────────────────────────────────────────────────
+
 
 def _display_colorama_welcome() -> None:
     _clear_basic()
@@ -569,6 +586,7 @@ def _display_colorama_welcome() -> None:
     print(f"{Fore.CYAN}{Style.BRIGHT}" + "\n".join(COMPACT_SHIP_ASCII_BASE))
     print(f"{Fore.MAGENTA}{Style.BRIGHT}{VICTORIA_TEXT}")
     print(f"{Fore.WHITE}{Style.NORMAL}{'AdTech Data Navigation Terminal'.center(80)}\n{Style.RESET_ALL}")
+
 
 def _animate_waves_colorama(duration: float = 1.2) -> None:
     start = time.time()
@@ -587,6 +605,7 @@ def _animate_waves_colorama(duration: float = 1.2) -> None:
         offset += 1
         time.sleep(0.08)
 
+
 def _display_colorama_tips(*, initial_bullets: bool = True) -> None:
     _clear_basic()
     print(f"{Fore.WHITE}{Style.BRIGHT}{'Victoria Terminal'.center(80)}{Style.RESET_ALL}\n")
@@ -595,6 +614,7 @@ def _display_colorama_tips(*, initial_bullets: bool = True) -> None:
     for tip in items:
         print(f"{Fore.WHITE}{tip}{Style.RESET_ALL}")
     print()
+
 
 def _animate_tips_colorama() -> None:
     for i in range(1, len(TIPS_BULLETS) + 1):
@@ -610,6 +630,7 @@ def _animate_tips_colorama() -> None:
         print()
         time.sleep(0.25)
 
+
 def _spinner_colorama(message: str, duration: float = 1.5) -> None:
     frames = "|/-\\"
     start = time.time()
@@ -620,7 +641,9 @@ def _spinner_colorama(message: str, duration: float = 1.5) -> None:
         i += 1
     print()
 
+
 # ── Basic implementations ─────────────────────────────────────────────────────
+
 
 def _display_basic_welcome() -> None:
     _clear_basic()
@@ -631,6 +654,7 @@ def _display_basic_welcome() -> None:
     print("AdTech Data Navigation Terminal".center(80))
     print()
 
+
 def _display_basic_tips(*, initial_bullets: bool = True) -> None:
     _clear_basic()
     print("Victoria Terminal".center(80))
@@ -640,6 +664,7 @@ def _display_basic_tips(*, initial_bullets: bool = True) -> None:
     for tip in items:
         print(tip)
     print()
+
 
 def _wait_for_enter_basic(prompt: str) -> None:
     try:
@@ -652,24 +677,30 @@ def _wait_for_enter_basic(prompt: str) -> None:
         print("\nStartup cancelled")
         sys.exit(0)
 
+
 def _clear_basic() -> None:
     # Clear for most terminals
     print("\033[2J\033[H", end="")
 
+
 # ──────────────────────────────────────────────────────────────────────────────
 # Setup / CRUSH helpers                                                         |
 # ──────────────────────────────────────────────────────────────────────────────
+
 
 def initialize_colorama() -> None:
     """Initialise colorama when not running under pytest."""
     if "PYTEST_CURRENT_TEST" not in os.environ:
         colorama_init()
 
+
 _DEF_ENV_PATTERN = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}")
+
 
 def resource_path(name: str | Path) -> Path:
     base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
     return base / name
+
 
 def parse_env_file(path: Path) -> dict[str, str]:
     """Parse a ``.env`` style file into a dictionary."""
@@ -677,6 +708,7 @@ def parse_env_file(path: Path) -> dict[str, str]:
         return {}
     values = dotenv_values(path)
     return {key: str(value) for key, value in values.items() if value is not None}
+
 
 REQUIRED_ENV_KEYS = ("OPENROUTER_API_KEY",)
 BROWSERBASE_ENV_KEY = "SMITHERY_BROWSERBASE_URL"
@@ -717,6 +749,7 @@ def load_environment(
 
     return values
 
+
 def ensure_app_home(app_home: Path = APP_HOME) -> Path:
     """Ensure the Victoria home directory exists with bundled documentation."""
     app_home.mkdir(parents=True, exist_ok=True)
@@ -731,15 +764,18 @@ def ensure_app_home(app_home: Path = APP_HOME) -> Path:
             shutil.copy2(src, dest)
     return app_home
 
+
 def _read_json(path: Path) -> dict[str, Any]:
     with path.open("r", encoding="utf-8-sig") as handle:
         return json.load(handle)
+
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8", newline="\n") as handle:
         json.dump(payload, handle, ensure_ascii=False, indent=2)
         handle.write("\n")
+
 
 def substitute_env(obj: Any, env: Mapping[str, str] | None = None) -> Any:
     """Replace ``${VAR}`` tokens with values from ``env``."""
@@ -749,10 +785,12 @@ def substitute_env(obj: Any, env: Mapping[str, str] | None = None) -> Any:
     if isinstance(obj, list):
         return [substitute_env(value, env_map) for value in obj]
     if isinstance(obj, str):
+
         def repl(match: re.Match[str]) -> str:
             var = match.group(1)
             value = env_map.get(var)
             return value if value is not None else match.group(0)
+
         return _DEF_ENV_PATTERN.sub(repl, obj)
     return obj
 
@@ -811,6 +849,7 @@ def generate_crush_config(
     good(f"Configuration written to {output_path}")
     return output_path
 
+
 def remove_local_duckdb(app_home: Path = APP_HOME) -> None:
     """Remove the cached DuckDB file so each run starts fresh."""
     db_path = app_home / "adtech.duckdb"
@@ -820,6 +859,7 @@ def remove_local_duckdb(app_home: Path = APP_HOME) -> None:
             info(f"Removed local database: {db_path}")
     except Exception as exc:  # pragma: no cover - best effort cleanup
         warn(f"Could not remove {db_path}: {exc}")
+
 
 def preflight_crush() -> None:
     """Validate that Crush can be launched."""
@@ -835,10 +875,9 @@ def preflight_crush() -> None:
     if os.environ.get("OPENROUTER_API_KEY"):
         good("OpenRouter API key configured")
     else:
-        warn(
-            "OPENROUTER_API_KEY not configured. Remote models will be unavailable until it is set."
-        )
+        warn("OPENROUTER_API_KEY not configured. Remote models will be unavailable until it is set.")
     good("All systems ready")
+
 
 def launch_crush(*, app_home: Path = APP_HOME) -> None:
     """Launch Crush with the generated configuration."""
@@ -862,6 +901,7 @@ def launch_crush(*, app_home: Path = APP_HOME) -> None:
     except Exception as exc:  # pragma: no cover - runtime errors
         err(f"Failed to launch Crush: {exc}")
         sys.exit(1)
+
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     """Parse CLI arguments for the entry point."""
@@ -894,10 +934,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--acccept-license",
         action="store_true",
-        help=(
-            "Automatically accept the Victoria Terminal license "
-            "(required when using --no-banner)."
-        ),
+        help=("Automatically accept the Victoria Terminal license " "(required when using --no-banner)."),
     )
     parser.add_argument(
         "--version",
@@ -905,6 +942,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         version=f"%(prog)s {__version__}",
     )
     return parser.parse_args(sanitized_args)
+
 
 def main(argv: Sequence[str] | None = None) -> None:
     """Entry point for launching the Victoria terminal."""
@@ -915,10 +953,7 @@ def main(argv: Sequence[str] | None = None) -> None:
     os.environ["VICTORIA_HOME"] = str(app_home)
 
     if args.no_banner and not args.acccept_license:
-        err(
-            "Using --no-banner requires --acccept-license to confirm acceptance "
-            "of the Victoria Terminal license."
-        )
+        err("Using --no-banner requires --acccept-license to confirm acceptance " "of the Victoria Terminal license.")
         sys.exit(2)
 
     # Intro: two screens with Enter between each, spinner before launch
@@ -939,6 +974,7 @@ def main(argv: Sequence[str] | None = None) -> None:
     if args.skip_launch:
         return
     launch_crush(app_home=app_home)
+
 
 if __name__ == "__main__":
     try:

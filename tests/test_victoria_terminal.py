@@ -54,18 +54,14 @@ def test_load_environment_preserves_existing_values(tmp_path: Path) -> None:
     assert custom_env["SHARED"] == "existing"
 
 
-def test_load_environment_returns_empty_when_file_absent(
-    tmp_path: Path, mocker: pytest.MockFixture
-) -> None:
+def test_load_environment_returns_empty_when_file_absent(tmp_path: Path, mocker: pytest.MockFixture) -> None:
     warn = mocker.patch.object(entrypoint, "warn")
 
     assert entrypoint.load_environment(app_home=tmp_path, env={}) == {}
     warn.assert_called_once()
 
 
-def test_load_environment_reports_missing_keys(
-    tmp_path: Path, mocker: pytest.MockFixture
-) -> None:
+def test_load_environment_reports_missing_keys(tmp_path: Path, mocker: pytest.MockFixture) -> None:
     env_path = tmp_path / entrypoint.ENV_FILENAME
     env_path.write_text("# empty file\n", encoding="utf-8")
     env: dict[str, str] = {}
@@ -74,14 +70,11 @@ def test_load_environment_reports_missing_keys(
     entrypoint.load_environment(app_home=tmp_path, env=env)
 
     warn.assert_called_with(
-        "The following API keys are missing. Update your .env file to enable "
-        "these integrations: OPENROUTER_API_KEY"
+        "The following API keys are missing. Update your .env file to enable " "these integrations: OPENROUTER_API_KEY"
     )
 
 
-def test_load_environment_uses_values_from_env_file(
-    tmp_path: Path, mocker: pytest.MockFixture
-) -> None:
+def test_load_environment_uses_values_from_env_file(tmp_path: Path, mocker: pytest.MockFixture) -> None:
     env_path = tmp_path / entrypoint.ENV_FILENAME
     env_path.write_text("OPENROUTER_API_KEY=from-file\n", encoding="utf-8")
     env: dict[str, str] = {}
@@ -123,9 +116,7 @@ def test_generate_crush_config_substitutes_env(tmp_path: Path) -> None:
     }
 
     template = entrypoint.resource_path(entrypoint.CRUSH_TEMPLATE)
-    output = entrypoint.generate_crush_config(
-        app_home=tmp_path, env=env_values, template_path=template
-    )
+    output = entrypoint.generate_crush_config(app_home=tmp_path, env=env_values, template_path=template)
 
     data = json.loads(output.read_text(encoding="utf-8"))
     assert data["providers"]["openrouter"]["api_key"] == "test-key"
@@ -153,9 +144,7 @@ def test_generate_crush_config_includes_browserbase_when_configured(tmp_path: Pa
     }
 
     template = entrypoint.resource_path(entrypoint.CRUSH_TEMPLATE)
-    output = entrypoint.generate_crush_config(
-        app_home=tmp_path, env=env_values, template_path=template
-    )
+    output = entrypoint.generate_crush_config(app_home=tmp_path, env=env_values, template_path=template)
 
     data = json.loads(output.read_text(encoding="utf-8"))
     browserbase_cfg = data["mcp"].get("browserbase")
@@ -171,9 +160,7 @@ def test_generate_crush_config_ignores_placeholder_browserbase_url(tmp_path: Pat
     }
 
     template = entrypoint.resource_path(entrypoint.CRUSH_TEMPLATE)
-    output = entrypoint.generate_crush_config(
-        app_home=tmp_path, env=env_values, template_path=template
-    )
+    output = entrypoint.generate_crush_config(app_home=tmp_path, env=env_values, template_path=template)
 
     data = json.loads(output.read_text(encoding="utf-8"))
     assert "browserbase" not in data["mcp"]
@@ -187,9 +174,7 @@ def test_generate_crush_config_ignores_blank_browserbase_url(tmp_path: Path) -> 
     }
 
     template = entrypoint.resource_path(entrypoint.CRUSH_TEMPLATE)
-    output = entrypoint.generate_crush_config(
-        app_home=tmp_path, env=env_values, template_path=template
-    )
+    output = entrypoint.generate_crush_config(app_home=tmp_path, env=env_values, template_path=template)
 
     data = json.loads(output.read_text(encoding="utf-8"))
     assert "browserbase" not in data["mcp"]
@@ -263,16 +248,12 @@ def test_parse_args_sets_acccept_license_flag() -> None:
     assert args.acccept_license is True
 
 
-def test_main_honours_skip_launch(
-    tmp_path: Path, mocker: pytest.MockFixture, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_main_honours_skip_launch(tmp_path: Path, mocker: pytest.MockFixture, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("VICTORIA_HOME", raising=False)
 
     mocker.patch("victoria_terminal.initialize_colorama")
     banner_sequence = mocker.patch("victoria_terminal.banner_sequence")
-    ensure_app_home = mocker.patch(
-        "victoria_terminal.ensure_app_home", side_effect=lambda path: path
-    )
+    ensure_app_home = mocker.patch("victoria_terminal.ensure_app_home", side_effect=lambda path: path)
     load_environment = mocker.patch("victoria_terminal.load_environment")
     generate_config = mocker.patch("victoria_terminal.generate_crush_config")
     mocker.patch("victoria_terminal.remove_local_duckdb")
@@ -336,12 +317,14 @@ def test_main_no_banner_requires_license_acceptance(
     err = mocker.patch("victoria_terminal.err")
 
     with pytest.raises(SystemExit) as excinfo:
-        entrypoint.main([
-            "--skip-launch",
-            "--no-banner",
-            "--app-home",
-            str(tmp_path),
-        ])
+        entrypoint.main(
+            [
+                "--skip-launch",
+                "--no-banner",
+                "--app-home",
+                str(tmp_path),
+            ]
+        )
 
     assert excinfo.value.code == 2
     err.assert_called_once()
