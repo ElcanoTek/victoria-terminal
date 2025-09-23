@@ -764,7 +764,7 @@ curl --request POST \
      --header 'Content-Type: application/json' \
      --header "X-API-KEY: $GAMMA_API_KEY" \
      --data '{
-         "inputText": "# Q3 Ad Campaign Performance Review\n---\n## Executive Summary\n* Overall campaign performance was strong, with a 15% increase in ROAS compared to Q2.\n* Key drivers of success were the new creative assets and the optimization of our programmatic bidding strategy.\n---\n## Campaign Performance by Channel\nHere is a breakdown of our key performance metrics by channel. Please include a bar chart to visualize this data.\n\n- **Programmatic Display:** ROAS: 3.5, CTR: 0.5%, CPA: $25\n- **Paid Search:** ROAS: 4.2, CTR: 2.1%, CPA: $18\n- **Social Media:** ROAS: 3.8, CTR: 1.5%, CPA: $22\n\n![A futuristic cityscape with holographic ad billboards](https://example.com/ad_tech_city.jpg)\n---\n## ROAS Trend Q2 vs. Q3\nPlease include a line chart to show the ROAS trend from Q2 to Q3.\n\n- **Q2 ROAS:** 3.2\n- **Q3 ROAS:** 3.7\n---\n## Recommendations for Q4\n* Increase budget allocation for Paid Search by 20%.\n* A/B test new ad copy for Programmatic Display to improve CTR.\n* Launch a new retargeting campaign on Social Media.",
+         "inputText": "# Q3 Ad Campaign Performance Review\n---\n## Executive Summary\n* Overall campaign performance was strong, with a 15% increase in ROAS compared to Q2.\n* Key drivers of success were the new creative assets and the optimization of our programmatic bidding strategy.\n---\n## Campaign Performance by Channel\nHere is a breakdown of our key performance metrics by channel. Please include a bar chart to visualize this data.\n\n- **Programmatic Display:** ROAS: 3.5, CTR: 0.5%, CPA: $25\n- **Paid Search:** ROAS: 4.2, CTR: 2.1%, CPA: $18\n- **Social Media:** ROAS: 3.8, CTR: 1.5%, CPA: $22\n---\n## ROAS Trend Q2 vs. Q3\nPlease include a line chart to show the ROAS trend from Q2 to Q3.\n\n- **Q2 ROAS:** 3.2\n- **Q3 ROAS:** 3.7\n---\n## Recommendations for Q4\n* Increase budget allocation for Paid Search by 20%.\n* A/B test new ad copy for Programmatic Display to improve CTR.\n* Launch a new retargeting campaign on Social Media.",
          "format": "presentation",
          "themeName": "Professional",
          "additionalInstructions": "Use a modern and clean design. Ensure all charts are easy to read and properly labeled. Use a professional color palette.",
@@ -783,10 +783,11 @@ curl --request POST \
 
 -   **Including Images:** You can include images in your presentation by providing a URL to the image in your `inputText` using Markdown syntax: `![Image description](URL)`. Alternatively, you can let Gamma's AI generate images for you by setting the `imageOptions`.
 
-### Accessing Your Presentation
+### Checking Presentation Status and Accessing Your Presentation
 
-After you run the `curl` command, you will receive a `generationId`. You can then use this ID to check the status of your presentation and get the URL to view it.
+After you run the initial `curl` command, you will receive a response with a `generationId`. The presentation generation typically takes 30-60 seconds. Here's how to check the status and get your presentation URL:
 
+**Step 1: Check the generation status**
 ```bash
 curl --request GET \
      --url https://public-api.gamma.app/v0.2/generations/YOUR_GENERATION_ID \
@@ -794,7 +795,16 @@ curl --request GET \
      --header 'accept: application/json'
 ```
 
-Once the status is `completed`, the response will contain a `gammaUrl` that you can open in your browser to view your presentation.
+**Step 2: Interpret the response**
+- If `"status": "pending"` - the presentation is still being generated. Wait a few seconds and check again.
+- If `"status": "completed"` - your presentation is ready!
+
+**Step 3: Access your presentation**
+When the status shows `completed`, the response will include:
+- `gammaUrl` - Direct link to view your presentation in Gamma's web interface
+- `pptxUrl` - Download link for the PowerPoint file (if you specified `"exportAs": "pptx"`)
+
+Simply copy the `gammaUrl` and open it in your browser to view your beautiful, AI-generated presentation with charts and professional styling.
 
 ---
 

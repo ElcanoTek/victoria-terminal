@@ -170,11 +170,7 @@ Example configuration:
 
 ```dotenv
 # victoria/.env
-OPENROUTER_API_KEY="sk-or-..."
-MOTHERDUCK_TOKEN="your_motherduck_token"
-SNOWFLAKE_ACCOUNT="your_account"
-SNOWFLAKE_USER="your_user"
-SNOWFLAKE_PASSWORD="your_password"
+OPENROUTER_API_KEY="sk-or-your-api-key-here"
 GAMMA_API_KEY="sk-gamma-your-api-key-here"
 ```
 
