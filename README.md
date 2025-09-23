@@ -108,15 +108,15 @@ When passing arguments to Victoria inside the container, always use the `--` sep
 
 ```bash
 # Correct: Arguments after -- go to Victoria
-podman run --rm -it -v ~/Victoria:/root/Victoria ghcr.io/elcanotek/victoria-terminal:latest -- --reconfigure --skip-launch
+podman run --rm -it -v ~/Victoria:/root/Victoria ghcr.io/elcanotek/victoria-terminal:latest -- --skip-launch
 
 # Avoid: Ambiguous argument parsing
-podman run --rm -it -v ~/Victoria:/root/Victoria ghcr.io/elcanotek/victoria-terminal:latest --reconfigure --skip-launch
+podman run --rm -it -v ~/Victoria:/root/Victoria ghcr.io/elcanotek/victoria-terminal:latest --skip-launch
 ```
 
 The `--` separator ensures that:
 - Container runtime options (like `--rm`, `-it`, `-v`) are processed by Podman
-- Application arguments (like `--reconfigure`, `--skip-launch`) are passed to Victoria
+- Application arguments (like `--skip-launch`) are passed to Victoria
 - No confusion occurs between container and application flags
 
 On macOS and Linux you can split the run command across multiple lines for readability (the example below shows the `x86_64` tag; swap in the tag from the table above if you are on Arm64):
@@ -124,7 +124,7 @@ On macOS and Linux you can split the run command across multiple lines for reada
 ```bash
 podman run --rm -it \
   -v ~/Victoria:/root/Victoria \
-  ghcr.io/elcanotek/victoria-terminal:latest -- --reconfigure --skip-launch
+  ghcr.io/elcanotek/victoria-terminal:latest -- --skip-launch
 ```
 > [!IMPORTANT]
 > Non-interactive runs that skip the launch banner must pass `--accept-license` (for example, together with `--no-banner`). Using this flag automatically accepts the Victoria Terminal Business Source License described in [LICENSE](LICENSE).
@@ -132,7 +132,7 @@ podman run --rm -it \
 Windows users should keep the commands on a single line and use `$env:USERPROFILE/Victoria` in place of `~/Victoria`:
 
 ```powershell
-podman run --rm -it -v "$env:USERPROFILE/Victoria:/root/Victoria" ghcr.io/elcanotek/victoria-terminal:latest -- --reconfigure --skip-launch
+podman run --rm -it -v "$env:USERPROFILE/Victoria:/root/Victoria" ghcr.io/elcanotek/victoria-terminal:latest -- --skip-launch
 ```
 
 #### Configure on first run
@@ -142,12 +142,12 @@ The container's default command (`victoria_terminal.py`) now assumes you provide
 - If `~/Victoria/.env` exists, Victoria loads the environment variables and launches immediately.
 - If the file is missing—or lacks a required key—it logs a warning that calls out which integrations will be unavailable until the `.env` file is updated.
 
-Use the `--reconfigure` flag to re-run the validation checks without launching the UI:
+Victoria validates your `.env` file on every launch. Pass `--skip-launch` if you only want to perform the configuration checks without starting the UI:
 
 ```bash
 podman run --rm -it \
   -v ~/Victoria:/root/Victoria \
-  ghcr.io/elcanotek/victoria-terminal:latest -- --reconfigure --skip-launch
+  ghcr.io/elcanotek/victoria-terminal:latest -- --skip-launch
 ```
 
 You can also point the default command at an alternate shared location with `--shared-home /path/to/shared/Victoria`.
