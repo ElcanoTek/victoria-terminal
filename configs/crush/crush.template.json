@@ -98,10 +98,13 @@
     },
     "gamma": {
       "type": "stdio",
-      "command": "python3",
+      "command": "python",
       "args": [
-        "mcp/gamma_server.py"
-      ]
+        "gamma-mcp.py"
+      ],
+      "env": {
+        "GAMMA_API_KEY": "${GAMMA_API_KEY}"
+      }
     }
   }
 }

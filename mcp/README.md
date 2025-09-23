@@ -1,14 +1,14 @@
 # Victoria Terminal MCP Servers
 
-This directory contains Model Context Protocol (MCP) servers that extend Victoria's capabilities by providing secure, structured access to external APIs and services.
+This directory contains documentation for Model Context Protocol (MCP) servers that extend Victoria's capabilities. The actual MCP server files are located in the root directory for simplicity.
 
 ## Overview
 
-MCP servers enable Victoria to interact with external services through a standardized protocol, replacing direct API calls and curl commands with secure, type-safe tool interfaces. Each server runs within the existing Victoria Terminal container environment.
+MCP servers enable Victoria to interact with external services through a standardized protocol, replacing direct API calls and curl commands with secure, type-safe tool interfaces.
 
 ## Available Servers
 
-### Gamma AI Server (`gamma_server.py`)
+### Gamma AI Server (`../gamma-mcp.py`)
 
 The Gamma MCP server provides secure access to Gamma's presentation generation API, replacing the previous curl-based implementation with a structured tool interface.
 
@@ -16,7 +16,7 @@ The Gamma MCP server provides secure access to Gamma's presentation generation A
 - Generate presentations from markdown content
 - Check presentation generation status
 - Secure API key handling through environment variables
-- Runs within the existing container environment
+- Runs locally via stdio communication
 
 **Tools:**
 - `generate_presentation`: Create a new presentation with customizable themes and options
@@ -28,14 +28,17 @@ The server is configured in the Crush template as:
 {
   "gamma": {
     "type": "stdio",
-    "command": "python3",
-    "args": ["mcp/gamma_server.py"]
+    "command": "python",
+    "args": ["gamma-mcp.py"],
+    "env": {
+      "GAMMA_API_KEY": "${GAMMA_API_KEY}"
+    }
   }
 }
 ```
 
 **Environment Variables:**
-- `GAMMA_API_KEY`: Your Gamma API key (required)
+- `GAMMA_API_KEY`: Your Gamma API key (required, already included in example.env)
 
 ## Usage
 
@@ -60,11 +63,11 @@ status = gamma.check_presentation_status(generation_id="gen_123456")
 
 When adding new MCP servers:
 
-1. **Create a new Python file** in this directory (e.g., `service_server.py`)
+1. **Create a new Python file** in the root directory (e.g., `service-mcp.py`)
 2. **Use the FastMCP framework** for implementation
-3. **Add configuration** to the Crush template
+3. **Add configuration** to the Crush template with appropriate environment variables
 4. **Update this README** with documentation
-5. **Use existing container dependencies** where possible
+5. **Add any required environment variables** to `example.env`
 
 ## Development Guidelines
 
@@ -93,17 +96,18 @@ if __name__ == "__main__":
 - Use environment variables for sensitive configuration
 - Log to stderr (not stdout for stdio transport)
 - Include comprehensive docstrings for tools
+- Place server files in the root directory for simplicity
 
 ## Testing
 
 Test the server independently:
 ```bash
-python3 mcp/gamma_server.py
+python gamma-mcp.py
 ```
 
 Or use MCP Inspector:
 ```bash
-npx @modelcontextprotocol/inspector python3 mcp/gamma_server.py
+npx @modelcontextprotocol/inspector python gamma-mcp.py
 ```
 
 ## Troubleshooting
@@ -111,7 +115,7 @@ npx @modelcontextprotocol/inspector python3 mcp/gamma_server.py
 ### Common Issues
 
 1. **Import errors**: Ensure required packages are available in the container
-2. **API authentication**: Verify environment variables are set correctly
+2. **API authentication**: Verify environment variables are set correctly in `.env`
 3. **Server not found**: Check file paths in Crush configuration
 4. **Permission errors**: Ensure server files are executable
 
