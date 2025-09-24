@@ -102,10 +102,10 @@ Use the table below to pull (or update) the matching image and run it. Re-runnin
 
 | Platform | CPU architecture | Pull / update | Run |
 | --- | --- | --- | --- |
-| macOS or Linux (Intel/AMD) | `x86_64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest` | `podman run --rm -it -v ~/Victoria:/root/Victoria ghcr.io/elcanotek/victoria-terminal:latest` |
-| macOS or Linux (Arm64) | `arm64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest-arm64` | `podman run --rm -it -v ~/Victoria:/root/Victoria ghcr.io/elcanotek/victoria-terminal:latest-arm64` |
-| Windows PowerShell (Intel/AMD) | `x86_64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest` | `podman run --rm -it -v "$env:USERPROFILE/Victoria:/root/Victoria" ghcr.io/elcanotek/victoria-terminal:latest` |
-| Windows PowerShell (Arm64) | `arm64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest-arm64` | `podman run --rm -it -v "$env:USERPROFILE/Victoria:/root/Victoria" ghcr.io/elcanotek/victoria-terminal:latest-arm64` |
+| macOS or Linux (Intel/AMD) | `x86_64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest` | `podman run --rm -it -v ~/Victoria:/home/victoria/Victoria:U ghcr.io/elcanotek/victoria-terminal:latest` |
+| macOS or Linux (Arm64) | `arm64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest-arm64` | `podman run --rm -it -v ~/Victoria:/home/victoria/Victoria:U ghcr.io/elcanotek/victoria-terminal:latest-arm64` |
+| Windows PowerShell (Intel/AMD) | `x86_64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest` | `podman run --rm -it -v "$env:USERPROFILE/Victoria:/home/victoria/Victoria:U" ghcr.io/elcanotek/victoria-terminal:latest` |
+| Windows PowerShell (Arm64) | `arm64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest-arm64` | `podman run --rm -it -v "$env:USERPROFILE/Victoria:/home/victoria/Victoria:U" ghcr.io/elcanotek/victoria-terminal:latest-arm64` |
 
 > [!NOTE]
 > The run commands are shown on a single line to work in PowerShell and other shells without additional escaping. On macOS and Linux you can add `\` line continuations if you prefer.
@@ -116,10 +116,10 @@ When passing arguments to Victoria inside the container, always use the `--` sep
 
 ```bash
 # Correct: Arguments after -- go to Victoria
-podman run --rm -it -v ~/Victoria:/root/Victoria ghcr.io/elcanotek/victoria-terminal:latest -- --skip-launch
+podman run --rm -it -v ~/Victoria:/home/victoria/Victoria:U ghcr.io/elcanotek/victoria-terminal:latest -- --skip-launch
 
 # Avoid: Ambiguous argument parsing
-podman run --rm -it -v ~/Victoria:/root/Victoria ghcr.io/elcanotek/victoria-terminal:latest --skip-launch
+podman run --rm -it -v ~/Victoria:/home/victoria/Victoria:U ghcr.io/elcanotek/victoria-terminal:latest --skip-launch
 ```
 
 The `--` separator ensures that:
@@ -131,7 +131,7 @@ On macOS and Linux you can split the run command across multiple lines for reada
 
 ```bash
 podman run --rm -it \
-  -v ~/Victoria:/root/Victoria \
+  -v ~/Victoria:/home/victoria/Victoria:U \
   ghcr.io/elcanotek/victoria-terminal:latest -- --skip-launch
 ```
 > [!IMPORTANT]
@@ -140,8 +140,35 @@ podman run --rm -it \
 Windows users should keep the commands on a single line and use `$env:USERPROFILE/Victoria` in place of `~/Victoria`:
 
 ```powershell
-podman run --rm -it -v "$env:USERPROFILE/Victoria:/root/Victoria" ghcr.io/elcanotek/victoria-terminal:latest -- --skip-launch
+podman run --rm -it -v "$env:USERPROFILE/Victoria:/home/victoria/Victoria:U" ghcr.io/elcanotek/victoria-terminal:latest -- --skip-launch
 ```
+
+#### Fixing permissions after upgrading
+
+If you previously ran an older image that defaulted to the `root` user, files in
+`~/Victoria` (or `%USERPROFILE%\Victoria`) might still be owned by UID/GID `0`.
+The non-root `victoria` user introduced in recent images cannot modify those
+files, which surfaces as errors similar to:
+
+```
+❌ An unexpected error occurred: [Errno 1] Operation not permitted: '/home/victoria/Victoria/.env'
+```
+
+To repair the shared workspace permissions, run the following once on your host
+system:
+
+```bash
+podman unshare chown -R 1001:1001 "$HOME/Victoria"
+```
+
+On PowerShell, run:
+
+```powershell
+podman unshare chown -R 1001:1001 "$env:USERPROFILE/Victoria"
+```
+
+After ownership is updated, rerun `victoria` and the container will be able to
+create and edit `.env` alongside other configuration files.
 
 #### Configure on first run
 
@@ -154,7 +181,7 @@ Victoria validates your `.env` file on every launch. Pass `--skip-launch` if you
 
 ```bash
 podman run --rm -it \
-  -v ~/Victoria:/root/Victoria \
+  -v ~/Victoria:/home/victoria/Victoria:U \
   ghcr.io/elcanotek/victoria-terminal:latest -- --skip-launch
 ```
 

@@ -56,7 +56,7 @@ Victoria now provides a Podman container image that ships with Python and the `c
 
 ```bash
 podman run --rm -it \
-  -v ~/Victoria:/root/Victoria \
+  -v ~/Victoria:/home/victoria/Victoria:U \
   ghcr.io/elcanotek/victoria-terminal:latest
 ```
 
