@@ -1,7 +1,27 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+USERNAME=victoria
 DEFAULT_CMD=("python3" "/workspace/victoria_terminal.py")
+
+# When running as root, adapt the container to the user's UID and GID.
+# This ensures that the user has the correct permissions to work with the
+# mounted /workspace directory.
+if [ "$(id -u)" = "0" ]; then
+    # Get the UID and GID of the /workspace directory.
+    TARGET_UID=$(stat -c "%u" /workspace)
+    TARGET_GID=$(stat -c "%g" /workspace)
+
+    # Change the UID and GID of the victoria user to match the target.
+    # The --non-unique flag is omitted to prevent potential security issues.
+    groupmod --gid "${TARGET_GID}" "${USERNAME}"
+    usermod --uid "${TARGET_UID}" --gid "${TARGET_GID}" "${USERNAME}"
+
+    # Re-execute the script as the victoria user, preserving the environment.
+    # The `setpriv` command is used to drop root privileges and execute the
+    # command in a new security context.
+    exec setpriv --reuid "${TARGET_UID}" --regid "${TARGET_GID}" --clear-groups --init-groups "$0" "$@"
+fi
 
 # If no arguments were provided, launch Victoria.
 if [[ $# -eq 0 ]]; then

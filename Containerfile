@@ -21,15 +21,13 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN groupadd --gid "${USER_GID}" --non-unique "${USERNAME}" \
-    && useradd --uid "${USER_UID}" --gid "${USER_GID}" --create-home --shell /bin/bash --non-unique "${USERNAME}" \
+RUN groupadd --gid "${USER_GID}" "${USERNAME}" \
+    && useradd --uid "${USER_UID}" --gid "${USER_GID}" --create-home --shell /bin/bash "${USERNAME}" \
     && mkdir -p /home/${USERNAME}/.local/share/crush \
     && cp configs/crush/crush.local.json /home/${USERNAME}/.local/share/crush/crush.json \
     && chown -R ${USER_UID}:${USER_GID} /home/${USERNAME}/.local \
     && chown -R ${USER_UID}:${USER_GID} /workspace \
     && install -Dm755 container_entrypoint.sh /usr/local/bin/container-entrypoint.sh
-
-USER ${USERNAME}
 
 ENV HOME="/home/${USERNAME}"
 
