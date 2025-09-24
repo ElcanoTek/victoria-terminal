@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-DEFAULT_CMD=("python3" "/app/victoria_terminal.py")
+DEFAULT_CMD=("python3" "/workspace/victoria_terminal.py")
 
 # If no arguments were provided, launch Victoria.
 if [[ $# -eq 0 ]]; then
