@@ -112,7 +112,7 @@ victoria() {
     return $?
   fi
   podman run --rm -it \
-    -v "$HOME/Victoria:/home/victoria/Victoria:U" \
+    -v "$HOME/Victoria:/root/Victoria" \
     "$image" "$@"
 }
 # <<< victoria-terminal helper <<<

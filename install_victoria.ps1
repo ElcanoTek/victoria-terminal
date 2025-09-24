@@ -121,7 +121,7 @@ $functionBlockLines = @(
     '        return',
     '    }',
     '    & podman run --rm -it `',
-    '        -v `"$env:USERPROFILE/Victoria:/home/victoria/Victoria:U`" `',
+    '        -v `"$env:USERPROFILE/Victoria:/root/Victoria`" `',
     "        $image @Args",
     '}',
     'Set-Alias victoria Invoke-Victoria',
