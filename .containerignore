@@ -1,0 +1,26 @@
+# Exclude version control metadata and CI configuration
+.git
+.github
+
+# Exclude local development artifacts
+.nox
+.pytest_cache
+__pycache__
+*.py[cod]
+*.so
+*.dylib
+
+# Exclude build outputs and virtual environments
+build
+dist
+*.egg-info
+.venv
+
+# Ignore editor and OS files
+*.swp
+.DS_Store
+Thumbs.db
+
+# Keep LICENSE and VICTORIA.md available in the image
+!LICENSE
+!VICTORIA.md

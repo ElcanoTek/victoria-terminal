@@ -19,3 +19,18 @@ known_first_party = ["victoria_terminal"]
 [tool.flake8]
 max-line-length = 120
 extend-ignore = ["E203", "W503"]
+
+
+[tool.pytest.ini_options]
+addopts = "--timeout=60 --timeout-method=thread --strict-config --strict-markers -v --tb=short --cov=victoria_terminal --cov-report=term-missing"
+timeout = 60
+minversion = "6.0"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+pythonpath = ["."]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]

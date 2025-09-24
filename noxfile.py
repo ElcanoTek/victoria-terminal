@@ -29,7 +29,7 @@ nox.options.reuse_existing_virtualenvs = True
 def lint(session: nox.Session) -> None:
     """Run formatters and static analysis."""
 
-    session.install("black", "isort", "flake8")
+    session.install("black", "isort", "flake8", "flake8-pyproject")
     session.run("black", "--check", *PYTHON_FILES)
     session.run("isort", "--check-only", *PYTHON_FILES)
     session.run("flake8", *PYTHON_FILES)
