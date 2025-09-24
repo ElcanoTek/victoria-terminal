@@ -24,6 +24,7 @@ Victoria is distributed as a container image. Build and run that image locally d
 
    ```bash
    podman run --rm -it \
+     --user 0 \
      --userns=keep-id \
      -e VICTORIA_HOME=/workspace/Victoria \
      -v ~/Victoria:/workspace/Victoria \
@@ -31,6 +32,7 @@ Victoria is distributed as a container image. Build and run that image locally d
 
    # Run automated linting
    podman run --rm -it \
+     --user 0 \
      --userns=keep-id \
      -e VICTORIA_HOME=/workspace/Victoria \
      -v ~/Victoria:/workspace/Victoria \
@@ -100,6 +102,7 @@ These tools run through [Nox](https://nox.thea.codes/) sessions defined in `noxf
 
 ```bash
 podman run --rm -it \
+  --user 0 \
   --userns=keep-id \
   -e VICTORIA_HOME=/workspace/Victoria \
   -v ~/Victoria:/workspace/Victoria \
@@ -114,6 +117,7 @@ Use the same locally built image to execute the automated test suite. Passing `p
 
 ```bash
 podman run --rm -it \
+  --user 0 \
   --userns=keep-id \
   -e VICTORIA_HOME=/workspace/Victoria \
   -v ~/Victoria:/workspace/Victoria \
@@ -124,6 +128,7 @@ The entrypoint sets the repository root as the working directory, so the command
 
 ```bash
 podman run --rm -it \
+  --user 0 \
   --userns=keep-id \
   -e VICTORIA_HOME=/workspace/Victoria \
   -v ~/Victoria:/workspace/Victoria \
@@ -142,6 +147,7 @@ Reuse the development image from the steps above and append `bash` to open a she
 
 ```bash
 podman run --rm -it \
+  --user 0 \
   --userns=keep-id \
   -e VICTORIA_HOME=/workspace/Victoria \
   -v ~/Victoria:/workspace/Victoria \
@@ -151,7 +157,7 @@ podman run --rm -it \
 Windows contributors should keep the command on one line and swap the mount path for `$env:USERPROFILE/Victoria`:
 
 ```powershell
-podman run --rm -it --userns=keep-id -e VICTORIA_HOME=/workspace/Victoria -v "$env:USERPROFILE/Victoria:/workspace/Victoria" victoria-terminal bash
+podman run --rm -it --user 0 --userns=keep-id -e VICTORIA_HOME=/workspace/Victoria -v "$env:USERPROFILE/Victoria:/workspace/Victoria" victoria-terminal bash
 ```
 
 Once the container starts you land in `/root` with the full Victoria tooling available. Run `which victoria_terminal.py` or `nox --list` to confirm you're in the expected image. If you rely on a wrapper script to launch the container, reuse that script and append `bash` to its command list.
@@ -181,6 +187,7 @@ End-to-end verification happens automatically in GitHub Actions. Local test runs
 
 ```bash
 podman run --rm -it \
+  --user 0 \
   --userns=keep-id \
   -e VICTORIA_HOME=/workspace/Victoria \
   -v ~/Victoria:/workspace/Victoria \

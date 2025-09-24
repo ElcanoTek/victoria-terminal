@@ -56,6 +56,7 @@ Victoria now provides a Podman container image that ships with Python and the `c
 
 ```bash
 podman run --rm -it \
+  --user 0 \
   --userns=keep-id \
   -e VICTORIA_HOME=/workspace/Victoria \
   -v ~/Victoria:/workspace/Victoria \
