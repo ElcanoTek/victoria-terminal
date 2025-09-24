@@ -8,9 +8,7 @@ CODE_OF_CONDUCT.md
 CONTRIBUTING.md
 Containerfile
 Dockerfile
-LICENSE
 README.md
-VICTORIA.md
 noxfile.py
 example.env
 install_victoria.ps1
