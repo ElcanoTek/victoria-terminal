@@ -121,6 +121,7 @@ $functionBlockLines = @(
     '        return',
     '    }',
     '    & podman run --rm -it `',
+    '        --user 0 `',
     '        --userns=keep-id `',
     '        -e VICTORIA_HOME=/workspace/Victoria `',
     '        -v `"$env:USERPROFILE/Victoria:/workspace/Victoria`" `',

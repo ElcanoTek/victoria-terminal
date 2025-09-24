@@ -17,6 +17,12 @@ if [ "$(id -u)" = "0" ]; then
     groupmod --gid "${TARGET_GID}" "${USERNAME}"
     usermod --uid "${TARGET_UID}" --gid "${TARGET_GID}" "${USERNAME}"
 
+    # Ensure the remapped user can read and write its home directory contents.
+    # The Crush bootstrap config ships with restrictive permissions, so without
+    # updating ownership the mapped UID would fail to read it and exit with the
+    # "permission denied" error reported by users.
+    chown -R "${TARGET_UID}:${TARGET_GID}" "/home/${USERNAME}"
+
     # Re-execute the script as the victoria user, preserving the environment.
     # The `setpriv` command is used to drop root privileges and execute the
     # command in a new security context.
