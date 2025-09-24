@@ -20,7 +20,7 @@ if [ "$(id -u)" = "0" ]; then
     # Re-execute the script as the victoria user, preserving the environment.
     # The `setpriv` command is used to drop root privileges and execute the
     # command in a new security context.
-    exec setpriv --reuid "${TARGET_UID}" --regid "${TARGET_GID}" --clear-groups --init-groups "$0" "$@"
+    exec setpriv --reuid "${TARGET_UID}" --regid "${TARGET_GID}" --init-groups "$0" "$@"
 fi
 
 # If no arguments were provided, launch Victoria.
