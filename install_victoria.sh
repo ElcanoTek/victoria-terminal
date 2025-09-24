@@ -112,8 +112,9 @@ victoria() {
     return $?
   fi
   podman run --rm -it \
-    --user 0 \
     --userns=keep-id \
+    --security-opt=no-new-privileges \
+    --cap-drop=all \
     -e VICTORIA_HOME=/workspace/Victoria \
     -v "$HOME/Victoria:/workspace/Victoria" \
     "$image" "$@"
