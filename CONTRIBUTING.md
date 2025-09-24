@@ -24,12 +24,16 @@ Victoria is distributed as a container image. Build and run that image locally d
 
    ```bash
    podman run --rm -it \
-     -v ~/Victoria:/root/Victoria \
+     --userns=keep-id \
+     -e VICTORIA_HOME=/workspace/Victoria \
+     -v ~/Victoria:/workspace/Victoria \
      victoria-terminal
 
    # Run automated linting
    podman run --rm -it \
-     -v ~/Victoria:/root/Victoria \
+     --userns=keep-id \
+     -e VICTORIA_HOME=/workspace/Victoria \
+     -v ~/Victoria:/workspace/Victoria \
      victoria-terminal -- nox -s lint
    ```
 
@@ -96,7 +100,9 @@ These tools run through [Nox](https://nox.thea.codes/) sessions defined in `noxf
 
 ```bash
 podman run --rm -it \
-  -v ~/Victoria:/root/Victoria \
+  --userns=keep-id \
+  -e VICTORIA_HOME=/workspace/Victoria \
+  -v ~/Victoria:/workspace/Victoria \
   victoria-terminal -- nox -s lint
 ```
 
@@ -108,7 +114,9 @@ Use the same locally built image to execute the automated test suite. Passing `p
 
 ```bash
 podman run --rm -it \
-  -v ~/Victoria:/root/Victoria \
+  --userns=keep-id \
+  -e VICTORIA_HOME=/workspace/Victoria \
+  -v ~/Victoria:/workspace/Victoria \
   victoria-terminal -- pytest
 ```
 
@@ -116,7 +124,9 @@ The entrypoint sets the repository root as the working directory, so the command
 
 ```bash
 podman run --rm -it \
-  -v ~/Victoria:/root/Victoria \
+  --userns=keep-id \
+  -e VICTORIA_HOME=/workspace/Victoria \
+  -v ~/Victoria:/workspace/Victoria \
   victoria-terminal -- pytest tests/test_victoria_terminal.py -k "happy_path"
 ```
 
@@ -132,14 +142,16 @@ Reuse the development image from the steps above and append `bash` to open a she
 
 ```bash
 podman run --rm -it \
-  -v ~/Victoria:/root/Victoria \
+  --userns=keep-id \
+  -e VICTORIA_HOME=/workspace/Victoria \
+  -v ~/Victoria:/workspace/Victoria \
   victoria-terminal bash
 ```
 
 Windows contributors should keep the command on one line and swap the mount path for `$env:USERPROFILE/Victoria`:
 
 ```powershell
-podman run --rm -it -v "$env:USERPROFILE/Victoria:/root/Victoria" victoria-terminal bash
+podman run --rm -it --userns=keep-id -e VICTORIA_HOME=/workspace/Victoria -v "$env:USERPROFILE/Victoria:/workspace/Victoria" victoria-terminal bash
 ```
 
 Once the container starts you land in `/root` with the full Victoria tooling available. Run `which victoria_terminal.py` or `nox --list` to confirm you're in the expected image. If you rely on a wrapper script to launch the container, reuse that script and append `bash` to its command list.
@@ -152,12 +164,12 @@ With `--rm` enabled, Podman deletes the container when you exit the shell. Keep 
 * Package installs and other ad-hoc tooling disappear with the container.
 * Background processes you start are terminated automatically.
 
-Store anything you need to keep inside `/root/Victoria` (it maps to your host workspace) or copy it out before exiting. A second terminal can use `podman cp <container>:/path/in/container /path/on/host` to recover files while the shell is still running.
+Store anything you need to keep inside `/workspace/Victoria` (it maps to your host workspace) or copy it out before exiting. A second terminal can use `podman cp <container>:/path/in/container /path/on/host` to recover files while the shell is still running.
 
 ### What to inspect inside the shell
 
-1. **Environment variables.** `env | sort` shows the exact keys Victoria loaded from `/root/Victoria/.env`.
-2. **Generated configuration.** Inspect `/root/Victoria` for cached embeddings, logs, onboarding artifacts, or other runtime outputs.
+1. **Environment variables.** `env | sort` shows the exact keys Victoria loaded from `/workspace/Victoria/.env`.
+2. **Generated configuration.** Inspect `/workspace/Victoria` for cached embeddings, logs, onboarding artifacts, or other runtime outputs.
 3. **Network diagnostics.** Use `curl`, `dig`, or `openssl s_client` to test connectivity to external services.
 4. **Python tooling.** Launch `pytest`, `nox`, or ad-hoc scripts with the same interpreter the container uses in CI.
 
@@ -169,7 +181,9 @@ End-to-end verification happens automatically in GitHub Actions. Local test runs
 
 ```bash
 podman run --rm -it \
-  -v ~/Victoria:/root/Victoria \
+  --userns=keep-id \
+  -e VICTORIA_HOME=/workspace/Victoria \
+  -v ~/Victoria:/workspace/Victoria \
   victoria-terminal -- nox -s tests
 ```
 
