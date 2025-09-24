@@ -927,3 +927,72 @@ Simply copy the `gammaUrl` and open it in your browser to view your beautiful, A
 
 ---
 
+
+
+
+---
+
+## Campaign Wrap-Up Protocol
+
+Victoria can perform a comprehensive campaign wrap-up analysis, transforming raw performance data into a strategic narrative with actionable insights and a stunning visual presentation. This protocol guides you through a systematic process of standard analysis, automated quirky insight discovery, and final presentation generation.
+
+### 1. Standard Campaign Analysis
+
+This phase mirrors a traditional campaign wrap-up, providing a comprehensive overview of performance. The structure is inspired by best-in-class agency reports, ensuring all key aspects of the campaign are covered.
+
+**Analysis Steps:**
+
+1.  **Executive Summary:** Synthesize the most critical information upfront. This should include top-line metrics (Total Spend, Conversions, CPA, etc.), key performance highlights, and a summary of strategic recommendations.
+2.  **Platform & Partner Performance:** Analyze the performance of different platforms, exchanges, or partners. Identify top and bottom performers and provide insights into what drove their performance.
+3.  **Campaign Optimization Journey:** Tell the story of the campaign's optimization. Visualize the impact of changes made during the campaign, such as site removals, budget shifts, or targeting adjustments.
+4.  **Geographic Analysis:** Analyze performance by geographic location (DMA, state, country). Identify high-performing regions and opportunities for geographic targeting optimization.
+5.  **Temporal Analysis (Day of Week/Hour of Day):** Look for patterns in performance based on time. Identify the most and least efficient times to run the campaign.
+6.  **Creative & Content Analysis:** Analyze the performance of different creatives, ad formats, and site categories. Identify winning combinations and creative fatigue.
+
+### 2. Automated Quirky Insight Discovery
+
+This is where Victoria's unique analytical capabilities shine. The goal is to move beyond standard reporting and uncover non-obvious, high-impact insights that can drive significant competitive advantage. This process is designed to be systematic yet creative, encouraging the exploration of unusual patterns and correlations.
+
+**The Process:**
+
+1.  **Hypothesis Generation (The 'Quirky Questions'):** Start by brainstorming a list of unconventional questions to ask the data. Here are some examples to get you started:
+    *   What's the weirdest time of day for conversions for this campaign?
+    *   Is there a browser or OS that is unexpectedly good or bad?
+    *   Are there any 'sleeper' site categories that have a surprisingly high conversion rate, even with low traffic?
+    *   What happens to performance on holidays or major news events?
+    *   Is there a correlation between the weather and campaign performance?
+    *   Which combination of targeting parameters (geo, device, audience) is the most unexpectedly profitable?
+
+2.  **Automated Data Exploration:** Use the full power of your Python analytics toolkit to systematically test these hypotheses. Leverage `pandas`, `polars`, `scikit-learn`, and `statsmodels` to run correlations, build small predictive models, and identify anomalies.
+
+3.  **Insight Validation & Prioritization:** Not all quirky findings are created equal. Once you have a list of potential insights, you need to validate and prioritize them:
+    *   **Statistical Significance:** Is the finding real, or just random noise? Use statistical tests to confirm the validity of your insights.
+    *   **Impact Potential:** How much could this insight improve performance if acted upon? Quantify the potential impact in terms of CPA, ROAS, or other key metrics.
+    *   **Actionability:** Is this an insight that can be easily acted upon? An insight is only valuable if it can be translated into a concrete optimization action.
+    *   **'Quirkiness' Score:** Assign a score to each insight based on its unexpectedness and novelty. The goal is to surface the most surprising and non-obvious findings.
+
+4.  **The Prioritized Quirky Findings List:** The output of this process is a prioritized list of the top 3-5 quirkiest, most actionable insights from the campaign.
+
+### 3. Gamma Presentation Generation
+
+The final step is to bring the story to life with a visually stunning presentation using Gamma AI. The presentation should be a narrative that weaves together the findings from both the standard analysis and the quirky insight discovery.
+
+**Presentation Best Practices:**
+
+*   **Tell a Story:** Don't just present data; tell a story. Start with the big picture, drill down into the details, and end with a clear set of actionable recommendations.
+*   **Visualize Everything:** Use a wide variety of charts to make the data engaging and easy to understand. Gamma supports a rich set of chart types, so get creative! Here are some ideas based on the analysis phases:
+
+| Analysis Phase                  | Suggested Chart Types                                                                                                                                                           |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Executive Summary**           | Big number callouts, progress bars for goal attainment.                                                                                                                         |
+| **Platform Performance**        | Horizontal bar charts for rankings, pie or donut charts for distribution.                                                                                                       |
+| **Campaign Optimization Journey** | Dual-axis line and bar charts to show the relationship between optimizations and performance over time.                                                                         |
+| **Geographic Analysis**         | Geographic heatmaps, bubble maps.                                                                                                                                               |
+| **Temporal Analysis**           | Line charts for trends, heatmaps for hour-of-day/day-of-week analysis.                                                                                                          |
+| **Creative & Content Analysis** | Bubble charts to show the relationship between three variables (e.g., CTR, CVR, and spend), stacked bar charts for creative format comparison.                                      |
+| **Quirky Insights**             | Scatter plots to show unexpected correlations, annotated line charts to highlight anomalies.                                                                                    |
+
+*   **Leverage Gamma's AI:** Let Gamma's AI enhance your presentation with beautiful design, relevant icons, and a professional layout. Focus on providing high-quality, well-structured content in markdown, and let Gamma handle the rest.
+
+By following this protocol, Victoria can deliver a campaign wrap-up that is not only comprehensive and insightful but also engaging and actionable, setting a new standard for programmatic analysis.
+
