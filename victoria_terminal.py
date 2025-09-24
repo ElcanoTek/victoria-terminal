@@ -844,15 +844,27 @@ def generate_crush_config(
         raise FileNotFoundError(f"Missing Crush template at {template}")
     config = _read_json(template)
     env_map = env or os.environ
-    if not _is_browserbase_enabled(env_map):
-        mcp_config = config.get("mcp")
-        if isinstance(mcp_config, dict):
+    resolved_env: dict[str, str] = dict(env_map)
+    mcp_config = config.get("mcp")
+    if isinstance(mcp_config, dict):
+        if not _is_browserbase_enabled(env_map):
             mcp_config.pop("browserbase", None)
-    if not _is_gamma_enabled(env_map):
-        mcp_config = config.get("mcp")
-        if isinstance(mcp_config, dict):
-            mcp_config.pop("gamma", None)
-    resolved = substitute_env(config, env_map)
+
+        gamma_config = mcp_config.get("gamma")
+        if isinstance(gamma_config, dict):
+            if not _is_gamma_enabled(env_map):
+                mcp_config.pop("gamma", None)
+            else:
+                gamma_script = resource_path(Path("gamma-mcp.py"))
+                if not gamma_script.exists():
+                    raise FileNotFoundError(
+                        "Gamma MCP server script is missing from the Victoria installation "
+                        f"(expected at {gamma_script})."
+                    )
+
+                resolved_env["GAMMA_MCP_SCRIPT"] = str(gamma_script)
+                resolved_env["GAMMA_MCP_DIR"] = str(gamma_script.parent)
+    resolved = substitute_env(config, resolved_env)
     output_path = app_home / CRUSH_CONFIG_NAME
     _write_json(output_path, resolved)
     good(f"Configuration written to {output_path}")

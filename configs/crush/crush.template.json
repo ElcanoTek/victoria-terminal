@@ -100,12 +100,12 @@
       "type": "stdio",
       "command": "python3",
       "args": [
-        "gamma-mcp.py"
+        "${GAMMA_MCP_SCRIPT}"
       ],
-      "cwd": "${VICTORIA_HOME}",
+      "cwd": "${GAMMA_MCP_DIR}",
       "env": {
         "GAMMA_API_KEY": "${GAMMA_API_KEY}",
-        "PYTHONPATH": "${VICTORIA_HOME}"
+        "PYTHONPATH": "${GAMMA_MCP_DIR}"
       }
     }
   }
