@@ -6,11 +6,21 @@ A simple MCP server for Gamma AI presentation generation.
 Runs within the Victoria Terminal container environment.
 """
 
+import logging
 import os
+import sys
 from typing import Any, Dict, Optional
 
 import httpx
 from mcp.server.fastmcp import FastMCP
+
+# Configure logging to stderr (not stdout for STDIO transport)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    stream=sys.stderr
+)
+logger = logging.getLogger(__name__)
 
 # Initialize FastMCP server
 mcp = FastMCP("gamma")
@@ -18,13 +28,16 @@ mcp = FastMCP("gamma")
 # Constants
 GAMMA_API_BASE = "https://public-api.gamma.app/v0.2"
 USER_AGENT = "victoria-terminal/1.0"
+DEFAULT_TIMEOUT = 60.0  # Increased timeout for presentation generation
 
 
 async def make_gamma_request(method: str, url: str, json: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Make a request to the Gamma API with proper error handling."""
     api_key = os.environ.get("GAMMA_API_KEY")
     if not api_key:
-        return {"error": "GAMMA_API_KEY environment variable not set"}
+        error_msg = "GAMMA_API_KEY environment variable not set"
+        logger.error(error_msg)
+        return {"error": error_msg}
 
     headers = {
         "User-Agent": USER_AGENT,
@@ -33,18 +46,37 @@ async def make_gamma_request(method: str, url: str, json: Optional[Dict[str, Any
         "accept": "application/json",
     }
 
-    async with httpx.AsyncClient() as client:
-        try:
+    logger.info(f"Making {method} request to {url}")
+    
+    try:
+        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT) as client:
             if method.upper() == "POST":
-                response = await client.post(url, headers=headers, json=json, timeout=30.0)
+                response = await client.post(url, headers=headers, json=json)
             else:
-                response = await client.get(url, headers=headers, timeout=30.0)
+                response = await client.get(url, headers=headers)
+            
+            logger.info(f"Response status: {response.status_code}")
             response.raise_for_status()
-            return response.json()
-        except httpx.HTTPStatusError as e:
-            return {"error": f"HTTP error: {e.response.status_code} - {e.response.text}"}
-        except Exception as e:
-            return {"error": f"Request failed: {str(e)}"}
+            result = response.json()
+            logger.info("Request completed successfully")
+            return result
+            
+    except httpx.TimeoutException as e:
+        error_msg = f"Request timeout after {DEFAULT_TIMEOUT}s: {str(e)}"
+        logger.error(error_msg)
+        return {"error": error_msg}
+    except httpx.HTTPStatusError as e:
+        error_msg = f"HTTP error: {e.response.status_code} - {e.response.text}"
+        logger.error(error_msg)
+        return {"error": error_msg}
+    except httpx.RequestError as e:
+        error_msg = f"Request error: {str(e)}"
+        logger.error(error_msg)
+        return {"error": error_msg}
+    except Exception as e:
+        error_msg = f"Unexpected error: {str(e)}"
+        logger.error(error_msg)
+        return {"error": error_msg}
 
 
 @mcp.tool()
@@ -52,7 +84,8 @@ async def generate_presentation(
     input_text: str,
     theme_name: str = "Professional",
     additional_instructions: str = (
-        "Use a modern and clean design. Ensure all charts are easy to read " "and properly labeled."
+        "Use a modern and clean design. Ensure all charts are easy to read " 
+        "and properly labeled."
     ),
     export_as: str = "pptx",
 ) -> Dict[str, Any]:
@@ -68,6 +101,8 @@ async def generate_presentation(
     Returns:
         Dictionary containing the generation ID or error information
     """
+    logger.info(f"Generating presentation with theme: {theme_name}, format: {export_as}")
+    
     url = f"{GAMMA_API_BASE}/generations"
     payload = {
         "inputText": input_text,
@@ -81,7 +116,13 @@ async def generate_presentation(
         },
         "exportAs": export_as,
     }
-    return await make_gamma_request("POST", url, json=payload)
+    
+    result = await make_gamma_request("POST", url, json=payload)
+    
+    if "error" not in result:
+        logger.info(f"Presentation generation started successfully")
+    
+    return result
 
 
 @mcp.tool()
@@ -95,9 +136,29 @@ async def check_presentation_status(generation_id: str) -> Dict[str, Any]:
     Returns:
         Dictionary containing the generation status or error information
     """
+    logger.info(f"Checking status for generation ID: {generation_id}")
+    
     url = f"{GAMMA_API_BASE}/generations/{generation_id}"
-    return await make_gamma_request("GET", url)
+    result = await make_gamma_request("GET", url)
+    
+    if "error" not in result:
+        status = result.get("status", "unknown")
+        logger.info(f"Generation status: {status}")
+    
+    return result
 
 
 if __name__ == "__main__":
-    mcp.run(transport="stdio")
+    logger.info("Starting Gamma MCP Server")
+    
+    # Check if API key is available
+    if not os.environ.get("GAMMA_API_KEY"):
+        logger.error("GAMMA_API_KEY environment variable is not set")
+        sys.exit(1)
+    
+    try:
+        # Use stdio transport (default for FastMCP)
+        mcp.run(transport="stdio")
+    except Exception as e:
+        logger.error(f"Failed to start server: {e}")
+        sys.exit(1)
