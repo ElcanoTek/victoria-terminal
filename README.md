@@ -102,16 +102,16 @@ Use the table below to pull (or update) the matching image and run it. Re-runnin
 
 | Platform | CPU architecture | Pull / update | Run |
 | --- | --- | --- | --- |
-| macOS or Linux (Intel/AMD) | `x86_64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest` | `podman run --rm -it --user 0 --userns=keep-id -e VICTORIA_HOME=/workspace/Victoria -v ~/Victoria:/workspace/Victoria ghcr.io/elcanotek/victoria-terminal:latest` |
-| macOS or Linux (Arm64) | `arm64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest-arm64` | `podman run --rm -it --user 0 --userns=keep-id -e VICTORIA_HOME=/workspace/Victoria -v ~/Victoria:/workspace/Victoria ghcr.io/elcanotek/victoria-terminal:latest-arm64` |
-| Windows PowerShell (Intel/AMD) | `x86_64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest` | `podman run --rm -it --user 0 --userns=keep-id -e VICTORIA_HOME=/workspace/Victoria -v "$env:USERPROFILE/Victoria:/workspace/Victoria" ghcr.io/elcanotek/victoria-terminal:latest` |
-| Windows PowerShell (Arm64) | `arm64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest-arm64` | `podman run --rm -it --user 0 --userns=keep-id -e VICTORIA_HOME=/workspace/Victoria -v "$env:USERPROFILE/Victoria:/workspace/Victoria" ghcr.io/elcanotek/victoria-terminal:latest-arm64` |
+| macOS or Linux (Intel/AMD) | `x86_64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest` | `podman run --rm -it --userns=keep-id --security-opt=no-new-privileges --cap-drop=all -e VICTORIA_HOME=/workspace/Victoria -v ~/Victoria:/workspace/Victoria ghcr.io/elcanotek/victoria-terminal:latest` |
+| macOS or Linux (Arm64) | `arm64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest-arm64` | `podman run --rm -it --userns=keep-id --security-opt=no-new-privileges --cap-drop=all -e VICTORIA_HOME=/workspace/Victoria -v ~/Victoria:/workspace/Victoria ghcr.io/elcanotek/victoria-terminal:latest-arm64` |
+| Windows PowerShell (Intel/AMD) | `x86_64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest` | `podman run --rm -it --userns=keep-id --security-opt=no-new-privileges --cap-drop=all -e VICTORIA_HOME=/workspace/Victoria -v "$env:USERPROFILE/Victoria:/workspace/Victoria" ghcr.io/elcanotek/victoria-terminal:latest` |
+| Windows PowerShell (Arm64) | `arm64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest-arm64` | `podman run --rm -it --userns=keep-id --security-opt=no-new-privileges --cap-drop=all -e VICTORIA_HOME=/workspace/Victoria -v "$env:USERPROFILE/Victoria:/workspace/Victoria" ghcr.io/elcanotek/victoria-terminal:latest-arm64` |
 
 > [!NOTE]
 > The run commands are shown on a single line to work in PowerShell and other shells without additional escaping. On macOS and Linux you can add `\` line continuations if you prefer.
 
 > [!TIP]
-> The container image creates a non-root `victoria` user. Run the container as root (`--user 0`) together with `--userns=keep-id` so the entrypoint can remap to that account while preserving your host UID/GID and write access to `~/Victoria`.
+> The container entrypoint now bootstraps a writable home directory for both rootless (`--userns=keep-id`) and privileged runs. You no longer need to force `--user 0`. Add `--security-opt=no-new-privileges` and `--cap-drop=all` to keep the runtime aligned with least-privilege defaults.
 
 #### Best Practices for Argument Passing
 
@@ -119,10 +119,10 @@ When passing arguments to Victoria inside the container, always use the `--` sep
 
 ```bash
 # Correct: Arguments after -- go to Victoria
-podman run --rm -it --user 0 --userns=keep-id -e VICTORIA_HOME=/workspace/Victoria -v ~/Victoria:/workspace/Victoria ghcr.io/elcanotek/victoria-terminal:latest -- --skip-launch
+podman run --rm -it --userns=keep-id --security-opt=no-new-privileges --cap-drop=all -e VICTORIA_HOME=/workspace/Victoria -v ~/Victoria:/workspace/Victoria ghcr.io/elcanotek/victoria-terminal:latest -- --skip-launch
 
 # Avoid: Ambiguous argument parsing
-podman run --rm -it --user 0 --userns=keep-id -e VICTORIA_HOME=/workspace/Victoria -v ~/Victoria:/workspace/Victoria ghcr.io/elcanotek/victoria-terminal:latest --skip-launch
+podman run --rm -it --userns=keep-id --security-opt=no-new-privileges --cap-drop=all -e VICTORIA_HOME=/workspace/Victoria -v ~/Victoria:/workspace/Victoria ghcr.io/elcanotek/victoria-terminal:latest --skip-launch
 ```
 
 The `--` separator ensures that:
@@ -134,8 +134,9 @@ On macOS and Linux you can split the run command across multiple lines for reada
 
 ```bash
 podman run --rm -it \
-  --user 0 \
   --userns=keep-id \
+  --security-opt=no-new-privileges \
+  --cap-drop=all \
   -e VICTORIA_HOME=/workspace/Victoria \
   -v ~/Victoria:/workspace/Victoria \
   ghcr.io/elcanotek/victoria-terminal:latest -- --skip-launch
@@ -146,7 +147,7 @@ podman run --rm -it \
 Windows users should keep the commands on a single line and use `$env:USERPROFILE/Victoria` in place of `~/Victoria`:
 
 ```powershell
-podman run --rm -it --user 0 --userns=keep-id -e VICTORIA_HOME=/workspace/Victoria -v "$env:USERPROFILE/Victoria:/workspace/Victoria" ghcr.io/elcanotek/victoria-terminal:latest -- --skip-launch
+podman run --rm -it --userns=keep-id --security-opt=no-new-privileges --cap-drop=all -e VICTORIA_HOME=/workspace/Victoria -v "$env:USERPROFILE/Victoria:/workspace/Victoria" ghcr.io/elcanotek/victoria-terminal:latest -- --skip-launch
 ```
 
 #### Configure on first run
@@ -160,8 +161,9 @@ Victoria validates your `.env` file on every launch. Pass `--skip-launch` if you
 
 ```bash
 podman run --rm -it \
-  --user 0 \
   --userns=keep-id \
+  --security-opt=no-new-privileges \
+  --cap-drop=all \
   -e VICTORIA_HOME=/workspace/Victoria \
   -v ~/Victoria:/workspace/Victoria \
   ghcr.io/elcanotek/victoria-terminal:latest -- --skip-launch
