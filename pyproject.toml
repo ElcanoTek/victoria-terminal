@@ -19,3 +19,33 @@ known_first_party = ["victoria_terminal"]
 [tool.flake8]
 max-line-length = 120
 extend-ignore = ["E203", "W503"]
+
+
+[tool.pytest.ini_options]
+# Configure pytest with sensible defaults for the Victoria project
+addopts = """
+    --timeout=60 \
+    --timeout-method=thread \
+    --strict-config \
+    --strict-markers \
+    -v \
+    --tb=short \
+    --cov=victoria_terminal \
+    --cov-report=term-missing
+"""
+# Timeout configuration to prevent hanging tests
+timeout = 60
+# Test discovery patterns
+testpaths = "tests"
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+# Minimum version requirements
+minversion = "6.0"
+# Ensure the project root is importable without manual sys.path tweaks
+pythonpath = "."
+# Warnings filter
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
