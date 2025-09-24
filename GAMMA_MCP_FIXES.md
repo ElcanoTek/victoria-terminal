@@ -4,17 +4,18 @@ This document outlines the fixes applied to resolve timeout and connection issue
 
 ## Issues Resolved
 
-### 1. Unsupported Model Configuration
-**Problem**: Configuration files referenced unsupported models that caused API errors.
+### 1. Test Organization and Structure ✅ FIXED
+**Problem**: `test_gamma_mcp.py` was located in the root directory instead of following pytest conventions.
 
-**Models Updated**:
-- `openai/chatgpt-5` → `gpt-4.1-mini`
-- `openai/chatgpt-5-mini` → `gpt-4.1-nano`
-- `xai/grok-code-fast-1` → Removed (unsupported)
+**Solution**: 
+- Moved test file to `tests/test_gamma_mcp.py`
+- Converted to proper pytest format with fixtures
+- Added comprehensive test coverage for MCP protocol
+- Included proper error handling and assertions
 
 **Files Modified**:
-- `configs/crush/crush.template.json`
-- `configs/crush/crush.local.json`
+- `tests/test_gamma_mcp.py` (new location)
+- Removed `test_gamma_mcp.py` from root directory
 
 ### 2. Missing Crush CLI Dependency
 **Problem**: Victoria Terminal expects Crush CLI to be available but installation instructions were incomplete.
@@ -47,18 +48,22 @@ GAMMA_API_KEY=your_gamma_api_key
 VICTORIA_HOME=/path/to/victoria-terminal
 ```
 
-## Supported Models
+## Model Configuration Notes
 
-The following models are confirmed to work with the current API:
+The Crush configuration files (`configs/crush/crush.template.json` and `configs/crush/crush.local.json`) contain model references that may need to be updated based on your API provider's supported models.
+
+**Common supported models include**:
 - `gpt-4.1-mini`
 - `gpt-4.1-nano`
 - `gemini-2.5-flash`
+
+If you encounter "Unsupported model" errors, update your configuration files to use models supported by your API provider.
 
 ## Testing
 
 ### Test Gamma MCP Server
 ```bash
-python3 test_gamma_mcp.py
+python3 -m pytest tests/test_gamma_mcp.py -v
 ```
 
 Expected output:
@@ -77,24 +82,13 @@ export VICTORIA_HOME=$(pwd)
 crush run "what tools are available?"
 ```
 
-## Configuration Changes
-
-### configs/crush/crush.template.json
-- Updated model IDs to supported versions
-- Maintained all MCP server configurations
-- Preserved provider structure
-
-### configs/crush/crush.local.json
-- Updated default model references
-- Ensured compatibility with template configuration
-
 ## Troubleshooting
 
 ### Common Issues
 
 1. **"Unsupported model" errors**
-   - Ensure model IDs match supported list above
-   - Check API key validity
+   - Update model IDs in configuration files to match your API provider's supported models
+   - Check API key validity and permissions
 
 2. **"Command not found: crush"**
    - Install Crush CLI using instructions above
@@ -103,12 +97,22 @@ crush run "what tools are available?"
 3. **MCP server timeout**
    - Check that `gamma-mcp.py` is executable
    - Verify `GAMMA_API_KEY` is set correctly
-   - Test MCP server independently with `python3 test_gamma_mcp.py`
+   - Test MCP server independently with `python3 -m pytest tests/test_gamma_mcp.py`
 
 4. **Environment variable issues**
    - Ensure `.env` file exists and is properly formatted
    - Check that `VICTORIA_HOME` points to correct directory
    - Verify API keys are valid and have proper permissions
+
+## Test Structure Improvements
+
+The new test structure in `tests/test_gamma_mcp.py` includes:
+
+- **Proper pytest fixtures** for environment setup
+- **Comprehensive test coverage** for MCP protocol initialization
+- **Tool discovery testing** to verify server exposes expected tools
+- **Error handling tests** for missing API keys
+- **Clean process management** to avoid hanging processes
 
 ## Future Improvements
 
@@ -120,6 +124,6 @@ crush run "what tools are available?"
 ## Related Files
 
 - `gamma-mcp.py` - MCP server implementation
-- `test_gamma_mcp.py` - Test suite for MCP server
-- `configs/crush/` - Crush configuration files
+- `tests/test_gamma_mcp.py` - Comprehensive test suite for MCP server
+- `configs/crush/` - Crush configuration files (user should update models as needed)
 - `requirements.txt` - Python dependencies

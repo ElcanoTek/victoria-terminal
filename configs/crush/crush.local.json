@@ -1,12 +1,12 @@
 {
   "models": {
     "large": {
-      "model": "gpt-4.1-mini",
+      "model": "openai/gpt-5",
       "provider": "openrouter",
       "max_tokens": 64000
     },
     "small": {
-      "model": "gpt-4.1-nano",
+      "model": "x-ai/grok-code-fast-1",
       "provider": "openrouter",
       "max_tokens": 5000
     }
