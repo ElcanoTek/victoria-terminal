@@ -3,9 +3,11 @@ black
 colorama
 duckdb
 flake8
+httpx
 ipykernel
 isort
 matplotlib
+mcp[cli]
 nox
 numpy
 openpyxl
@@ -14,13 +16,13 @@ plotly
 polars
 pyarrow
 pylsp-mypy
-python-dotenv
-python-lsp-ruff
-python-lsp-server
 pytest
 pytest-cov
 pytest-mock
 pytest-timeout
+python-dotenv
+python-lsp-ruff
+python-lsp-server
 rich
 scikit-learn
 scipy
@@ -28,8 +30,3 @@ seaborn
 sqlalchemy
 statsmodels
 xlsxwriter
-
-httpx
-mcp[cli]
-
-colorama
