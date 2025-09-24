@@ -134,6 +134,7 @@ def test_generate_crush_config_substitutes_env(tmp_path: Path) -> None:
         str(tmp_path / "adtech.duckdb"),
     ]
     assert "browserbase" not in data["mcp"]
+    assert "gamma" not in data["mcp"]
 
 
 def test_generate_crush_config_includes_browserbase_when_configured(tmp_path: Path) -> None:
@@ -178,6 +179,39 @@ def test_generate_crush_config_ignores_blank_browserbase_url(tmp_path: Path) -> 
 
     data = json.loads(output.read_text(encoding="utf-8"))
     assert "browserbase" not in data["mcp"]
+
+
+def test_generate_crush_config_sets_gamma_paths(tmp_path: Path, mocker: pytest.MockFixture) -> None:
+    env_values = {
+        "OPENROUTER_API_KEY": "test-key",
+        "VICTORIA_HOME": str(tmp_path),
+        "GAMMA_API_KEY": "gamma-key",
+    }
+
+    template = entrypoint.resource_path(entrypoint.CRUSH_TEMPLATE)
+
+    gamma_dir = tmp_path / "bundle"
+    gamma_dir.mkdir()
+    gamma_script = gamma_dir / "gamma-mcp.py"
+    gamma_script.write_text("#!/usr/bin/env python3\n", encoding="utf-8")
+
+    original_resource_path = entrypoint.resource_path
+
+    def fake_resource_path(name: str | Path) -> Path:
+        if Path(name) == Path("gamma-mcp.py"):
+            return gamma_script
+        return original_resource_path(name)
+
+    mocker.patch("victoria_terminal.resource_path", side_effect=fake_resource_path)
+
+    output = entrypoint.generate_crush_config(app_home=tmp_path, env=env_values, template_path=template)
+
+    data = json.loads(output.read_text(encoding="utf-8"))
+    gamma_cfg = data["mcp"]["gamma"]
+    assert gamma_cfg["args"] == [str(gamma_script)]
+    assert gamma_cfg["cwd"] == str(gamma_dir)
+    assert gamma_cfg["env"]["PYTHONPATH"] == str(gamma_dir)
+    assert gamma_cfg["env"]["GAMMA_API_KEY"] == env_values["GAMMA_API_KEY"]
 
 
 def test_generate_crush_config_missing_template_raises(tmp_path: Path) -> None:
