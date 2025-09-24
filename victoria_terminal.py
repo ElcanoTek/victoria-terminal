@@ -178,27 +178,36 @@ def _resolve_app_home(app_home: Path | None = None) -> Path:
 _LICENSE_TEXT_CACHE: str | None = None
 
 
+def _resolve_license_path() -> Path:
+    """Locate the bundled license file."""
+
+    env_path = os.environ.get("VICTORIA_LICENSE_PATH")
+    if env_path:
+        candidate = Path(env_path).expanduser()
+        if candidate.is_file():
+            return candidate
+        candidate_with_name = candidate / LICENSE_FILE_NAME
+        if candidate_with_name.is_file():
+            return candidate_with_name
+
+    license_path = resource_path(Path(LICENSE_FILE_NAME))
+    if license_path.is_file():
+        return license_path
+
+    raise FileNotFoundError(
+        "Victoria Terminal requires the LICENSE file to display the agreement. "
+        f"Expected to find it at {license_path}"
+    )
+
+
 def _get_license_text() -> str:
     global _LICENSE_TEXT_CACHE
     if _LICENSE_TEXT_CACHE is not None:
         return _LICENSE_TEXT_CACHE
 
-    script_dir = Path(__file__).resolve().parent
-    candidates = (
-        script_dir / LICENSE_FILE_NAME,
-        Path.cwd() / LICENSE_FILE_NAME,
-        _resolve_app_home() / LICENSE_FILE_NAME,
-    )
-    for candidate in candidates:
-        if candidate.is_file():
-            _LICENSE_TEXT_CACHE = candidate.read_text(encoding="utf-8")
-            return _LICENSE_TEXT_CACHE
-
-    candidate_list = ", ".join(str(path) for path in candidates)
-    raise FileNotFoundError(
-        "Victoria Terminal requires the LICENSE file to display the agreement. "
-        f"Expected to find it in one of: {candidate_list}"
-    )
+    license_path = _resolve_license_path()
+    _LICENSE_TEXT_CACHE = license_path.read_text(encoding="utf-8")
+    return _LICENSE_TEXT_CACHE
 
 
 def _is_license_accepted(*, app_home: Path | None = None) -> bool:

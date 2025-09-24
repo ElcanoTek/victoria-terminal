@@ -185,6 +185,40 @@ def test_generate_crush_config_missing_template_raises(tmp_path: Path) -> None:
         entrypoint.generate_crush_config(app_home=tmp_path, template_path=tmp_path / "missing.json")
 
 
+def test_resolve_license_path_uses_resource_bundle(
+    tmp_path: Path, mocker: pytest.MockFixture, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.delenv("VICTORIA_LICENSE_PATH", raising=False)
+    bundle_dir = tmp_path / "bundle"
+    bundle_dir.mkdir()
+    license_file = bundle_dir / entrypoint.LICENSE_FILE_NAME
+    license_file.write_text("terms", encoding="utf-8")
+
+    mocker.patch.object(entrypoint, "resource_path", return_value=license_file)
+
+    assert entrypoint._resolve_license_path() == license_file
+
+
+def test_resolve_license_path_prefers_env_override(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    env_license = tmp_path / "custom-license.txt"
+    env_license.write_text("terms", encoding="utf-8")
+    monkeypatch.setenv("VICTORIA_LICENSE_PATH", str(env_license))
+
+    assert entrypoint._resolve_license_path() == env_license
+
+
+def test_resolve_license_path_raises_when_missing(
+    tmp_path: Path, mocker: pytest.MockFixture, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.delenv("VICTORIA_LICENSE_PATH", raising=False)
+    mocker.patch.object(entrypoint, "resource_path", return_value=tmp_path / "missing")
+
+    with pytest.raises(FileNotFoundError):
+        entrypoint._resolve_license_path()
+
+
 def test_ensure_app_home_copies_support_files(tmp_path: Path, mocker: pytest.MockFixture) -> None:
     source_dir = tmp_path / "source"
     source_dir.mkdir()
