@@ -199,9 +199,7 @@ def test_resolve_license_path_uses_resource_bundle(
     assert entrypoint._resolve_license_path() == license_file
 
 
-def test_resolve_license_path_prefers_env_override(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_resolve_license_path_prefers_env_override(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     env_license = tmp_path / "custom-license.txt"
     env_license.write_text("terms", encoding="utf-8")
     monkeypatch.setenv("VICTORIA_LICENSE_PATH", str(env_license))
