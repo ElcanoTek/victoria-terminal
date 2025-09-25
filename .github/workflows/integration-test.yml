@@ -10,18 +10,16 @@ jobs:
     timeout-minutes: 20
     env:
       IMAGE: ghcr.io/elcanotek/victoria-terminal:latest
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
 
       - name: Ensure OPENROUTER_API_KEY secret is available
-        env:
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        if: ${{ env.OPENROUTER_API_KEY == '' }}
         run: |
-          if [ -z "${OPENROUTER_API_KEY}" ]; then
-            echo "::error::OPENROUTER_API_KEY secret is not configured."
-            exit 1
-          fi
+          echo "::error::OPENROUTER_API_KEY secret is not configured."
+          exit 1
 
       - name: Install Podman
         run: |
@@ -46,8 +44,6 @@ jobs:
         run: mkdir -p victoria-home
 
       - name: Run Prime Directive integration check
-        env:
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: |
           set +e
           output=$(timeout 90s podman run --rm \
