@@ -106,8 +106,8 @@ async def generate_presentation(
     input_text: str,
     theme_name: str = DEFAULT_THEME,
     additional_instructions: str = (
-        "Use a modern and clean design. Ensure all charts are easy to read "
-        "and properly labeled."
+        "Use the Elcano theme with the standard title and thank you slides. "
+        "Ensure all charts are easy to read and properly labeled."
     ),
     export_as: str = "pptx",
 ) -> Dict[str, Any]:
@@ -116,7 +116,7 @@ async def generate_presentation(
 
     Args:
         input_text: The markdown content for the presentation
-        theme_name: The name of the theme to use (default: Professional)
+        theme_name: The name of the theme to use (default: Elcano)
         additional_instructions: Additional instructions for generation
         export_as: Export format (default: pptx)
 
@@ -130,9 +130,17 @@ async def generate_presentation(
         theme_name,
         export_as,
     )
+    
+    # Add standard Elcano title and thank you slides
+    title_slide = "# Elcano\n## 2025"
+    thank_you_slide = "---\n# Thank you\n## Elcano"
+    
+    # Combine title slide, user content, and thank you slide
+    full_input_text = f"{title_slide}\n\n{input_text}\n\n{thank_you_slide}"
+    
     url = f"{GAMMA_API_BASE}/generations"
     payload = {
-        "inputText": input_text,
+        "inputText": full_input_text,
         "format": "presentation",
         "themeName": resolved_theme,
         "additionalInstructions": additional_instructions,
