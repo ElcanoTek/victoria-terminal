@@ -1,0 +1,78 @@
+name: Integration Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  container-integration:
+    name: Victoria container integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      IMAGE: ghcr.io/elcanotek/victoria-terminal:latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Ensure OPENROUTER_API_KEY secret is available
+        if: ${{ secrets.OPENROUTER_API_KEY == '' }}
+        run: |
+          echo "::error::OPENROUTER_API_KEY secret is not configured."
+          exit 1
+
+      - name: Install Podman
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y podman
+
+      - name: Authenticate to GitHub Container Registry
+        env:
+          GHCR_USERNAME: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "${GHCR_TOKEN}" | podman login ghcr.io -u "${GHCR_USERNAME}" --password-stdin
+
+      - name: Pull Victoria Terminal container image
+        run: podman pull "${IMAGE}"
+
+      - name: Verify crush CLI is installed
+        run: |
+          podman run --rm --network=none "${IMAGE}" crush --version
+
+      - name: Prepare Victoria home directory
+        run: mkdir -p victoria-home
+
+      - name: Run Prime Directive integration check
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          set +e
+          output=$(timeout 90s podman run --rm \
+            --userns=keep-id \
+            --security-opt=no-new-privileges \
+            --cap-drop=all \
+            -e OPENROUTER_API_KEY \
+            -e VICTORIA_HOME=/workspace/Victoria \
+            -v "${PWD}/victoria-home:/workspace/Victoria:Z" \
+            "${IMAGE}" \
+            -- \
+            --accept-license \
+            --task \"Explain Victoria's Prime Directive and the advertising data sources it can connect to.\")
+          status=$?
+          set -e
+
+          echo "${output}"
+
+          if [ "${status}" -ne 0 ] && [ "${status}" -ne 124 ]; then
+            echo "::error::Victoria launch exited with status ${status}" >&2
+            exit "${status}"
+          fi
+
+          if ! grep -iq "aggregate numerators and denominators first" <<<"${output}"; then
+            echo "::error::Prime Directive response was not found in victoria_terminal output" >&2
+            exit 1
+          fi
+          if ! grep -iq "Snowflake" <<<"${output}"; then
+            echo "::error::Victoria capabilities response did not mention Snowflake" >&2
+            exit 1
+          fi

@@ -310,7 +310,7 @@ def banner_sequence() -> None:
     if not use_rich:
         raise RuntimeError(
             "Victoria Terminal requires an interactive terminal capable of Rich rendering. "
-            "Use --no-banner with --accept-license for non-interactive environments."
+            "Use --task together with --accept-license for non-interactive environments."
         )
 
     _display_rich_welcome()
@@ -701,11 +701,20 @@ def preflight_crush() -> None:
     good("All systems ready")
 
 
-def launch_crush(*, app_home: Path = APP_HOME) -> None:
-    """Launch Crush with the generated configuration."""
+def launch_crush(*, app_home: Path = APP_HOME, task_prompt: str | None = None) -> None:
+    """Launch Crush with the generated configuration.
+
+    When a task prompt is provided, the entry point triggers a non-interactive
+    ``crush run --yolo`` invocation with that prompt. Otherwise the traditional
+    interactive ``--yolo`` flow is launched.
+    """
     section("Mission launch")
     info("Launching Crush...")
-    cmd = [CRUSH_COMMAND, "-c", str(app_home), "--yolo"]
+    cmd = [CRUSH_COMMAND, "-c", str(app_home)]
+    if task_prompt is not None:
+        cmd.extend(["run", "--yolo", task_prompt])
+    else:
+        cmd.append("--yolo")
     try:
         if os.name == "nt":
             proc = subprocess.run(cmd, check=False)
@@ -732,8 +741,6 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     else:
         argv_list = list(argv)
 
-    sanitized_args = [arg for arg in argv_list if arg != "--"]
-
     parser = argparse.ArgumentParser(
         description=("Victoria container entry point. Ensures configuration exists and launches Crush.")
     )
@@ -749,22 +756,28 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         help="Prepare configuration without launching Crush.",
     )
     parser.add_argument(
-        "--no-banner",
-        action="store_true",
-        help="Skip the animated launch banner (useful for non-interactive runs).",
-    )
-    parser.add_argument(
         "--accept-license",
         dest="accept_license",
         action="store_true",
-        help=("Automatically accept the Victoria Terminal license " "(required when using --no-banner)."),
+        help=("Automatically accept the Victoria Terminal license (required when using --task)."),
+    )
+    parser.add_argument(
+        "--task",
+        metavar="PROMPT",
+        help=(
+            "Run a single Crush task non-interactively. Skips the onboarding "
+            "sequence, requires --accept-license, and forwards PROMPT to 'crush run --yolo'."
+        ),
     )
     parser.add_argument(
         "--version",
         action="version",
         version=f"%(prog)s {__version__}",
     )
-    return parser.parse_args(sanitized_args)
+
+    normalized_args = [arg for arg in argv_list if arg != "--"]
+
+    return parser.parse_args(normalized_args)
 
 
 def main(argv: Sequence[str] | None = None) -> None:
@@ -774,16 +787,27 @@ def main(argv: Sequence[str] | None = None) -> None:
     app_home = args.app_home.expanduser()
     os.environ["VICTORIA_HOME"] = str(app_home)
 
-    if args.no_banner and not args.accept_license:
-        err("Using --no-banner requires --accept-license to confirm acceptance of the Victoria Terminal license.")
-        sys.exit(2)
+    task_prompt: str | None = getattr(args, "task", None)
+    task_mode = task_prompt is not None
+
+    if task_mode:
+        task_prompt = task_prompt.strip() if task_prompt else ""
+        if args.skip_launch:
+            err("--task cannot be combined with --skip-launch.")
+            sys.exit(2)
+        if not task_prompt:
+            err("--task requires a non-empty prompt to run.")
+            sys.exit(2)
+        if not args.accept_license:
+            err("--task requires --accept-license to confirm acceptance of the Victoria Terminal license.")
+            sys.exit(2)
 
     # Intro: two screens with Enter between each, spinner before launch
-    if not args.no_banner:
+    if not task_mode:
         banner_sequence()
 
     ensure_app_home(app_home)
-    if args.no_banner and args.accept_license:
+    if args.accept_license:
         _persist_license_acceptance(app_home=app_home)
     load_environment(app_home)
     generate_crush_config(app_home=app_home)
@@ -795,7 +819,7 @@ def main(argv: Sequence[str] | None = None) -> None:
     preflight_crush()
     if args.skip_launch:
         return
-    launch_crush(app_home=app_home)
+    launch_crush(app_home=app_home, task_prompt=task_prompt if task_mode else None)
 
 
 if __name__ == "__main__":
