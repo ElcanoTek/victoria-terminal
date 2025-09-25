@@ -317,7 +317,6 @@ def test_parse_args_sets_accept_license_flag() -> None:
 def test_main_honours_skip_launch(tmp_path: Path, mocker: pytest.MockFixture, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("VICTORIA_HOME", raising=False)
 
-    mocker.patch("victoria_terminal.initialize_colorama")
     banner_sequence = mocker.patch("victoria_terminal.banner_sequence")
     ensure_app_home = mocker.patch("victoria_terminal.ensure_app_home", side_effect=lambda path: path)
     load_environment = mocker.patch("victoria_terminal.load_environment")
@@ -342,7 +341,6 @@ def test_main_skips_banner_when_flag_set(
 ) -> None:
     monkeypatch.delenv("VICTORIA_HOME", raising=False)
 
-    mocker.patch("victoria_terminal.initialize_colorama")
     banner_sequence = mocker.patch("victoria_terminal.banner_sequence")
     mocker.patch("victoria_terminal.ensure_app_home", side_effect=lambda path: path)
     mocker.patch("victoria_terminal.load_environment")
@@ -372,7 +370,6 @@ def test_main_no_banner_requires_license_acceptance(
 ) -> None:
     monkeypatch.delenv("VICTORIA_HOME", raising=False)
 
-    mocker.patch("victoria_terminal.initialize_colorama")
     mocker.patch("victoria_terminal.ensure_app_home")
     mocker.patch("victoria_terminal.load_environment")
     mocker.patch("victoria_terminal.generate_crush_config")
