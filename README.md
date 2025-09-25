@@ -38,19 +38,9 @@ Podman is required for every installation option. Install it first, then verify 
 
 ---
 
-## 🚀 Installation options
+## 🚀 Install with the helper script
 
-Victoria supports three installation flows. Use the summary below to pick the path that matches your workflow, then jump to the detailed instructions.
-
-| Stream | Best for | What you get |
-| --- | --- | --- |
-| [Stream 1 – Guided helper script](#stream-1--guided-helper-script) | Analysts and traders who want the quickest setup | Installs Podman prerequisites, provisions the shared workspace, pulls the right image, and adds a `victoria` command to your shell profile. |
-| [Stream 2 – Manual Podman commands](#stream-2--manual-podman-commands) | Operators who prefer to copy/paste each command | Step-by-step Podman instructions for creating the workspace, pulling images, running the container, and passing options. |
-| [Stream 3 – Build from source](#stream-3--build-from-source) | Contributors and teams customizing Victoria | Clone the repository, create a Python environment, and build/test the container locally. |
-
-### Stream 1 – Guided helper script
-
-Let Victoria wire up the remaining pieces for you. The helper scripts validate Podman, ensure your `~/Victoria` workspace exists, detect the host architecture, pull the matching container image tag, and add a reusable `victoria` command to your shell profile.
+The fastest way to get Victoria on your machine is the guided installer. It checks for Podman, ensures your `~/Victoria` workspace exists, detects the host architecture, pulls the matching container image tag, and adds a reusable `victoria` command to your shell profile.
 
 * **macOS / Linux**
   ```bash
@@ -69,107 +59,8 @@ victoria
 
 Re-run the script any time you want to refresh the alias. It will not reinstall Podman, but it will remind you to start `podman machine` on macOS and Windows if needed.
 
-### Stream 2 – Manual Podman commands
-
-Prefer to copy and paste the commands yourself? Follow the steps below to mirror what the helper script does behind the scenes.
-
-#### Create the shared workspace folder
-
-Victoria stores configuration and credentials in a folder that is mounted into the container. Create it once and reuse it for every upgrade:
-
-* **macOS / Linux**
-  ```bash
-  mkdir -p ~/Victoria
-  ```
-* **Windows (PowerShell)**
-  ```powershell
-  New-Item -ItemType Directory -Path "$HOME/Victoria" -Force
-  ```
-* **Windows (Command Prompt)**
-  ```cmd
-  mkdir %USERPROFILE%\Victoria
-  ```
-
-#### Pull the right image for your architecture
-
-Victoria publishes multi-architecture tags. If you're unsure which CPU architecture your Podman host is using, check it with:
-
-```bash
-podman info --format '{{.Host.Arch}}'
-```
-
-Use the table below to pull (or update) the matching image and run it. Re-running the `podman pull` command keeps you on the latest release.
-
-| Platform | CPU architecture | Pull / update | Run |
-| --- | --- | --- | --- |
-| macOS or Linux (Intel/AMD) | `x86_64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest` | `podman run --rm -it --userns=keep-id --security-opt=no-new-privileges --cap-drop=all -e VICTORIA_HOME=/workspace/Victoria -v ~/Victoria:/workspace/Victoria:z ghcr.io/elcanotek/victoria-terminal:latest` |
-| macOS or Linux (Arm64) | `arm64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest-arm64` | `podman run --rm -it --userns=keep-id --security-opt=no-new-privileges --cap-drop=all -e VICTORIA_HOME=/workspace/Victoria -v ~/Victoria:/workspace/Victoria:z ghcr.io/elcanotek/victoria-terminal:latest-arm64` |
-| Windows PowerShell (Intel/AMD) | `x86_64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest` | `podman run --rm -it -e VICTORIA_HOME=/workspace/Victoria -v "$env:USERPROFILE/Victoria:/workspace/Victoria" ghcr.io/elcanotek/victoria-terminal:latest` |
-| Windows PowerShell (Arm64) | `arm64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest-arm64` | `podman run --rm -it -e VICTORIA_HOME=/workspace/Victoria -v "$env:USERPROFILE/Victoria:/workspace/Victoria" ghcr.io/elcanotek/victoria-terminal:latest-arm64` |
-
-> **Tip:** The run commands are shown on a single line for PowerShell compatibility. On macOS and Linux you can add `\` line continuations for readability.
-
-When you need to pass arguments through to Victoria, include `--` after the image name so Podman stops parsing options. For example:
-
-```bash
-podman run --rm -it --userns=keep-id --security-opt=no-new-privileges --cap-drop=all -e VICTORIA_HOME=/workspace/Victoria -v ~/Victoria:/workspace/Victoria ghcr.io/elcanotek/victoria-terminal:latest -- --skip-launch
-```
-
-The same command on Windows stays on a single line and uses `$env:USERPROFILE/Victoria` for the shared folder path.
-
-> **Important:** Non-interactive runs that skip the launch banner must also pass `--accept-license` (for example, together with `--no-banner`). Using this flag automatically accepts the Victoria Terminal Business Source License described in [LICENSE](LICENSE).
-
-#### Configure on first run
-
-The container's default command (`victoria_terminal.py`) assumes you provide a ready-to-use `.env` file inside `~/Victoria`.
-
-- If `~/Victoria/.env` exists, Victoria loads the environment variables and launches immediately.
-- If the file is missing—or lacks a required key—it logs a warning that calls out which integrations will be unavailable until the `.env` file is updated.
-
-Victoria validates your `.env` file on every launch. Pass `--skip-launch` if you only want to perform the configuration checks without starting the UI:
-
-```bash
-podman run --rm -it \
-  --userns=keep-id \
-  --security-opt=no-new-privileges \
-  --cap-drop=all \
-  -e VICTORIA_HOME=/workspace/Victoria \
-  -v ~/Victoria:/workspace/Victoria \
-  ghcr.io/elcanotek/victoria-terminal:latest -- --skip-launch
-```
-
-You can also point the default command at an alternate shared location with `--shared-home /path/to/shared/Victoria`.
-
-> **Tip:** Ship a preconfigured `.env` file with every deployment so users can copy it into `~/Victoria` before launching.
-
-##### Managing the `.env` file
-
-Victoria reads every environment variable defined in `~/Victoria/.env` and exposes it to the terminal session. Provide two artifacts to your users:
-
-1. A commented template that documents each key (use `example.env` as a starting point).
-2. A deployment-ready file with live credentials so new users can copy it into place without editing.
-
-```dotenv
-# victoria/.env (sample deployment bundle)
-OPENROUTER_API_KEY="sk-or-your-api-key-here"
-GAMMA_API_KEY="sk-gamma-your-api-key-here"
-```
-
-- Keep comments in the template to describe why a key is needed or where to request it.
-- Distribute sensitive values through secure channels—Victoria simply reads them at runtime.
-- To rotate a credential, update the `.env` file on the host and restart the container; no interactive wizard is required.
-
-Swap in the image tag that matches your architecture (from the table above) and adjust the host path syntax for your platform. Windows PowerShell users should run the command on a single line with `$env:USERPROFILE/Victoria`.
-
-#### Using Local LLM Providers
-
-Victoria is configured to work with local LLM providers like LM Studio. To connect to LM Studio from within the Victoria container, you must enable network access.
-
-In LM Studio, navigate to the server settings and ensure that **"Serve on local network"** is turned on. This allows the container to reach the server at `http://host.containers.internal:1234`.
-
-### Stream 3 – Build from source
-
-Follow this path if you plan to modify Victoria, integrate it into a custom workflow, or contribute changes upstream. The end-to-end development workflow—including rebuilding the container, updating shared templates, and verifying changes—is documented in detail in [CONTRIBUTING.md](CONTRIBUTING.md).
+> **Need manual commands, pre-built image instructions, or the full development workflow?**
+> Head over to [CONTRIBUTING.md](CONTRIBUTING.md) for step-by-step guidance on running published container images and building Victoria from source.
 
 ## 🤝 Contributing
 
