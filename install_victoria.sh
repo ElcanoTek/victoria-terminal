@@ -112,7 +112,11 @@ victoria() {
     return $?
   fi
   podman run --rm -it \
-    -v "$HOME/Victoria:/root/Victoria" \
+    --userns=keep-id \
+    --security-opt=no-new-privileges \
+    --cap-drop=all \
+    -e VICTORIA_HOME=/workspace/Victoria \
+    -v "$HOME/Victoria:/workspace/Victoria:z" \
     "$image" "$@"
 }
 # <<< victoria-terminal helper <<<
