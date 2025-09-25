@@ -8,6 +8,20 @@ By submitting a Contribution you agree to the terms of the [ElcanoTek Contributo
 
 ## Development Workflow
 
+> [!WARNING]
+> **Windows Users: Git Line Endings**
+>
+> The container's entrypoint script (`container_entrypoint.sh`) is a POSIX shell script that requires Unix-style line endings (LF). If you check out the repository on Windows with Git's default settings, it may convert LF to CRLF, causing the container to fail with an error like `env: 'bash\r': Permission denied`.
+>
+> **How to fix it:**
+>
+> Configure Git to leave line endings as-is *before* cloning the repository:
+> ```powershell
+> git config --global core.autocrlf false
+> ```
+>
+> If you have already cloned the repository, you can run `git reset --hard` after changing the setting, or manually convert the line endings of shell scripts. Alternatively, use Windows Subsystem for Linux (WSL) for development.
+
 Victoria is distributed as a container image. Build and run that image locally during development. Podman is required.
 
 1. **Install and validate Podman.** macOS and Windows users can install Podman Desktop from [podman.io](https://podman.io); Linux users should use their distribution packages. Confirm the installation with `podman --version`.
@@ -20,8 +34,9 @@ Victoria is distributed as a container image. Build and run that image locally d
 
    Rebuild whenever you update Python dependencies, adjust the `Containerfile`, or need the container to pick up local source code changes.
 
-4. **Run the development image.** Mount your shared workspace and pass optional arguments after `--` to forward them to the entrypoint:
+4. **Run the development image.** Mount your shared workspace and pass optional arguments after `--` to forward them to the entrypoint.
 
+   **Linux, macOS (Bash):**
    ```bash
    podman run --rm -it \
      --userns=keep-id \
@@ -30,7 +45,19 @@ Victoria is distributed as a container image. Build and run that image locally d
      -e VICTORIA_HOME=/workspace/Victoria \
      -v ~/Victoria:/workspace/Victoria \
      victoria-terminal
+   ```
 
+   **Windows (PowerShell):**
+   ```powershell
+   podman run --rm -it --userns=keep-id --security-opt=no-new-privileges --cap-drop=all -e VICTORIA_HOME=/workspace/Victoria -v "$env:USERPROFILE/Victoria:/workspace/Victoria" victoria-terminal
+   ```
+
+   The entrypoint provisions a writable home directory for rootless sessions, so there is no need to override the container user. Pairing `--security-opt=no-new-privileges` with `--cap-drop=all` keeps the runtime aligned with least-privilege defaults; add individual capabilities back only when debugging a scenario that requires them.
+
+5. **Run linting and tests.** Use the same container to run Nox sessions for linting and testing.
+
+   **Linux, macOS (Bash):**
+   ```bash
    # Run automated linting
    podman run --rm -it \
      --userns=keep-id \
@@ -41,11 +68,11 @@ Victoria is distributed as a container image. Build and run that image locally d
      victoria-terminal -- nox -s lint
    ```
 
-   Windows users should keep the command on a single line and replace `~/Victoria` with `$env:USERPROFILE/Victoria`.
-
-   The entrypoint provisions a writable home directory for rootless sessions, so there is no need to override the container user.
-   Pairing `--security-opt=no-new-privileges` with `--cap-drop=all` keeps the runtime aligned with least-privilege defaults; add
-   individual capabilities back only when debugging a scenario that requires them.
+   **Windows (PowerShell):**
+   ```powershell
+   # Run automated linting
+   podman run --rm -it --userns=keep-id --security-opt=no-new-privileges --cap-drop=all -e VICTORIA_HOME=/workspace/Victoria -v "$env:USERPROFILE/Victoria:/workspace/Victoria" victoria-terminal -- nox -s lint
+   ```
 
 5. **Optional virtual environment.** If you must experiment outside Podman, create a local virtual environment with `python -m venv .venv`, install `requirements.txt`, and rebuild the container once you are satisfied with the changes. Treat this as a temporary escape hatch; the container remains the source of truth.
 
@@ -104,17 +131,7 @@ Victoria follows Python best practices with automated formatting and linting:
 * **[isort](https://pycqa.github.io/isort/)** — Import organizer aligned with Black.
 * **[flake8](https://flake8.pycqa.org/)** — Enforces PEP 8 compliance and highlights common mistakes.
 
-These tools run through [Nox](https://nox.thea.codes/) sessions defined in `noxfile.py`. Because the container ships with the tooling installed, invoke them directly via Podman:
-
-```bash
-podman run --rm -it \
-  --userns=keep-id \
-  --security-opt=no-new-privileges \
-  --cap-drop=all \
-  -e VICTORIA_HOME=/workspace/Victoria \
-  -v ~/Victoria:/workspace/Victoria \
-  victoria-terminal -- nox -s lint
-```
+These tools run through [Nox](https://nox.thea.codes/) sessions defined in `noxfile.py`. Because the container ships with the tooling installed, invoke them directly via Podman as shown in the "Development Workflow" section.
 
 Nox manages its own virtual environments, so you can run the command from a fresh checkout without pre-creating `.venv`.
 
