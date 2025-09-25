@@ -2,7 +2,7 @@
 
 The Victoria terminal has been simplified to rely on a single entry point. The
 current test suite focuses on the essential behaviours that keep that workflow
-reliable.
+reliable without relying on extensive mocking.
 
 ## Running the Tests
 
@@ -21,9 +21,8 @@ pytest
 
 ## Covered Scenarios
 
-- Validating `.env` parsing and serialization helpers.
+- Validating `.env` parsing helpers.
 - Verifying configuration files are created from bundled templates when
   variables are substituted.
-- Ensuring shared configuration folders synchronise bundled documentation.
-- Confirming the entry point honours the `--skip-launch` flag without invoking
-  external binaries.
+- Exercising basic command-line parsing behaviour.
+- Deferring complex lifecycle checks to integration tests.
