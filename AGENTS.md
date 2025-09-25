@@ -64,6 +64,15 @@ podman run --rm -it \
   ghcr.io/elcanotek/victoria-terminal:latest
 ```
 
+### Container Security Philosophy
+
+The container setup for Victoria is intentionally designed to balance security with developer productivity and cross-platform compatibility. Agents working on this project should adhere to the following principles and avoid making changes that contradict them:
+
+-   **Runtime Security is Paramount**: Security is enforced primarily at runtime using Podman's security features. The flags `--security-opt=no-new-privileges` and `--cap-drop=all` are critical. They significantly limit the container's privileges, providing a strong security posture without complicating the build process.
+-   **Flexible User Management**: The container uses `--userns=keep-id` to map the host user's ID to the container user. This is essential for seamless file sharing on mounted volumes and avoids permission issues. **Do not** add a `USER` instruction to the `Containerfile`, as it will break this workflow.
+-   **Single-Stage Build for Debugging**: The `Containerfile` uses a single-stage build. This is a deliberate choice to keep development tools (like `go`, `git`, etc.) available within the container, which simplifies debugging. Do not refactor this into a multi-stage build, as it would hinder the development workflow.
+-   **"Always on Latest" Update Strategy**: The base image is intentionally set to `fedora:latest`. This ensures the container always benefits from the latest security patches. Builds are versioned and stored in the GitHub Container Registry, allowing for easy rollbacks if an update causes issues. Do not pin the base image to a specific version, as this would prevent automatic security updates.
+
 ### Dependencies Explained
 
 - `requirements.txt`: Contains the dependencies required to run and develop the Victoria applications, including testing and formatting tools.
