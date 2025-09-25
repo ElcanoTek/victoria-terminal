@@ -107,52 +107,21 @@ Use the table below to pull (or update) the matching image and run it. Re-runnin
 | Windows PowerShell (Intel/AMD) | `x86_64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest` | `podman run --rm -it -e VICTORIA_HOME=/workspace/Victoria -v "$env:USERPROFILE/Victoria:/workspace/Victoria" ghcr.io/elcanotek/victoria-terminal:latest` |
 | Windows PowerShell (Arm64) | `arm64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest-arm64` | `podman run --rm -it -e VICTORIA_HOME=/workspace/Victoria -v "$env:USERPROFILE/Victoria:/workspace/Victoria" ghcr.io/elcanotek/victoria-terminal:latest-arm64` |
 
-> [!NOTE]
-> The run commands are shown on a single line to work in PowerShell and other shells without additional escaping. On macOS and Linux you can add `\` line continuations if you prefer.
+> **Tip:** The run commands are shown on a single line for PowerShell compatibility. On macOS and Linux you can add `\` line continuations for readability.
 
-> [!TIP]
-> The container entrypoint now bootstraps a writable home directory for both rootless (`--userns=keep-id`) and privileged runs. You no longer need to force `--user 0`. Add `--security-opt=no-new-privileges` and `--cap-drop=all` to keep the runtime aligned with least-privilege defaults on Linux and macOS. Podman on Windows does not currently support those flags, so it falls back to a privileged run by default.
-
-#### Best Practices for Argument Passing
-
-When passing arguments to Victoria inside the container, always use the `--` separator to clearly distinguish between container options and application arguments:
+When you need to pass arguments through to Victoria, include `--` after the image name so Podman stops parsing options. For example:
 
 ```bash
-# Correct: Arguments after -- go to Victoria
 podman run --rm -it --userns=keep-id --security-opt=no-new-privileges --cap-drop=all -e VICTORIA_HOME=/workspace/Victoria -v ~/Victoria:/workspace/Victoria ghcr.io/elcanotek/victoria-terminal:latest -- --skip-launch
-
-# Avoid: Ambiguous argument parsing
-podman run --rm -it --userns=keep-id --security-opt=no-new-privileges --cap-drop=all -e VICTORIA_HOME=/workspace/Victoria -v ~/Victoria:/workspace/Victoria ghcr.io/elcanotek/victoria-terminal:latest --skip-launch
 ```
 
-The `--` separator ensures that:
-- Container runtime options (like `--rm`, `-it`, `-v`) are processed by Podman.
-- Application arguments (like `--skip-launch`) are passed to Victoria.
-- Container and application flags remain unambiguous.
+The same command on Windows stays on a single line and uses `$env:USERPROFILE/Victoria` for the shared folder path.
 
-On macOS and Linux you can split the run command across multiple lines for readability (the example below shows the `x86_64` tag; swap in the tag from the table above if you are on Arm64):
-
-```bash
-podman run --rm -it \
-  --userns=keep-id \
-  --security-opt=no-new-privileges \
-  --cap-drop=all \
-  -e VICTORIA_HOME=/workspace/Victoria \
-  -v ~/Victoria:/workspace/Victoria \
-  ghcr.io/elcanotek/victoria-terminal:latest -- --skip-launch
-```
-> [!IMPORTANT]
-> Non-interactive runs that skip the launch banner must pass `--accept-license` (for example, together with `--no-banner`). Using this flag automatically accepts the Victoria Terminal Business Source License described in [LICENSE](LICENSE).
-
-Windows users should keep the commands on a single line and use `$env:USERPROFILE/Victoria` in place of `~/Victoria`:
-
-```powershell
-podman run --rm -it -e VICTORIA_HOME=/workspace/Victoria -v "$env:USERPROFILE/Victoria:/workspace/Victoria" ghcr.io/elcanotek/victoria-terminal:latest -- --skip-launch
-```
+> **Important:** Non-interactive runs that skip the launch banner must also pass `--accept-license` (for example, together with `--no-banner`). Using this flag automatically accepts the Victoria Terminal Business Source License described in [LICENSE](LICENSE).
 
 #### Configure on first run
 
-The container's default command (`victoria_terminal.py`) now assumes you provide a ready-to-use `.env` file inside `~/Victoria`.
+The container's default command (`victoria_terminal.py`) assumes you provide a ready-to-use `.env` file inside `~/Victoria`.
 
 - If `~/Victoria/.env` exists, Victoria loads the environment variables and launches immediately.
 - If the file is missing—or lacks a required key—it logs a warning that calls out which integrations will be unavailable until the `.env` file is updated.
@@ -171,41 +140,32 @@ podman run --rm -it \
 
 You can also point the default command at an alternate shared location with `--shared-home /path/to/shared/Victoria`.
 
-> [!IMPORTANT]
-> Victoria no longer prompts for API keys. Provide a curated `.env` file with every deployment so users can drop it into their `~/Victoria` folder and get started immediately.
+> **Tip:** Ship a preconfigured `.env` file with every deployment so users can copy it into `~/Victoria` before launching.
 
 ##### Managing the `.env` file
 
-Victoria reads every environment variable defined in `~/Victoria/.env` and exposes it to the terminal session. Bundle a template that documents each key alongside a fully configured variant for production use.
+Victoria reads every environment variable defined in `~/Victoria/.env` and exposes it to the terminal session. Provide two artifacts to your users:
 
-Use the provided `example.env` file as a template:
-
-```bash
-# Copy the example file and customize it
-cp example.env ~/Victoria/.env
-```
-
-Example configuration:
+1. A commented template that documents each key (use `example.env` as a starting point).
+2. A deployment-ready file with live credentials so new users can copy it into place without editing.
 
 ```dotenv
-# victoria/.env
+# victoria/.env (sample deployment bundle)
 OPENROUTER_API_KEY="sk-or-your-api-key-here"
 GAMMA_API_KEY="sk-gamma-your-api-key-here"
 ```
 
-- Keep comments in the file to describe why a key is needed or where to request it.
+- Keep comments in the template to describe why a key is needed or where to request it.
 - Distribute sensitive values through secure channels—Victoria simply reads them at runtime.
 - To rotate a credential, update the `.env` file on the host and restart the container; no interactive wizard is required.
 
-> [!TIP]
-> Swap in the image tag that matches your architecture (from the table above) and adjust the host path syntax for your platform. Windows PowerShell users should run the command on a single line with `$env:USERPROFILE/Victoria`.
+Swap in the image tag that matches your architecture (from the table above) and adjust the host path syntax for your platform. Windows PowerShell users should run the command on a single line with `$env:USERPROFILE/Victoria`.
 
 #### Using Local LLM Providers
 
 Victoria is configured to work with local LLM providers like LM Studio. To connect to LM Studio from within the Victoria container, you must enable network access.
 
-> [!IMPORTANT]
-> In LM Studio, navigate to the server settings and ensure that **"Serve on local network"** is turned on. This allows the container to reach the server at `http://host.containers.internal:1234`.
+In LM Studio, navigate to the server settings and ensure that **"Serve on local network"** is turned on. This allows the container to reach the server at `http://host.containers.internal:1234`.
 
 ### Stream 3 – Build from source
 
