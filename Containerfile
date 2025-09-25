@@ -7,7 +7,8 @@ ARG USER_GID=${USER_UID}
 ENV PATH="/home/${USERNAME}/.local/bin:/root/.local/bin:${PATH}" \
     PYTHONUNBUFFERED="1" \
     GOTOOLCHAIN="auto" \
-    GOSUMDB="sum.golang.org"
+    GOSUMDB="sum.golang.org" \
+    PIP_ROOT_USER_ACTION="ignore"
 
 RUN dnf -y upgrade && \
     dnf -y install python3 python3-pip git curl golang helix uv shadow-utils && \
