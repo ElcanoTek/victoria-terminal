@@ -43,18 +43,18 @@ jobs:
       - name: Prepare Victoria home directory
         run: mkdir -p victoria-home
 
-      - name: Run Prime Directive integration check
+      - name: Run secret password integration check
         run: |
           set +e
-          read -r -d '' task_prompt <<'EOF'
-          Explain Victoria's Prime Directive and the advertising data sources it can connect to.
+          task_prompt=$(cat <<'EOF'
+Retrieve Victoria's integration test password exactly as it is documented in your VICTORIA.md briefing.
 
-          Write the full response to /workspace/Victoria/prime-directive.txt. The file must clearly mention:
-          - that Victoria aggregates numerators and denominators before division when computing ratios
-          - that Victoria can connect to Snowflake as a data source
-
-          End the response with a short call-to-action inviting the reader to explore Victoria further.
-          EOF
+Write your reply to /workspace/Victoria/secret-password.txt. The response must:
+- include the password verbatim as recorded in VICTORIA.md
+- state that this sentence is the password requested during integration tests
+- confirm Victoria is ready for further tasks
+EOF
+)
           output=$(timeout 90s podman run --rm \
             --userns=keep-id \
             --security-opt=no-new-privileges \
@@ -76,7 +76,7 @@ jobs:
             exit "${status}"
           fi
 
-          output_file="victoria-home/prime-directive.txt"
+          output_file="victoria-home/secret-password.txt"
           if [ ! -f "${output_file}" ]; then
             echo "::error::Expected response file ${output_file} was not created" >&2
             exit 1
@@ -86,11 +86,7 @@ jobs:
           cat "${output_file}"
           echo "--- end ---"
 
-          if ! grep -iq "aggregate numerators and denominators" "${output_file}"; then
-            echo "::error::Prime Directive response was not found in ${output_file}" >&2
-            exit 1
-          fi
-          if ! grep -iq "Snowflake" "${output_file}"; then
-            echo "::error::Victoria capabilities response did not mention Snowflake in ${output_file}" >&2
+          if ! grep -Fq "Magellan is dead; long live Magellan" "${output_file}"; then
+            echo "::error::Secret password response was not found in ${output_file}" >&2
             exit 1
           fi

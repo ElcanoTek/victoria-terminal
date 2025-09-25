@@ -78,15 +78,24 @@ else:
     }
 
 
+SILENT_MODE = False
+
+
 def info(message: str) -> None:  # pragma: no cover - simple wrapper
+    if SILENT_MODE:
+        return
     console.print(f"[cyan]{ICONS['info']} {message}")
 
 
 def good(message: str) -> None:  # pragma: no cover - simple wrapper
+    if SILENT_MODE:
+        return
     console.print(f"[green]{ICONS['good']} {message}")
 
 
 def warn(message: str) -> None:  # pragma: no cover - simple wrapper
+    if SILENT_MODE:
+        return
     console.print(f"[yellow]{ICONS['warn']} {message}")
 
 
@@ -101,6 +110,8 @@ def handle_error(exc: Exception) -> None:
 
 
 def section(title: str) -> None:  # pragma: no cover - simple wrapper
+    if SILENT_MODE:
+        return
     console.rule(f"[bold yellow]{title}")
 
 
@@ -256,11 +267,15 @@ def _prompt_license_response() -> str:
 
 def _notify_invalid_response() -> None:
     message = "Please respond with 'accept' or 'decline'."
+    if SILENT_MODE:
+        return
     console.print(f"[yellow]{message}[/yellow]")
 
 
 def _acknowledge_license_acceptance() -> None:
     message = "License accepted. Continuing startup..."
+    if SILENT_MODE:
+        return
     console.print(f"[green]{message}[/green]")
     time.sleep(1.0)
 
@@ -787,11 +802,12 @@ def main(argv: Sequence[str] | None = None) -> None:
     app_home = args.app_home.expanduser()
     os.environ["VICTORIA_HOME"] = str(app_home)
 
-    task_prompt: str | None = getattr(args, "task", None)
-    task_mode = task_prompt is not None
+    raw_task_prompt = getattr(args, "task", None)
+    task_prompt: str | None = None
+    task_mode_active = False
 
-    if task_mode:
-        task_prompt = task_prompt.strip() if task_prompt else ""
+    if raw_task_prompt is not None:
+        task_prompt = raw_task_prompt.strip() if raw_task_prompt else ""
         if args.skip_launch:
             err("--task cannot be combined with --skip-launch.")
             sys.exit(2)
@@ -801,6 +817,12 @@ def main(argv: Sequence[str] | None = None) -> None:
         if not args.accept_license:
             err("--task requires --accept-license to confirm acceptance of the Victoria Terminal license.")
             sys.exit(2)
+        task_mode_active = True
+
+    global SILENT_MODE
+    SILENT_MODE = task_mode_active
+
+    task_mode = task_mode_active
 
     # Intro: two screens with Enter between each, spinner before launch
     if not task_mode:
