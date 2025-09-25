@@ -302,16 +302,16 @@ def test_parse_args_ignores_double_dash_separator() -> None:
     assert args.skip_launch is True
 
 
-def test_parse_args_sets_no_banner_flag() -> None:
-    args = entrypoint.parse_args(["--no-banner"])
-
-    assert args.no_banner is True
-
-
 def test_parse_args_sets_accept_license_flag() -> None:
     args = entrypoint.parse_args(["--accept-license"])
 
     assert args.accept_license is True
+
+
+def test_parse_args_supports_task_flag() -> None:
+    args = entrypoint.parse_args(["--task", " Summarize mission "])
+
+    assert args.task == " Summarize mission "
 
 
 def test_main_honours_skip_launch(tmp_path: Path, mocker: pytest.MockFixture, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -336,40 +336,45 @@ def test_main_honours_skip_launch(tmp_path: Path, mocker: pytest.MockFixture, mo
     banner_sequence.assert_called_once_with()
 
 
-def test_main_skips_banner_when_flag_set(
+def test_main_task_launches_crush_without_banner(
     tmp_path: Path, mocker: pytest.MockFixture, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.delenv("VICTORIA_HOME", raising=False)
 
     banner_sequence = mocker.patch("victoria_terminal.banner_sequence")
-    mocker.patch("victoria_terminal.ensure_app_home", side_effect=lambda path: path)
+    ensure_app_home = mocker.patch("victoria_terminal.ensure_app_home", side_effect=lambda path: path)
     mocker.patch("victoria_terminal.load_environment")
     mocker.patch("victoria_terminal.generate_crush_config")
     mocker.patch("victoria_terminal.remove_local_duckdb")
     mocker.patch("victoria_terminal.info")
     mocker.patch("victoria_terminal.preflight_crush")
-    mocker.patch("victoria_terminal.launch_crush")
+    launch_crush = mocker.patch("victoria_terminal.launch_crush")
     persist_acceptance = mocker.patch("victoria_terminal._persist_license_acceptance")
 
-    entrypoint.main(
-        [
-            "--skip-launch",
-            "--no-banner",
-            "--accept-license",
-            "--app-home",
-            str(tmp_path),
-        ]
-    )
+    entrypoint.main(["--accept-license", "--task", "Summarize Prime Directive"])
 
+    ensure_app_home.assert_called_once()
+    launch_crush.assert_called_once()
+    args, kwargs = launch_crush.call_args
+    assert kwargs["task_prompt"] == "Summarize Prime Directive"
     banner_sequence.assert_not_called()
-    persist_acceptance.assert_called_once_with(app_home=tmp_path)
+    persist_acceptance.assert_called_once()
 
 
-def test_main_no_banner_requires_license_acceptance(
-    tmp_path: Path, mocker: pytest.MockFixture, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.delenv("VICTORIA_HOME", raising=False)
+def test_main_task_rejects_conflicting_flags(mocker: pytest.MockFixture) -> None:
+    mocker.patch("victoria_terminal.ensure_app_home")
+    mocker.patch("victoria_terminal.load_environment")
+    mocker.patch("victoria_terminal.generate_crush_config")
+    mocker.patch("victoria_terminal.remove_local_duckdb")
+    mocker.patch("victoria_terminal.info")
+    mocker.patch("victoria_terminal.preflight_crush")
 
+    with pytest.raises(SystemExit) as excinfo:
+        entrypoint.main(["--task", "prompt", "--accept-license", "--skip-launch"])
+
+    assert excinfo.value.code == 2
+
+def test_main_task_requires_accept_license(mocker: pytest.MockFixture) -> None:
     mocker.patch("victoria_terminal.ensure_app_home")
     mocker.patch("victoria_terminal.load_environment")
     mocker.patch("victoria_terminal.generate_crush_config")
@@ -380,14 +385,17 @@ def test_main_no_banner_requires_license_acceptance(
     err = mocker.patch("victoria_terminal.err")
 
     with pytest.raises(SystemExit) as excinfo:
-        entrypoint.main(
-            [
-                "--skip-launch",
-                "--no-banner",
-                "--app-home",
-                str(tmp_path),
-            ]
-        )
+        entrypoint.main(["--task", "prompt"])
 
     assert excinfo.value.code == 2
     err.assert_called_once()
+
+def test_launch_crush_runs_task_with_yolo(tmp_path: Path, mocker: pytest.MockFixture) -> None:
+    execvp = mocker.patch("victoria_terminal.os.execvp")
+
+    entrypoint.launch_crush(app_home=tmp_path, task_prompt="Prime Directive")
+
+    execvp.assert_called_once()
+    args = execvp.call_args[0]
+    assert args[0] == entrypoint.CRUSH_COMMAND
+    assert args[1][3:] == ["run", "--yolo", "Prime Directive"]

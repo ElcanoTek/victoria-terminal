@@ -62,7 +62,7 @@ podman run --rm -it --userns=keep-id --security-opt=no-new-privileges --cap-drop
 
 The same command on Windows stays on a single line and uses `$env:USERPROFILE/Victoria` for the shared folder path.
 
-> **Important:** Non-interactive runs that skip the launch banner must also pass `--accept-license` (for example, together with `--no-banner`). Using this flag automatically accepts the Victoria Terminal Business Source License described in [LICENSE](LICENSE).
+> **Important:** Non-interactive runs triggered with `--task` must also pass `--accept-license`. Using this flag automatically accepts the Victoria Terminal Business Source License described in [LICENSE](LICENSE).
 
 ### 3. Configure on first run
 
