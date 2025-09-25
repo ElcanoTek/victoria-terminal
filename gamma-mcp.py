@@ -6,6 +6,7 @@ A simple MCP server for Gamma AI presentation generation.
 Runs within the Victoria Terminal container environment.
 """
 
+import asyncio
 import logging
 import os
 import sys
@@ -29,6 +30,10 @@ mcp = FastMCP("gamma")
 GAMMA_API_BASE = "https://public-api.gamma.app/v0.2"
 USER_AGENT = "victoria-terminal/1.0"
 DEFAULT_TIMEOUT = 60.0  # Increased timeout for presentation generation
+
+# Polling configuration
+POLLING_INTERVAL = 30  # seconds
+MAX_POLLING_ATTEMPTS = 10  # Maximum number of polling attempts (5 minutes total)
 
 
 async def make_gamma_request(method: str, url: str, json: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -181,6 +186,142 @@ async def check_presentation_status(generation_id: str) -> Dict[str, Any]:
         logger.info(f"Generation status: {status}")
     
     return result
+
+
+@mcp.tool()
+async def wait_for_presentation_completion(
+    generation_id: str,
+    polling_interval: int = POLLING_INTERVAL,
+    max_attempts: int = MAX_POLLING_ATTEMPTS
+) -> Dict[str, Any]:
+    """
+    Automatically poll the presentation status until completion or timeout.
+    
+    This function will check the presentation status every 30 seconds (by default)
+    until the presentation is completed, failed, or the maximum number of attempts
+    is reached.
+
+    Args:
+        generation_id: The ID of the generation to monitor
+        polling_interval: Time in seconds between status checks (default: 30)
+        max_attempts: Maximum number of polling attempts (default: 10)
+
+    Returns:
+        Dictionary containing the final generation status or error information
+    """
+    logger.info(f"Starting automatic polling for generation ID: {generation_id}")
+    logger.info(f"Polling every {polling_interval} seconds, max attempts: {max_attempts}")
+    
+    attempt = 0
+    
+    while attempt < max_attempts:
+        attempt += 1
+        logger.info(f"Polling attempt {attempt}/{max_attempts}")
+        
+        # Check the current status
+        result = await check_presentation_status(generation_id)
+        
+        # Handle errors
+        if "error" in result:
+            logger.error(f"Error checking status: {result['error']}")
+            return result
+        
+        status = result.get("status", "unknown")
+        logger.info(f"Current status: {status}")
+        
+        # Check if presentation is completed
+        if status == "completed":
+            logger.info("Presentation generation completed successfully!")
+            return result
+        
+        # Check if presentation failed
+        if status == "failed":
+            logger.error("Presentation generation failed")
+            return result
+        
+        # If still pending and not the last attempt, wait before next check
+        if attempt < max_attempts:
+            logger.info(f"Status is '{status}', waiting {polling_interval} seconds before next check...")
+            await asyncio.sleep(polling_interval)
+        else:
+            logger.warning(f"Maximum polling attempts ({max_attempts}) reached")
+            return {
+                "error": f"Presentation generation timed out after {max_attempts} attempts",
+                "generationId": generation_id,
+                "status": status,
+                "attempts": attempt
+            }
+    
+    # This should not be reached, but included for completeness
+    return {
+        "error": "Unexpected end of polling loop",
+        "generationId": generation_id,
+        "attempts": attempt
+    }
+
+
+@mcp.tool()
+async def generate_and_wait_for_presentation(
+    input_text: str,
+    theme_name: str = DEFAULT_THEME,
+    additional_instructions: str = (
+        "Use the Elcano theme with the standard title and thank you slides. "
+        "Ensure all charts are easy to read and properly labeled."
+    ),
+    export_as: str = "pptx",
+    polling_interval: int = POLLING_INTERVAL,
+    max_attempts: int = MAX_POLLING_ATTEMPTS
+) -> Dict[str, Any]:
+    """
+    Generate a presentation and automatically wait for completion.
+    
+    This is a convenience function that combines generate_presentation and
+    wait_for_presentation_completion into a single call. It will start the
+    generation and then automatically poll every 30 seconds until the
+    presentation is ready.
+
+    Args:
+        input_text: The markdown content for the presentation
+        theme_name: The name of the theme to use (default: Elcano)
+        additional_instructions: Additional instructions for generation
+        export_as: Export format (default: pptx)
+        polling_interval: Time in seconds between status checks (default: 30)
+        max_attempts: Maximum number of polling attempts (default: 10)
+
+    Returns:
+        Dictionary containing the final generation result or error information
+    """
+    logger.info("Starting presentation generation with automatic completion waiting")
+    
+    # Start the generation
+    generation_result = await generate_presentation(
+        input_text=input_text,
+        theme_name=theme_name,
+        additional_instructions=additional_instructions,
+        export_as=export_as
+    )
+    
+    # Check if generation started successfully
+    if "error" in generation_result:
+        logger.error("Failed to start presentation generation")
+        return generation_result
+    
+    generation_id = generation_result.get("generationId")
+    if not generation_id:
+        logger.error("No generation ID returned from generation request")
+        return {"error": "No generation ID returned from generation request"}
+    
+    logger.info(f"Generation started successfully with ID: {generation_id}")
+    logger.info("Now waiting for completion...")
+    
+    # Wait for completion
+    completion_result = await wait_for_presentation_completion(
+        generation_id=generation_id,
+        polling_interval=polling_interval,
+        max_attempts=max_attempts
+    )
+    
+    return completion_result
 
 
 if __name__ == "__main__":
