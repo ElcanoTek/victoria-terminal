@@ -46,6 +46,7 @@ jobs:
       - name: Run Prime Directive integration check
         run: |
           set +e
+          task_prompt="Explain Victoria's Prime Directive and the advertising data sources it can connect to."
           output=$(timeout 90s podman run --rm \
             --userns=keep-id \
             --security-opt=no-new-privileges \
@@ -56,7 +57,7 @@ jobs:
             "${IMAGE}" \
             -- \
             --accept-license \
-            --task \"Explain Victoria's Prime Directive and the advertising data sources it can connect to.\")
+            --task "${task_prompt}")
           status=$?
           set -e
 
