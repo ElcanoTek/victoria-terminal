@@ -53,11 +53,36 @@ if [ "$(id -u)" = "0" ]; then
     # Get the UID and GID of the /workspace directory.
     TARGET_UID=$(stat -c "%u" /workspace)
     TARGET_GID=$(stat -c "%g" /workspace)
+    CURRENT_UID=$(id -u "${USERNAME}")
+    CURRENT_GID=$(id -g "${USERNAME}")
 
-    # Change the UID and GID of the victoria user to match the target.
-    # The --non-unique flag is omitted to prevent potential security issues.
-    groupmod --gid "${TARGET_GID}" "${USERNAME}"
-    usermod --uid "${TARGET_UID}" --gid "${TARGET_GID}" "${USERNAME}"
+    # Skip remapping when the requested UID or GID are already claimed by a
+    # different account (including root on platforms that expose the mount as
+    # 0:0). This mirrors the previous behaviour where the container simply ran
+    # as the existing victoria user.
+    if getent passwd "${TARGET_UID}" >/dev/null 2>&1; then
+        existing_user=$(getent passwd "${TARGET_UID}" | cut -d: -f1)
+        if [[ "${existing_user}" != "${USERNAME}" ]]; then
+            TARGET_UID=${CURRENT_UID}
+        fi
+    fi
+
+    if getent group "${TARGET_GID}" >/dev/null 2>&1; then
+        existing_group=$(getent group "${TARGET_GID}" | cut -d: -f1)
+        if [[ "${existing_group}" != "${USERNAME}" ]]; then
+            TARGET_GID=${CURRENT_GID}
+        fi
+    fi
+
+    # Change the UID and GID of the victoria user to match the target when the
+    # IDs differ from the current mapping. The --non-unique flag is omitted to
+    # prevent potential security issues.
+    if [[ "${TARGET_GID}" -ne "${CURRENT_GID}" ]]; then
+        groupmod --gid "${TARGET_GID}" "${USERNAME}"
+    fi
+    if [[ "${TARGET_UID}" -ne "${CURRENT_UID}" ]]; then
+        usermod --uid "${TARGET_UID}" --gid "${TARGET_GID}" "${USERNAME}"
+    fi
 
     # Ensure the remapped user can read and write its home directory contents.
     # The Crush bootstrap config ships with restrictive permissions, so without
