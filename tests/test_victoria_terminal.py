@@ -188,3 +188,33 @@ def test_parse_args_supports_task_flag() -> None:
     args = entrypoint.parse_args(["--task", " Summarize mission "])
 
     assert args.task == " Summarize mission "
+
+
+def test_launch_crush_appends_yolo_in_interactive_mode(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    recorded: dict[str, list[str]] = {}
+
+    def fake_execvp(cmd: str, argv: list[str]) -> None:
+        recorded["cmd"] = argv
+        raise SystemExit(0)
+
+    monkeypatch.setattr(entrypoint.os, "execvp", fake_execvp)
+
+    with pytest.raises(SystemExit):
+        entrypoint.launch_crush(app_home=tmp_path)
+
+    assert recorded["cmd"][-1] == "--yolo"
+
+
+def test_launch_crush_omits_yolo_in_task_mode(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    recorded: dict[str, list[str]] = {}
+
+    def fake_execvp(cmd: str, argv: list[str]) -> None:
+        recorded["cmd"] = argv
+        raise SystemExit(0)
+
+    monkeypatch.setattr(entrypoint.os, "execvp", fake_execvp)
+
+    with pytest.raises(SystemExit):
+        entrypoint.launch_crush(app_home=tmp_path, task_prompt="Chart conversions")
+
+    assert "--yolo" not in recorded["cmd"]
