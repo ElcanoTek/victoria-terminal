@@ -27,7 +27,6 @@ import time
 from pathlib import Path
 from typing import Any, Mapping, MutableMapping, Sequence
 
-import colorama
 from colorama import Fore, Style
 from colorama import init as colorama_init
 from dotenv import dotenv_values, load_dotenv, set_key
@@ -37,8 +36,7 @@ from rich.live import Live
 from rich.panel import Panel
 from rich.text import Text
 
-# Initialize colorama and rich console
-colorama.init(autoreset=True)
+# Initialize rich console
 console = Console()
 
 __version__ = "2025.9.9"
@@ -700,7 +698,7 @@ def _clear_basic() -> None:
 def initialize_colorama() -> None:
     """Initialise colorama when not running under pytest."""
     if "PYTEST_CURRENT_TEST" not in os.environ:
-        colorama_init()
+        colorama_init(autoreset=True)
 
 
 _DEF_ENV_PATTERN = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}")
@@ -953,7 +951,8 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         help="Skip the animated launch banner (useful for non-interactive runs).",
     )
     parser.add_argument(
-        "--acccept-license",
+        "--accept-license",
+        dest="accept_license",
         action="store_true",
         help=("Automatically accept the Victoria Terminal license " "(required when using --no-banner)."),
     )
@@ -973,8 +972,11 @@ def main(argv: Sequence[str] | None = None) -> None:
     app_home = args.app_home.expanduser()
     os.environ["VICTORIA_HOME"] = str(app_home)
 
-    if args.no_banner and not args.acccept_license:
-        err("Using --no-banner requires --acccept-license to confirm acceptance " "of the Victoria Terminal license.")
+    if args.no_banner and not args.accept_license:
+        err(
+            "Using --no-banner requires --accept-license to confirm acceptance "
+            "of the Victoria Terminal license."
+        )
         sys.exit(2)
 
     # Intro: two screens with Enter between each, spinner before launch
@@ -982,7 +984,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         banner_sequence()
 
     ensure_app_home(app_home)
-    if args.no_banner and args.acccept_license:
+    if args.no_banner and args.accept_license:
         _persist_license_acceptance(app_home=app_home)
     load_environment(app_home)
     generate_crush_config(app_home=app_home)
