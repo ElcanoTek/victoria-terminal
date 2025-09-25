@@ -1,6 +1,5 @@
 altair
 black
-colorama
 duckdb
 flake8
 httpx

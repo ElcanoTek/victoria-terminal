@@ -27,8 +27,6 @@ import time
 from pathlib import Path
 from typing import Any, Mapping, MutableMapping, Sequence
 
-from colorama import Fore, Style
-from colorama import init as colorama_init
 from dotenv import dotenv_values, load_dotenv, set_key
 from rich.align import Align
 from rich.console import Console, Group
@@ -248,110 +246,50 @@ def _display_license_notice_rich() -> None:
     console.print(panel)
 
 
-def _display_license_notice_colorama() -> None:
-    _clear_basic()
-    license_text = _get_license_text().rstrip()
+def _prompt_license_response() -> str:
     try:
-        print(f"{Fore.WHITE}{Style.BRIGHT}{LICENSE_NOTICE_TITLE.center(80)}{Style.RESET_ALL}\n")
-        for line in license_text.splitlines():
-            print(f"{Fore.WHITE}{line}{Style.RESET_ALL}")
-        print()
-        print(f"{Fore.YELLOW}{LICENSE_NOTICE_REMINDER}{Style.RESET_ALL}")
-        print()
-    except Exception:
-        print(LICENSE_NOTICE_TITLE.center(80))
-        print()
-        print(license_text)
-        print()
-        print(LICENSE_NOTICE_REMINDER)
-        print()
-
-
-def _display_license_notice_basic() -> None:
-    _clear_basic()
-    print(LICENSE_NOTICE_TITLE.center(80))
-    print()
-    print(_get_license_text())
-    print()
-    print(LICENSE_NOTICE_REMINDER)
-    print()
-
-
-def _prompt_license_response(mode: str) -> str:
-    try:
-        if mode == "rich":
-            return console.input(f"[cyan]{LICENSE_ACCEPT_PROMPT}[/cyan]").strip()
-        if mode == "colorama":
-            try:
-                return input(f"{Fore.CYAN}{LICENSE_ACCEPT_PROMPT}{Style.RESET_ALL}").strip()
-            except Exception:
-                return input(LICENSE_ACCEPT_PROMPT).strip()
-        return input(LICENSE_ACCEPT_PROMPT).strip()
+        return console.input(f"[cyan]{LICENSE_ACCEPT_PROMPT}[/cyan]").strip()
     except (KeyboardInterrupt, EOFError):
-        _handle_license_decline(mode, cancelled=True)
+        _handle_license_decline(cancelled=True)
         return ""
 
 
-def _notify_invalid_response(mode: str) -> None:
+def _notify_invalid_response() -> None:
     message = "Please respond with 'accept' or 'decline'."
-    if mode == "rich":
-        console.print(f"[yellow]{message}[/yellow]")
-    else:
-        try:
-            print(f"{Fore.YELLOW}{message}{Style.RESET_ALL}")
-        except Exception:
-            print(message)
+    console.print(f"[yellow]{message}[/yellow]")
 
 
-def _acknowledge_license_acceptance(mode: str) -> None:
+def _acknowledge_license_acceptance() -> None:
     message = "License accepted. Continuing startup..."
-    if mode == "rich":
-        console.print(f"[green]{message}[/green]")
-    else:
-        try:
-            print(f"{Fore.GREEN}{message}{Style.RESET_ALL}")
-        except Exception:
-            print(message)
+    console.print(f"[green]{message}[/green]")
     time.sleep(1.0)
 
 
-def _handle_license_decline(mode: str, *, cancelled: bool = False) -> None:
+def _handle_license_decline(*, cancelled: bool = False) -> None:
     if cancelled:
         message = "Victoria launch cancelled before accepting the license."
     else:
         message = "Victoria Terminal requires license acceptance to continue. Exiting."
-    if mode == "rich":
-        console.print(f"[red]{message}[/red]")
-    else:
-        try:
-            print(f"{Fore.RED}{message}{Style.RESET_ALL}")
-        except Exception:
-            print(message)
+    console.print(f"[red]{message}[/red]")
     sys.exit(0)
 
 
-def _ensure_license_acceptance(mode: str, *, app_home: Path | None = None) -> None:
+def _ensure_license_acceptance(*, app_home: Path | None = None) -> None:
     resolved_home = _resolve_app_home(app_home)
     if _is_license_accepted(app_home=resolved_home):
         return
-    display_map = {
-        "rich": _display_license_notice_rich,
-        "colorama": _display_license_notice_colorama,
-        "basic": _display_license_notice_basic,
-    }
-    display = display_map.get(mode, _display_license_notice_basic)
-    display()
+    _display_license_notice_rich()
     accept_responses = {"accept", "a", "yes", "y"}
     decline_responses = {"decline", "d", "no", "n"}
     while True:
-        response = _prompt_license_response(mode).lower()
+        response = _prompt_license_response().lower()
         if response in accept_responses:
             _persist_license_acceptance(app_home=resolved_home)
-            _acknowledge_license_acceptance(mode)
+            _acknowledge_license_acceptance()
             break
         if response in decline_responses:
-            _handle_license_decline(mode)
-        _notify_invalid_response(mode)
+            _handle_license_decline()
+        _notify_invalid_response()
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -369,40 +307,22 @@ def banner_sequence() -> None:
     app_home = _resolve_app_home()
     use_rich = HAS_RICH and hasattr(console, "is_terminal") and console.is_terminal and sys.stdout.isatty()
 
-    if use_rich:
-        _display_rich_welcome()
-        _animate_waves_rich(duration=1.8)
-        _wait_for_enter_rich("Press Enter to continue...")
-        _display_rich_tips(initial_bullets=True)
-        _animate_tips_rich()
-        _wait_for_enter_rich("Press Enter to continue...")
-        _ensure_license_acceptance("rich", app_home=app_home)
-        _spinner_rich("Launching CRUSH…", duration=1.8)
-        console.clear()
-        return
+    if not use_rich:
+        raise RuntimeError(
+            "Victoria Terminal requires an interactive terminal capable of Rich rendering. "
+            "Use --no-banner with --accept-license for non-interactive environments."
+        )
 
-    if "Fore" in globals() and "Style" in globals():
-        _display_colorama_welcome()
-        _animate_waves_colorama(duration=1.2)
-        _wait_for_enter_basic("Press Enter to continue...")
-        _display_colorama_tips(initial_bullets=True)
-        _animate_tips_colorama()
-        _wait_for_enter_basic("Press Enter to continue...")
-        _ensure_license_acceptance("colorama", app_home=app_home)
-        _spinner_colorama("Launching CRUSH…", duration=1.5)
-        _clear_basic()
-        return
-
-    _display_basic_welcome()
-    time.sleep(1.0)
-    _wait_for_enter_basic("Press Enter to continue...")
-    _display_basic_tips(initial_bullets=True)
-    time.sleep(0.8)
-    _display_basic_tips(initial_bullets=False)  # swap to checkmarks
-    _wait_for_enter_basic("Press Enter to continue...")
-    _ensure_license_acceptance("basic", app_home=app_home)
-    time.sleep(0.8)  # minimal spinner stand-in
-    _clear_basic()
+    _display_rich_welcome()
+    _animate_waves_rich(duration=1.8)
+    _wait_for_enter_rich("Press Enter to continue...")
+    _display_rich_tips(initial_bullets=True)
+    _animate_tips_rich()
+    _wait_for_enter_rich("Press Enter to continue...")
+    _ensure_license_acceptance(app_home=app_home)
+    _spinner_rich("Launching CRUSH…", duration=1.8)
+    console.clear()
+    return
 
 
 # ── Rich implementations ─────────────────────────────────────────────────────
@@ -582,123 +502,6 @@ def _wait_for_enter_rich(prompt: str) -> None:
     except (KeyboardInterrupt, EOFError):
         console.print("\n[yellow]Startup cancelled[/yellow]")
         sys.exit(0)
-
-
-# ── Colorama implementations ──────────────────────────────────────────────────
-
-
-def _display_colorama_welcome() -> None:
-    _clear_basic()
-    print(f"{Fore.GREEN}{Style.BRIGHT}{TERMINAL_PROMPT}\n")
-    print(f"{Fore.CYAN}{Style.BRIGHT}" + "\n".join(COMPACT_SHIP_ASCII_BASE))
-    print(f"{Fore.MAGENTA}{Style.BRIGHT}{VICTORIA_TEXT}")
-    print(f"{Fore.WHITE}{Style.NORMAL}{'AdTech Data Navigation Terminal'.center(80)}\n{Style.RESET_ALL}")
-
-
-def _animate_waves_colorama(duration: float = 1.2) -> None:
-    start = time.time()
-    offset = 0
-    while time.time() - start < duration:
-        _clear_basic()
-        print(f"{Fore.GREEN}{Style.BRIGHT}{TERMINAL_PROMPT}\n")
-        lines = COMPACT_SHIP_ASCII_BASE.copy()
-        for idx in (-3, -2, -1):
-            if abs(idx) <= len(lines):
-                padding = " " * (offset % 6)
-                lines[idx] = f"{padding}{lines[idx].strip()}"
-        print(f"{Fore.CYAN}{Style.BRIGHT}" + "\n".join(lines))
-        print(f"{Fore.MAGENTA}{Style.BRIGHT}{VICTORIA_TEXT}")
-        print(f"{Fore.WHITE}{Style.NORMAL}{'AdTech Data Navigation Terminal'.center(80)}\n{Style.RESET_ALL}")
-        offset += 1
-        time.sleep(0.08)
-
-
-def _display_colorama_tips(*, initial_bullets: bool = True) -> None:
-    _clear_basic()
-    print(f"{Fore.WHITE}{Style.BRIGHT}{'Victoria Terminal'.center(80)}{Style.RESET_ALL}\n")
-    print(f"{Fore.CYAN}{Style.DIM}{'TIPS'.center(80)}{Style.RESET_ALL}\n")
-    items = TIPS_BULLETS if initial_bullets else TIPS_CHECKED
-    for tip in items:
-        print(f"{Fore.WHITE}{tip}{Style.RESET_ALL}")
-    print()
-
-
-def _animate_tips_colorama() -> None:
-    for i in range(1, len(TIPS_BULLETS) + 1):
-        # redraw with partial checkmarks
-        _clear_basic()
-        print(f"{Fore.WHITE}{Style.BRIGHT}{'Victoria Terminal'.center(80)}{Style.RESET_ALL}\n")
-        print(f"{Fore.CYAN}{Style.DIM}{'TIPS'.center(80)}{Style.RESET_ALL}\n")
-        for idx, tip in enumerate(TIPS_BULLETS):
-            if idx < i:
-                print(f"{Fore.WHITE}{TIPS_CHECKED[idx]}{Style.RESET_ALL}")
-            else:
-                print(f"{Fore.WHITE}{tip}{Style.RESET_ALL}")
-        print()
-        time.sleep(0.25)
-
-
-def _spinner_colorama(message: str, duration: float = 1.5) -> None:
-    frames = "|/-\\"
-    start = time.time()
-    i = 0
-    while time.time() - start < duration:
-        print(f"\r{Fore.CYAN}{frames[i % len(frames)]} {message}{Style.RESET_ALL}", end="", flush=True)
-        time.sleep(0.08)
-        i += 1
-    print()
-
-
-# ── Basic implementations ─────────────────────────────────────────────────────
-
-
-def _display_basic_welcome() -> None:
-    _clear_basic()
-    print(TERMINAL_PROMPT)
-    print()
-    print("\n".join(COMPACT_SHIP_ASCII_BASE))
-    print(VICTORIA_TEXT)
-    print("AdTech Data Navigation Terminal".center(80))
-    print()
-
-
-def _display_basic_tips(*, initial_bullets: bool = True) -> None:
-    _clear_basic()
-    print("Victoria Terminal".center(80))
-    print("TIPS".center(80))
-    print()
-    items = TIPS_BULLETS if initial_bullets else TIPS_CHECKED
-    for tip in items:
-        print(tip)
-    print()
-
-
-def _wait_for_enter_basic(prompt: str) -> None:
-    try:
-        print(f"{Fore.CYAN}{prompt}{Style.RESET_ALL}")
-    except Exception:
-        print(prompt)
-    try:
-        input()
-    except (KeyboardInterrupt, EOFError):
-        print("\nStartup cancelled")
-        sys.exit(0)
-
-
-def _clear_basic() -> None:
-    # Clear for most terminals
-    print("\033[2J\033[H", end="")
-
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Setup / CRUSH helpers                                                         |
-# ──────────────────────────────────────────────────────────────────────────────
-
-
-def initialize_colorama() -> None:
-    """Initialise colorama when not running under pytest."""
-    if "PYTEST_CURRENT_TEST" not in os.environ:
-        colorama_init(autoreset=True)
 
 
 _DEF_ENV_PATTERN = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}")
@@ -966,7 +769,6 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
 
 def main(argv: Sequence[str] | None = None) -> None:
     """Entry point for launching the Victoria terminal."""
-    initialize_colorama()
     args = parse_args(argv)
 
     app_home = args.app_home.expanduser()
