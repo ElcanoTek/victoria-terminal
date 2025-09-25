@@ -46,7 +46,15 @@ jobs:
       - name: Run Prime Directive integration check
         run: |
           set +e
-          task_prompt="Explain Victoria's Prime Directive and the advertising data sources it can connect to."
+          read -r -d '' task_prompt <<'EOF'
+          Explain Victoria's Prime Directive and the advertising data sources it can connect to.
+
+          Write the full response to /workspace/Victoria/prime-directive.txt. The file must clearly mention:
+          - that Victoria aggregates numerators and denominators before division when computing ratios
+          - that Victoria can connect to Snowflake as a data source
+
+          End the response with a short call-to-action inviting the reader to explore Victoria further.
+          EOF
           output=$(timeout 90s podman run --rm \
             --userns=keep-id \
             --security-opt=no-new-privileges \
@@ -68,11 +76,21 @@ jobs:
             exit "${status}"
           fi
 
-          if ! grep -iq "aggregate numerators and denominators first" <<<"${output}"; then
-            echo "::error::Prime Directive response was not found in victoria_terminal output" >&2
+          output_file="victoria-home/prime-directive.txt"
+          if [ ! -f "${output_file}" ]; then
+            echo "::error::Expected response file ${output_file} was not created" >&2
             exit 1
           fi
-          if ! grep -iq "Snowflake" <<<"${output}"; then
-            echo "::error::Victoria capabilities response did not mention Snowflake" >&2
+
+          echo "--- Victoria task output ---"
+          cat "${output_file}"
+          echo "--- end ---"
+
+          if ! grep -iq "aggregate numerators and denominators" "${output_file}"; then
+            echo "::error::Prime Directive response was not found in ${output_file}" >&2
+            exit 1
+          fi
+          if ! grep -iq "Snowflake" "${output_file}"; then
+            echo "::error::Victoria capabilities response did not mention Snowflake in ${output_file}" >&2
             exit 1
           fi
