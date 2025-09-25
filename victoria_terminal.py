@@ -705,14 +705,14 @@ def launch_crush(*, app_home: Path = APP_HOME, task_prompt: str | None = None) -
     """Launch Crush with the generated configuration.
 
     When a task prompt is provided, the entry point triggers a non-interactive
-    ``crush run --yolo`` invocation with that prompt. Otherwise the traditional
+    ``crush run`` invocation with that prompt. Otherwise the traditional
     interactive ``--yolo`` flow is launched.
     """
     section("Mission launch")
     info("Launching Crush...")
     cmd = [CRUSH_COMMAND, "-c", str(app_home)]
     if task_prompt is not None:
-        cmd.extend(["run", "--yolo", task_prompt])
+        cmd.extend(["run", task_prompt])
     else:
         cmd.append("--yolo")
     try:
@@ -766,7 +766,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         metavar="PROMPT",
         help=(
             "Run a single Crush task non-interactively. Skips the onboarding "
-            "sequence, requires --accept-license, and forwards PROMPT to 'crush run --yolo'."
+            "sequence, requires --accept-license, and forwards PROMPT to 'crush run'."
         ),
     )
     parser.add_argument(
