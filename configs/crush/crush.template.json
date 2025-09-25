@@ -55,7 +55,7 @@
     },
     "lmstudio": {
       "type": "openai",
-      "base_url": "http://localhost:1234/v1",
+      "base_url": "http://host.containers.internal:1234/v1",
       "api_key": "not-needed",
       "name": "LM Studio (local)",
       "models": [
