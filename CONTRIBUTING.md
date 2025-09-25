@@ -43,7 +43,7 @@ Victoria is distributed as a container image. Build and run that image locally d
      --security-opt=no-new-privileges \
      --cap-drop=all \
      -e VICTORIA_HOME=/workspace/Victoria \
-     -v ~/Victoria:/workspace/Victoria \
+     -v ~/Victoria:/workspace/Victoria:z \
      victoria-terminal
    ```
 
