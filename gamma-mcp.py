@@ -78,13 +78,35 @@ async def make_gamma_request(method: str, url: str, json: Optional[Dict[str, Any
         logger.error(error_msg)
         return {"error": error_msg}
 
+DEFAULT_THEME = "Elcano"
+AVAILABLE_THEMES = {"Elcano", "Elcano_Light"}
+
+
+def _resolve_theme_name(theme_name: str) -> str:
+    """Normalize a requested theme to one of the supported Gamma themes."""
+
+    requested = theme_name.strip()
+    if requested in AVAILABLE_THEMES:
+        return requested
+
+    normalized = requested.replace("-", "_").replace(" ", "_").casefold()
+    for theme in AVAILABLE_THEMES:
+        if normalized == theme.casefold():
+            return theme
+
+    logger.warning(
+        "Unsupported theme '%s' requested. Falling back to default theme '%s'.",
+        theme_name,
+        DEFAULT_THEME,
+    )
+    return DEFAULT_THEME
 
 @mcp.tool()
 async def generate_presentation(
     input_text: str,
-    theme_name: str = "Professional",
+    theme_name: str = DEFAULT_THEME,
     additional_instructions: str = (
-        "Use a modern and clean design. Ensure all charts are easy to read " 
+        "Use a modern and clean design. Ensure all charts are easy to read "
         "and properly labeled."
     ),
     export_as: str = "pptx",
@@ -101,13 +123,18 @@ async def generate_presentation(
     Returns:
         Dictionary containing the generation ID or error information
     """
-    logger.info(f"Generating presentation with theme: {theme_name}, format: {export_as}")
-    
+    resolved_theme = _resolve_theme_name(theme_name)
+    logger.info(
+        "Generating presentation with theme: %s (requested: %s), format: %s",
+        resolved_theme,
+        theme_name,
+        export_as,
+    )
     url = f"{GAMMA_API_BASE}/generations"
     payload = {
         "inputText": input_text,
         "format": "presentation",
-        "themeName": theme_name,
+        "themeName": resolved_theme,
         "additionalInstructions": additional_instructions,
         "imageOptions": {
             "source": "aiGenerated",
