@@ -973,10 +973,7 @@ def main(argv: Sequence[str] | None = None) -> None:
     os.environ["VICTORIA_HOME"] = str(app_home)
 
     if args.no_banner and not args.accept_license:
-        err(
-            "Using --no-banner requires --accept-license to confirm acceptance "
-            "of the Victoria Terminal license."
-        )
+        err("Using --no-banner requires --accept-license to confirm acceptance of the Victoria Terminal license.")
         sys.exit(2)
 
     # Intro: two screens with Enter between each, spinner before launch
