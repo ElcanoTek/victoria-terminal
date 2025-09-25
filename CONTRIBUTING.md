@@ -49,10 +49,10 @@ Victoria is distributed as a container image. Build and run that image locally d
 
    **Windows (PowerShell):**
    ```powershell
-   podman run --rm -it --userns=keep-id --security-opt=no-new-privileges --cap-drop=all -e VICTORIA_HOME=/workspace/Victoria -v "$env:USERPROFILE/Victoria:/workspace/Victoria" victoria-terminal
+   podman run --rm -it -e VICTORIA_HOME=/workspace/Victoria -v "$env:USERPROFILE/Victoria:/workspace/Victoria" victoria-terminal
    ```
 
-   The entrypoint provisions a writable home directory for rootless sessions, so there is no need to override the container user. Pairing `--security-opt=no-new-privileges` with `--cap-drop=all` keeps the runtime aligned with least-privilege defaults; add individual capabilities back only when debugging a scenario that requires them.
+   The entrypoint provisions a writable home directory for rootless sessions, so there is no need to override the container user. Pairing `--security-opt=no-new-privileges` with `--cap-drop=all` keeps the runtime aligned with least-privilege defaults on Linux and macOS. Podman on Windows lacks the required user namespace mapping and security flags, so those runs default to the container's root user.
 
 5. **Run linting and tests.** Use the same container to run Nox sessions for linting and testing.
 
@@ -71,7 +71,7 @@ Victoria is distributed as a container image. Build and run that image locally d
    **Windows (PowerShell):**
    ```powershell
    # Run automated linting
-   podman run --rm -it --userns=keep-id --security-opt=no-new-privileges --cap-drop=all -e VICTORIA_HOME=/workspace/Victoria -v "$env:USERPROFILE/Victoria:/workspace/Victoria" victoria-terminal -- nox -s lint
+   podman run --rm -it -e VICTORIA_HOME=/workspace/Victoria -v "$env:USERPROFILE/Victoria:/workspace/Victoria" victoria-terminal -- nox -s lint
    ```
 
 5. **Optional virtual environment.** If you must experiment outside Podman, create a local virtual environment with `python -m venv .venv`, install `requirements.txt`, and rebuild the container once you are satisfied with the changes. Treat this as a temporary escape hatch; the container remains the source of truth.
@@ -184,7 +184,7 @@ podman run --rm -it \
 Windows contributors should keep the command on one line and swap the mount path for `$env:USERPROFILE/Victoria`:
 
 ```powershell
-podman run --rm -it --userns=keep-id --security-opt=no-new-privileges --cap-drop=all -e VICTORIA_HOME=/workspace/Victoria -v "$env:USERPROFILE/Victoria:/workspace/Victoria" victoria-terminal bash
+podman run --rm -it -e VICTORIA_HOME=/workspace/Victoria -v "$env:USERPROFILE/Victoria:/workspace/Victoria" victoria-terminal bash
 ```
 
 Once the container starts you land in `/root` with the full Victoria tooling available. Run `which victoria_terminal.py` or `nox --list` to confirm you're in the expected image. If you rely on a wrapper script to launch the container, reuse that script and append `bash` to its command list.
