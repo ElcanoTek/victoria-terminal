@@ -112,7 +112,14 @@ async def generate_presentation(
     theme_name: str = DEFAULT_THEME,
     additional_instructions: str = (
         "Use the Elcano theme with the standard title and thank you slides. "
-        "Ensure all charts are easy to read and properly labeled."
+        "For charts and data visualizations: "
+        "1) Choose the most appropriate chart type for the data (bar charts for comparisons, line charts for trends, pie charts for proportions). "
+        "2) Ensure all charts have clear, descriptive titles and properly labeled axes. "
+        "3) Use consistent color schemes that align with the Elcano brand palette. "
+        "4) Sort data logically (e.g., highest to lowest for bar charts). "
+        "5) Include data labels where they enhance readability. "
+        "6) For complex datasets, focus on the key insights and highlight the most important data points. "
+        "7) Maintain professional formatting with adequate spacing and readable fonts."
     ),
     export_as: str = "pptx",
 ) -> Dict[str, Any]:
@@ -266,7 +273,14 @@ async def generate_and_wait_for_presentation(
     theme_name: str = DEFAULT_THEME,
     additional_instructions: str = (
         "Use the Elcano theme with the standard title and thank you slides. "
-        "Ensure all charts are easy to read and properly labeled."
+        "For charts and data visualizations: "
+        "1) Choose the most appropriate chart type for the data (bar charts for comparisons, line charts for trends, pie charts for proportions). "
+        "2) Ensure all charts have clear, descriptive titles and properly labeled axes. "
+        "3) Use consistent color schemes that align with the Elcano brand palette. "
+        "4) Sort data logically (e.g., highest to lowest for bar charts). "
+        "5) Include data labels where they enhance readability. "
+        "6) For complex datasets, focus on the key insights and highlight the most important data points. "
+        "7) Maintain professional formatting with adequate spacing and readable fonts."
     ),
     export_as: str = "pptx",
     polling_interval: int = POLLING_INTERVAL,
