@@ -15,10 +15,13 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Ensure OPENROUTER_API_KEY secret is available
-        if: ${{ secrets.OPENROUTER_API_KEY == '' }}
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: |
-          echo "::error::OPENROUTER_API_KEY secret is not configured."
-          exit 1
+          if [ -z "${OPENROUTER_API_KEY}" ]; then
+            echo "::error::OPENROUTER_API_KEY secret is not configured."
+            exit 1
+          fi
 
       - name: Install Podman
         run: |
