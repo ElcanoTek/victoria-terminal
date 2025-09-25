@@ -116,7 +116,7 @@ victoria() {
     --security-opt=no-new-privileges \
     --cap-drop=all \
     -e VICTORIA_HOME=/workspace/Victoria \
-    -v "$HOME/Victoria:/workspace/Victoria" \
+    -v "$HOME/Victoria:/workspace/Victoria:z" \
     "$image" "$@"
 }
 # <<< victoria-terminal helper <<<
