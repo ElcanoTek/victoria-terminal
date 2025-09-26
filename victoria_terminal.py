@@ -47,10 +47,16 @@ SUPPORT_FILES: tuple[Path, ...] = (
     Path(CONFIGS_DIR) / "crush" / "CRUSH.md",
     Path(VICTORIA_FILE),
 )
-DEFAULT_APP_HOME = Path.home() / "Victoria"
-APP_HOME = Path(os.environ.get("VICTORIA_HOME", DEFAULT_APP_HOME))
-APP_HOME.mkdir(parents=True, exist_ok=True)
-os.environ.setdefault("VICTORIA_HOME", str(APP_HOME))
+
+
+def _require_victoria_home() -> Path:
+    env_home = os.environ.get("VICTORIA_HOME")
+    if not env_home:
+        raise RuntimeError("VICTORIA_HOME must be set before launching Victoria Terminal.")
+    return Path(env_home).expanduser()
+
+
+APP_HOME = _require_victoria_home()
 
 # Icons
 ICONS = {
@@ -163,10 +169,7 @@ LICENSE_ACCEPT_PROMPT = "Type 'accept' to agree or 'decline' to exit: "
 def _resolve_app_home(app_home: Path | None = None) -> Path:
     if app_home is not None:
         return app_home
-    env_home = os.environ.get("VICTORIA_HOME")
-    if env_home:
-        return Path(env_home).expanduser()
-    return APP_HOME
+    return _require_victoria_home()
 
 
 _LICENSE_TEXT_CACHE: str | None = None
@@ -740,17 +743,6 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         description=("Victoria container entry point. Ensures configuration exists and launches Crush.")
     )
     parser.add_argument(
-        "--app-home",
-        type=Path,
-        default=APP_HOME,
-        help=("Directory to use for Victoria configuration (defaults to ~/Victoria or $VICTORIA_HOME)."),
-    )
-    parser.add_argument(
-        "--skip-launch",
-        action="store_true",
-        help="Prepare configuration without launching Crush.",
-    )
-    parser.add_argument(
         "--accept-license",
         dest="accept_license",
         action="store_true",
@@ -779,7 +771,7 @@ def main(argv: Sequence[str] | None = None) -> None:
     """Entry point for launching the Victoria terminal."""
     args = parse_args(argv)
 
-    app_home = args.app_home.expanduser()
+    app_home = APP_HOME
     os.environ["VICTORIA_HOME"] = str(app_home)
 
     raw_task_prompt = getattr(args, "task", None)
@@ -788,9 +780,6 @@ def main(argv: Sequence[str] | None = None) -> None:
 
     if raw_task_prompt is not None:
         task_prompt = raw_task_prompt.strip() if raw_task_prompt else ""
-        if args.skip_launch:
-            err("--task cannot be combined with --skip-launch.")
-            sys.exit(2)
         if not task_prompt:
             err("--task requires a non-empty prompt to run.")
             sys.exit(2)
@@ -819,8 +808,6 @@ def main(argv: Sequence[str] | None = None) -> None:
         f"Inside the container that directory is available at: {app_home}"
     )
     preflight_crush()
-    if args.skip_launch:
-        return
     launch_crush(app_home=app_home, task_prompt=task_prompt if task_mode else None)
 
 
