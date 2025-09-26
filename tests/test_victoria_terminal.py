@@ -24,7 +24,7 @@ TEST_APP_HOME = Path(__file__).resolve().parent / ".victoria-test-home"
 os.environ.setdefault("VICTORIA_HOME", str(TEST_APP_HOME))
 TEST_APP_HOME.mkdir(parents=True, exist_ok=True)
 
-import victoria_terminal as entrypoint
+import victoria_terminal as entrypoint  # noqa: E402
 
 
 def test_parse_env_file_handles_comments(tmp_path: Path) -> None:
@@ -119,6 +119,30 @@ def test_generate_crush_config_substitutes_env(tmp_path: Path) -> None:
     ]
     assert "browserbase" not in data["mcp"]
     assert "gamma" not in data["mcp"]
+
+
+def test_generate_crush_config_includes_gamma_when_configured(tmp_path: Path) -> None:
+    env_values = {
+        "OPENROUTER_API_KEY": "test-key",
+        "VICTORIA_HOME": str(tmp_path),
+        "GAMMA_API_KEY": "gamma-key",
+    }
+
+    template = entrypoint.resource_path(entrypoint.CRUSH_TEMPLATE)
+    output = entrypoint.generate_crush_config(app_home=tmp_path, env=env_values, template_path=template)
+
+    data = json.loads(output.read_text(encoding="utf-8"))
+
+    gamma_config = data["mcp"]["gamma"]
+    gamma_script = entrypoint.resource_path(Path("gamma_mcp.py"))
+
+    assert gamma_config["command"] == "python3"
+    assert gamma_config["args"] == [str(gamma_script)]
+    assert gamma_config["cwd"] == str(gamma_script.parent)
+
+    env_block = gamma_config["env"]
+    assert env_block["GAMMA_API_KEY"] == "gamma-key"
+    assert env_block["PYTHONPATH"] == str(gamma_script.parent)
 
 
 def test_generate_crush_config_includes_browserbase_when_configured(tmp_path: Path) -> None:

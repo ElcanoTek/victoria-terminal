@@ -660,7 +660,7 @@ def generate_crush_config(
             if not _is_gamma_enabled(env_map):
                 mcp_config.pop("gamma", None)
             else:
-                gamma_script = resource_path(Path("gamma-mcp.py"))
+                gamma_script = resource_path(Path("gamma_mcp.py"))
                 if not gamma_script.exists():
                     raise FileNotFoundError(
                         "Gamma MCP server script is missing from the Victoria installation "
