@@ -533,18 +533,25 @@ def load_environment(
 ) -> dict[str, str]:
     """Load environment variables from ``.env`` without overriding existing values."""
     env_path = app_home / ENV_FILENAME
+    target_env: MutableMapping[str, str] = env if env is not None else os.environ
+
     if not env_path.exists():
-        warn(
-            "No configuration file found. Provide a pre-populated .env file at "
-            f"{env_path} to enable remote providers."
-        )
+        missing_keys = [key for key in REQUIRED_ENV_KEYS if not target_env.get(key)]
+        if missing_keys:
+            warn(
+                "No configuration file found. Provide a .env file or set the "
+                f"following variables via the container runtime: {', '.join(missing_keys)}"
+            )
+        else:
+            info(
+                "No .env file found. Using runtime-provided environment variables for secrets."
+            )
         return {}
 
     values = parse_env_file(env_path)
     if env is None:
         load_dotenv(env_path, override=False)
 
-    target_env: MutableMapping[str, str] = env if env is not None else os.environ
     for key, value in values.items():
         target_env.setdefault(key, value)
 
