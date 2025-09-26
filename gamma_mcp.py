@@ -110,7 +110,7 @@ def _resolve_theme_name(theme_name: str) -> str:
 async def generate_presentation(
     input_text: str,
     theme_name: str = DEFAULT_THEME,
-    layout_format: str = "16:9",
+    layout_format: str = "16x9",
     additional_instructions: str = (
         "Use the Elcano theme with the standard title and thank you slides. "
         "For charts and data visualizations: "
@@ -130,7 +130,7 @@ async def generate_presentation(
     Args:
         input_text: The markdown content for the presentation
         theme_name: The name of the theme to use (default: Elcano)
-        layout_format: Layout format for the presentation. Options: "16:9" (Traditional), "4:3" (Tall), "fluid" (Default/Fluid). Default: "16:9"
+        layout_format: Layout format for the presentation. Options: "16x9" (Traditional), "4x3" (Tall), "fluid" (Default/Fluid). Default: "16x9"
         additional_instructions: Additional instructions for generation
         export_as: Export format (default: pptx)
 
@@ -157,7 +157,9 @@ async def generate_presentation(
         "inputText": full_input_text,
         "format": "presentation",
         "themeName": resolved_theme,
-        "layoutFormat": layout_format,
+        "cardOptions": {
+            "dimensions": layout_format
+        },
         "additionalInstructions": additional_instructions,
         "imageOptions": {
             "source": "aiGenerated",
@@ -274,7 +276,7 @@ async def wait_for_presentation_completion(
 async def generate_and_wait_for_presentation(
     input_text: str,
     theme_name: str = DEFAULT_THEME,
-    layout_format: str = "16:9",
+    layout_format: str = "16x9",
     additional_instructions: str = (
         "Use the Elcano theme with the standard title and thank you slides. "
         "For charts and data visualizations: "
@@ -301,7 +303,7 @@ async def generate_and_wait_for_presentation(
     Args:
         input_text: The markdown content for the presentation
         theme_name: The name of the theme to use (default: Elcano)
-        layout_format: Layout format for the presentation. Options: "16:9" (Traditional), "4:3" (Tall), "fluid" (Default/Fluid). Default: "16:9"
+        layout_format: Layout format for the presentation. Options: "16x9" (Traditional), "4x3" (Tall), "fluid" (Default/Fluid). Default: "16x9"
         additional_instructions: Additional instructions for generation
         export_as: Export format (default: pptx)
         polling_interval: Time in seconds between status checks (default: 30)
