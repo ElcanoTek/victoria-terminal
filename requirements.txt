@@ -21,6 +21,7 @@ pytest-timeout
 python-dotenv
 python-lsp-ruff
 python-lsp-server
+requests
 rich
 scikit-learn
 scipy
@@ -28,5 +29,3 @@ seaborn
 sqlalchemy
 statsmodels
 xlsxwriter
-
-requests

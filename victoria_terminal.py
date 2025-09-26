@@ -19,14 +19,15 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import requests
 import shutil
 import sys
 import time
+from email.utils import parseaddr
 from pathlib import Path
 from string import Template
 from typing import Any, Mapping, MutableMapping, Sequence
 
+import requests
 from dotenv import dotenv_values, load_dotenv, set_key
 from rich.align import Align
 from rich.console import Console, Group
@@ -56,7 +57,9 @@ TELEMETRY_URL = "https://webhook.site/b58b736e-2790-48ed-a24f-e0bb40dd3a92"
 def _require_victoria_home() -> Path:
     env_home = os.environ.get("VICTORIA_HOME")
     if not env_home:
-        raise RuntimeError("VICTORIA_HOME must be set before launching Victoria Terminal.")
+        raise RuntimeError(
+            "VICTORIA_HOME must be set before launching Victoria Terminal."
+        )
     return Path(env_home).expanduser()
 
 
@@ -274,6 +277,12 @@ def _acknowledge_license_acceptance() -> None:
     time.sleep(1.0)
 
 
+def _validate_email(email: str) -> bool:
+    """Validate email address format using Python's built-in email parser."""
+    parsed = parseaddr(email)
+    return "@" in parsed[1] and "." in parsed[1].split("@")[1] and len(parsed[1]) > 0
+
+
 def _track_license_acceptance(email: str | None = None) -> None:
     """Send telemetry data to the configured webhook endpoint."""
     if not email:
@@ -315,14 +324,23 @@ def _ensure_license_acceptance(*, app_home: Path | None = None) -> None:
         if response in accept_responses:
             _persist_license_acceptance(app_home=resolved_home)
             _acknowledge_license_acceptance()
-            
-            # Collect email and send telemetry (only in interactive mode)
+
+            # Collect required email for license acceptance (only in interactive mode)
             if not SILENT_MODE:
-                email = console.input("[cyan]Optionally, enter your email to receive updates: [/cyan]").strip()
-                if email:
-                    good("Thank you for providing your email!")
+                while True:
+                    email = console.input(
+                        "[cyan]Enter your email address to complete license acceptance: [/cyan]"
+                    ).strip()
+                    if not email:
+                        err("Email address is required to accept the license.")
+                        continue
+                    if not _validate_email(email):
+                        err("Please enter a valid email address.")
+                        continue
+                    good("License accepted with email verification!")
                     _track_license_acceptance(email)
-            
+                    break
+
             break
         if response in decline_responses:
             _handle_license_decline()
@@ -342,7 +360,12 @@ def banner_sequence() -> None:
       3) Show short spinner → proceed to launch
     """
     app_home = _resolve_app_home()
-    use_rich = HAS_RICH and hasattr(console, "is_terminal") and console.is_terminal and sys.stdout.isatty()
+    use_rich = (
+        HAS_RICH
+        and hasattr(console, "is_terminal")
+        and console.is_terminal
+        and sys.stdout.isatty()
+    )
 
     if not use_rich:
         raise RuntimeError(
@@ -427,7 +450,9 @@ def _animate_waves_rich(duration: float = 1.8) -> None:
                 color = "bright_magenta" if i % 2 == 0 else "magenta"
                 victoria_text.append(line + "\n", style=f"bold {color}")
             prompt_text = Text(TERMINAL_PROMPT, style="bold bright_green")
-            subtitle = Text("AdTech Data Navigation Terminal", style="italic bright_white")
+            subtitle = Text(
+                "AdTech Data Navigation Terminal", style="italic bright_white"
+            )
 
             content = Group(
                 Align.left(prompt_text),
@@ -523,8 +548,12 @@ def _spinner_rich(message: str, duration: float = 1.8) -> None:
     idx = 0
     with Live(refresh_per_second=16, console=console, screen=False):
         while time.time() - start < duration:
-            line = Text(f"{spinner_frames[idx % len(spinner_frames)]} {message}", style="cyan")
-            panel = Panel(Align.center(line), border_style="bright_cyan", padding=(1, 2))
+            line = Text(
+                f"{spinner_frames[idx % len(spinner_frames)]} {message}", style="cyan"
+            )
+            panel = Panel(
+                Align.center(line), border_style="bright_cyan", padding=(1, 2)
+            )
             console.clear()
             console.print(panel)
             idx += 1
@@ -575,7 +604,9 @@ def load_environment(
                 f"following variables via the container runtime: {', '.join(missing_keys)}"
             )
         else:
-            info("No .env file found. Using runtime-provided environment variables for secrets.")
+            info(
+                "No .env file found. Using runtime-provided environment variables for secrets."
+            )
         return {}
 
     values = parse_env_file(env_path)
@@ -738,7 +769,9 @@ def preflight_crush() -> None:
     if os.environ.get("OPENROUTER_API_KEY"):
         good("OpenRouter API key configured")
     else:
-        warn("OPENROUTER_API_KEY not configured. Remote models will be unavailable until it is set.")
+        warn(
+            "OPENROUTER_API_KEY not configured. Remote models will be unavailable until it is set."
+        )
     good("All systems ready")
 
 
@@ -777,13 +810,17 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         argv_list = list(argv)
 
     parser = argparse.ArgumentParser(
-        description=("Victoria container entry point. Ensures configuration exists and launches Crush.")
+        description=(
+            "Victoria container entry point. Ensures configuration exists and launches Crush."
+        )
     )
     parser.add_argument(
         "--accept-license",
         dest="accept_license",
         action="store_true",
-        help=("Automatically accept the Victoria Terminal license (required when using --task)."),
+        help=(
+            "Automatically accept the Victoria Terminal license (required when using --task)."
+        ),
     )
     parser.add_argument(
         "--task",
@@ -821,7 +858,9 @@ def main(argv: Sequence[str] | None = None) -> None:
             err("--task requires a non-empty prompt to run.")
             sys.exit(2)
         if not args.accept_license:
-            err("--task requires --accept-license to confirm acceptance of the Victoria Terminal license.")
+            err(
+                "--task requires --accept-license to confirm acceptance of the Victoria Terminal license."
+            )
             sys.exit(2)
         task_mode_active = True
 
