@@ -16,6 +16,15 @@ jobs:
     permissions:
       contents: read
       packages: write
+    env:
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      TASK_PROMPT: |
+        Retrieve Victoria's integration test password exactly as it is documented in your VICTORIA.md briefing.
+
+        Write your reply to /workspace/Victoria/secret-password.txt. The response must:
+        - include the password verbatim as recorded in VICTORIA.md
+        - state that this sentence is the password requested during integration tests
+        - confirm Victoria is ready for further tasks
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,6 +39,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Ensure OPENROUTER_API_KEY secret is available
+        if: ${{ env.OPENROUTER_API_KEY == '' }}
+        run: |
+          echo "::error::OPENROUTER_API_KEY secret is not configured."
+          exit 1
+
+      - name: Install Podman
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y podman
+
       - name: Build image
         id: build-image
         uses: redhat-actions/buildah-build@v2
@@ -39,6 +59,52 @@ jobs:
           tags: |
             latest
             ${{ github.sha }}
+
+      - name: Verify crush CLI is installed
+        env:
+          IMAGE: localhost/${{ env.IMAGE_NAME }}:latest
+        run: |
+          podman run --rm --network=none "${IMAGE}" crush --version
+
+      - name: Prepare Victoria home directory
+        run: mkdir -p victoria-home
+
+      - name: Run secret password integration check
+        env:
+          IMAGE: localhost/${{ env.IMAGE_NAME }}:latest
+        run: |
+          set +e
+          output=$(timeout 90s podman run --rm \
+            -e OPENROUTER_API_KEY \
+            -v "${PWD}/victoria-home:/workspace/Victoria:Z" \
+            "${IMAGE}" \
+            -- \
+            --accept-license \
+            --task "${TASK_PROMPT}")
+          status=$?
+          set -e
+
+          echo "${output}"
+
+          if [ "${status}" -ne 0 ] && [ "${status}" -ne 124 ]; then
+            echo "::error::Victoria launch exited with status ${status}" >&2
+            exit "${status}"
+          fi
+
+          output_file="victoria-home/secret-password.txt"
+          if [ ! -f "${output_file}" ]; then
+            echo "::error::Expected response file ${output_file} was not created" >&2
+            exit 1
+          fi
+
+          echo "--- Victoria task output ---"
+          cat "${output_file}"
+          echo "--- end ---"
+
+          if ! grep -Fq "Magellan is dead; long live Magellan" "${output_file}"; then
+            echo "::error::Secret password response was not found in ${output_file}" >&2
+            exit 1
+          fi
 
       - name: Push image
         uses: redhat-actions/push-to-registry@v2
@@ -52,6 +118,15 @@ jobs:
     permissions:
       contents: read
       packages: write
+    env:
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      TASK_PROMPT: |
+        Retrieve Victoria's integration test password exactly as it is documented in your VICTORIA.md briefing.
+
+        Write your reply to /workspace/Victoria/secret-password.txt. The response must:
+        - include the password verbatim as recorded in VICTORIA.md
+        - state that this sentence is the password requested during integration tests
+        - confirm Victoria is ready for further tasks
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -66,6 +141,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Ensure OPENROUTER_API_KEY secret is available
+        if: ${{ env.OPENROUTER_API_KEY == '' }}
+        run: |
+          echo "::error::OPENROUTER_API_KEY secret is not configured."
+          exit 1
+
+      - name: Install Podman
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y podman
+
       - name: Build image (arm64)
         id: build-image-arm64
         uses: redhat-actions/buildah-build@v2
@@ -75,6 +161,52 @@ jobs:
           tags: |
             latest-arm64
             ${{ github.sha }}-arm64
+
+      - name: Verify crush CLI is installed (arm64)
+        env:
+          IMAGE: localhost/${{ env.IMAGE_NAME }}:latest-arm64
+        run: |
+          podman run --rm --network=none "${IMAGE}" crush --version
+
+      - name: Prepare Victoria home directory
+        run: mkdir -p victoria-home
+
+      - name: Run secret password integration check (arm64)
+        env:
+          IMAGE: localhost/${{ env.IMAGE_NAME }}:latest-arm64
+        run: |
+          set +e
+          output=$(timeout 90s podman run --rm \
+            -e OPENROUTER_API_KEY \
+            -v "${PWD}/victoria-home:/workspace/Victoria:Z" \
+            "${IMAGE}" \
+            -- \
+            --accept-license \
+            --task "${TASK_PROMPT}")
+          status=$?
+          set -e
+
+          echo "${output}"
+
+          if [ "${status}" -ne 0 ] && [ "${status}" -ne 124 ]; then
+            echo "::error::Victoria launch exited with status ${status}" >&2
+            exit "${status}"
+          fi
+
+          output_file="victoria-home/secret-password.txt"
+          if [ ! -f "${output_file}" ]; then
+            echo "::error::Expected response file ${output_file} was not created" >&2
+            exit 1
+          fi
+
+          echo "--- Victoria task output ---"
+          cat "${output_file}"
+          echo "--- end ---"
+
+          if ! grep -Fq "Magellan is dead; long live Magellan" "${output_file}"; then
+            echo "::error::Secret password response was not found in ${output_file}" >&2
+            exit 1
+          fi
 
       - name: Push image
         uses: redhat-actions/push-to-registry@v2
