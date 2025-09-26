@@ -26,7 +26,9 @@ from pathlib import Path
 from string import Template
 from typing import Any, Mapping, MutableMapping, Sequence
 
+import requests
 from dotenv import dotenv_values, load_dotenv, set_key
+from email_validator import EmailNotValidError, validate_email
 from rich.align import Align
 from rich.console import Console, Group
 from rich.live import Live
@@ -47,6 +49,9 @@ SUPPORT_FILES: tuple[Path, ...] = (
     Path(CONFIGS_DIR) / "crush" / "CRUSH.md",
     Path(VICTORIA_FILE),
 )
+
+# Telemetry configuration
+TELEMETRY_URL = "https://webhook.site/b58b736e-2790-48ed-a24f-e0bb40dd3a92"
 
 
 def _require_victoria_home() -> Path:
@@ -159,8 +164,6 @@ LICENSE_NOTICE_TITLE = "Victoria Terminal License Agreement"
 LICENSE_FILE_NAME = "LICENSE"
 LICENSE_NOTICE_REMINDER = "You must accept these terms to continue. Type 'accept' to agree or 'decline' to exit."
 LICENSE_ACCEPT_PROMPT = "Type 'accept' to agree or 'decline' to exit: "
-
-
 # ──────────────────────────────────────────────────────────────────────────────
 # License acceptance helpers                                                    |
 # ──────────────────────────────────────────────────────────────────────────────
@@ -270,6 +273,42 @@ def _acknowledge_license_acceptance() -> None:
     time.sleep(1.0)
 
 
+def _is_valid_email(email: str) -> bool:
+    """Validate an email address using the email_validator library."""
+
+    if not email:
+        return False
+
+    try:
+        validate_email(email, check_deliverability=True)
+    except EmailNotValidError:
+        return False
+    return True
+
+
+def _track_license_acceptance(email: str | None = None) -> None:
+    """Send telemetry data to the configured webhook endpoint."""
+    if not email:
+        return
+
+    if not _is_valid_email(email):
+        return
+
+    payload = {
+        "email": email,
+        "event": "license_accepted",
+        "timestamp": int(time.time()),
+        "version": __version__,
+    }
+
+    try:
+        requests.post(TELEMETRY_URL, json=payload, timeout=3)
+    except requests.RequestException:
+        # Fail silently if there's a network error. We don't want to
+        # interrupt the user's experience for a telemetry failure.
+        pass
+
+
 def _handle_license_decline(*, cancelled: bool = False) -> None:
     if cancelled:
         message = "Victoria launch cancelled before accepting the license."
@@ -291,6 +330,23 @@ def _ensure_license_acceptance(*, app_home: Path | None = None) -> None:
         if response in accept_responses:
             _persist_license_acceptance(app_home=resolved_home)
             _acknowledge_license_acceptance()
+
+            # Collect required email for license acceptance (only in interactive mode)
+            if not SILENT_MODE:
+                while True:
+                    email = console.input(
+                        "[cyan]Enter your email address to complete license acceptance: [/cyan]"
+                    ).strip()
+                    if not email:
+                        err("Email address is required to accept the license.")
+                        continue
+                    if not _is_valid_email(email):
+                        err("Please enter a valid email address.")
+                        continue
+                    good("License accepted with email verification!")
+                    _track_license_acceptance(email)
+                    break
+
             break
         if response in decline_responses:
             _handle_license_decline()

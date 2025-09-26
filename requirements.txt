@@ -1,6 +1,7 @@
 altair
 black
 duckdb
+email-validator
 flake8
 httpx
 ipykernel
@@ -21,6 +22,7 @@ pytest-timeout
 python-dotenv
 python-lsp-ruff
 python-lsp-server
+requests
 rich
 scikit-learn
 scipy
