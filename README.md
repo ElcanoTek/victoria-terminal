@@ -13,8 +13,9 @@ Victoria is Elcano's AI agent for navigating programmatic advertising datasets. 
 
 ## 🔐 Security and licensing overview
 
-- **Container-first distribution.** Victoria ships as a Podman image that packages Python, the `crush` CLI, and required dependencies. The container isolates the agent from the host OS while still allowing controlled file sharing via `~/Victoria`.
-- **Secrets stay in your workspace.** Credentials are read from `~/Victoria/.env`, mounted into the container at runtime. Provide a fully populated file with the API keys your team needs and Victoria consumes them without persisting new secrets.
+- **Container-first distribution.** Victoria ships as a Podman image that packages Python, the `crush` CLI, and required dependencies. The container isolates the agent from the host OS while still allowing controlled file sharing via `~/Victoria` when you opt to mount it.
+- **Task isolation without sharing directories.** Automated runs launched with `victoria --task` can execute entirely inside the container without mounting a host workspace, eliminating the need to expose local files during read-only operations.
+- **Secrets stay in your control.** Provide API keys as environment variables when you launch the container or store them in `~/Victoria/.env` if you choose to mount that directory. Victoria consumes credentials at runtime without persisting new secrets to disk.
 - **Transparent builds.** GitHub Actions builds and publishes the container to `ghcr.io/elcanotek/victoria-terminal`, ensuring every release is reproducible and verified in CI.
 - **Source-available license.** Usage is governed by the Victoria Terminal Business Source License (BUSL-1.1). See [LICENSE](LICENSE) for details.
 - **Contributor license agreement.** Submitting a patch, issue, or other material constitutes acceptance of the [ElcanoTek Contributor License Agreement](CLA.md).
@@ -61,10 +62,10 @@ Re-run the script any time you want to refresh the alias. It will not reinstall 
 
 ### Automate Victoria with `--task`
 
-Victoria can execute non-interactive tasks when launched with the `--task` flag. Pair it with `--accept-license` so the container can acknowledge the Business Source License without prompting:
+Victoria can execute non-interactive tasks when launched with the `--task` flag:
 
 ```bash
-victoria --accept-license --task "create a Gamma presentation on this week's optimizations and email it to brad@elcanotek.com"
+victoria --task "create a Gamma presentation on this week's optimizations and email it to brad@elcanotek.com"
 ```
 
 Use clear, production-ready instructions in the quoted task string—automation jobs frequently power integration tests and CI workflows. The example above mirrors the internal integration scenario we maintain; adapt the prompt to match the workflow you need to validate. When automations require filesystem output, specify both the filename and the directory inside your mounted `~/Victoria` workspace so downstream jobs can inspect the results.
