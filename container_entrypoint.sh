@@ -4,16 +4,13 @@ set -euo pipefail
 DEFAULT_CMD=("python3" "/workspace/victoria_terminal.py")
 
 configure_runtime_environment() {
-    local chosen_home
-
-    if [[ -n "${VICTORIA_HOME:-}" ]]; then
-        chosen_home="${VICTORIA_HOME}"
-    else
-        chosen_home="${HOME:-/root}"
+    if [[ -z "${VICTORIA_HOME:-}" ]]; then
+        echo "VICTORIA_HOME must be set." >&2
+        exit 1
     fi
 
-    mkdir -p "${chosen_home}"
-    export HOME="${chosen_home}"
+    export HOME="${VICTORIA_HOME}"
+    mkdir -p "${HOME}"
 
     mkdir -p "${HOME}/.local/share/crush"
     if [[ ! -f "${HOME}/.local/share/crush/crush.json" ]]; then
