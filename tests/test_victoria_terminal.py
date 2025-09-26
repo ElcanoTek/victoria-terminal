@@ -62,6 +62,15 @@ def test_load_environment_returns_empty_when_file_absent(tmp_path: Path) -> None
     assert entrypoint.load_environment(app_home=tmp_path, env={}) == {}
 
 
+def test_load_environment_without_file_respects_runtime_env(tmp_path: Path) -> None:
+    custom_env = {"OPENROUTER_API_KEY": "from-runtime"}
+
+    values = entrypoint.load_environment(app_home=tmp_path, env=custom_env)
+
+    assert values == {}
+    assert custom_env["OPENROUTER_API_KEY"] == "from-runtime"
+
+
 def test_load_environment_uses_values_from_env_file(tmp_path: Path) -> None:
     env_path = tmp_path / entrypoint.ENV_FILENAME
     env_path.write_text("OPENROUTER_API_KEY=from-file\n", encoding="utf-8")
