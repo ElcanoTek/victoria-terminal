@@ -19,12 +19,11 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import re
 import shutil
-import subprocess
 import sys
 import time
 from pathlib import Path
+from string import Template
 from typing import Any, Mapping, MutableMapping, Sequence
 
 from dotenv import dotenv_values, load_dotenv, set_key
@@ -54,28 +53,16 @@ APP_HOME.mkdir(parents=True, exist_ok=True)
 os.environ.setdefault("VICTORIA_HOME", str(APP_HOME))
 
 # Icons
-if os.name == "nt":
-    ICONS = {
-        "info": "[*]",
-        "good": "[v]",
-        "warn": "[!]",
-        "bad": "[x]",
-        "rocket": "->",
-        "wave": "~",
-        "anchor": "#",
-        "folder": "[]",
-    }
-else:
-    ICONS = {
-        "info": "ℹ️",
-        "good": "✅",
-        "warn": "⚠️",
-        "bad": "❌",
-        "rocket": "🚀",
-        "wave": "🌊",
-        "anchor": "⚓",
-        "folder": "📁",
-    }
+ICONS = {
+    "info": "ℹ️",
+    "good": "✅",
+    "warn": "⚠️",
+    "bad": "❌",
+    "rocket": "🚀",
+    "wave": "🌊",
+    "anchor": "⚓",
+    "folder": "📁",
+}
 
 
 SILENT_MODE = False
@@ -519,9 +506,6 @@ def _wait_for_enter_rich(prompt: str) -> None:
         sys.exit(0)
 
 
-_DEF_ENV_PATTERN = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}")
-
-
 def resource_path(name: str | Path) -> Path:
     base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
     return base / name
@@ -610,13 +594,15 @@ def substitute_env(obj: Any, env: Mapping[str, str] | None = None) -> Any:
     if isinstance(obj, list):
         return [substitute_env(value, env_map) for value in obj]
     if isinstance(obj, str):
-
-        def repl(match: re.Match[str]) -> str:
-            var = match.group(1)
-            value = env_map.get(var)
-            return value if value is not None else match.group(0)
-
-        return _DEF_ENV_PATTERN.sub(repl, obj)
+        template = Template(obj)
+        try:
+            return template.safe_substitute(env_map)
+        except ValueError:
+            # Preserve the original value when the template contains malformed
+            # placeholders (for example a trailing ``$``). This matches the
+            # previous behaviour where only well-formed ``${VAR}`` patterns
+            # were substituted.
+            return obj
     return obj
 
 
@@ -731,13 +717,7 @@ def launch_crush(*, app_home: Path = APP_HOME, task_prompt: str | None = None) -
     else:
         cmd.append("--yolo")
     try:
-        if os.name == "nt":
-            proc = subprocess.run(cmd, check=False)
-            if proc.returncode != 0:
-                err(f"Crush exited with {proc.returncode}")
-                sys.exit(proc.returncode)
-        else:
-            os.execvp(CRUSH_COMMAND, cmd)
+        os.execvp(CRUSH_COMMAND, cmd)
     except FileNotFoundError:
         err(
             f"'{CRUSH_COMMAND}' command not found in PATH. "
