@@ -24,7 +24,7 @@ TEST_APP_HOME = Path(__file__).resolve().parent / ".victoria-test-home"
 os.environ.setdefault("VICTORIA_HOME", str(TEST_APP_HOME))
 TEST_APP_HOME.mkdir(parents=True, exist_ok=True)
 
-import victoria_terminal as entrypoint
+import victoria_terminal as entrypoint  # noqa: E402
 
 
 def test_parse_env_file_handles_comments(tmp_path: Path) -> None:
