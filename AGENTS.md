@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This document provides instructions and guidelines for AI agents working on the Victoria project. Victoria is a fleet of AI-powered applications designed to help programmatic advertising traders analyze data and optimize campaigns.
+This document provides instructions and guidelines for AI agents working on the Victoria Terminal project. Victoria Terminal is Elcano's container-first interface for analyzing programmatic advertising data with help from AI copilots.
 
 ## Project Overview
 
@@ -10,7 +10,6 @@ Victoria connects to advertising data sources (CSVs, Excel files, Snowflake) and
 - Python 3.8+
 - `crush` as the AI coding agent
 - `rich` for terminal UI
-- `colorama` for cross-platform terminal colors
 
 ## Core Philosophy
 
@@ -52,13 +51,26 @@ For local development, we strongly recommend using a virtual environment to isol
 
 ### Podman Containers
 
-Victoria now provides a Podman container image that ships with Python and the `crush` CLI pre-installed. Developers can build it locally with `podman build -t victoria-terminal .` or run the published image from `ghcr.io/elcanotek/victoria-terminal:latest`. Mount `~/Victoria` into the container to reuse configuration created by the entry point.
+Victoria Terminal ships as a Podman container image that includes Python and the `crush` CLI. Developers can build it locally with `podman build -t victoria-terminal .` or run the published image from `ghcr.io/elcanotek/victoria-terminal:latest`. Mount `~/Victoria` into the container to reuse configuration created by the entry point.
 
 ```bash
-podman run --rm -it \
-  -v ~/Victoria:/root/Victoria \
-  ghcr.io/elcanotek/victoria-terminal:latest
+podman run --rm -it -v ~/Victoria:/workspace/Victoria:z ghcr.io/elcanotek/victoria-terminal:latest
 ```
+
+Windows PowerShell users should keep the command on a single line and substitute the host path syntax:
+
+```powershell
+podman run --rm -it -v "$env:USERPROFILE/Victoria:/workspace/Victoria" ghcr.io/elcanotek/victoria-terminal:latest
+```
+
+### Container Runtime Philosophy
+
+The container setup for Victoria is intentionally designed to balance reliability with developer productivity and cross-platform compatibility. Agents working on this project should adhere to the following principles and avoid making changes that contradict them:
+
+-   **Prefer the Default Podman Security Profile**: The streamlined `podman run` command above intentionally omits additional security flags that previously caused permission issues on macOS, Linux, and Windows hosts. Do not reintroduce `--userns=keep-id`, `--security-opt`, or `--cap-drop` defaults unless a regression is demonstrated and thoroughly tested across platforms.
+-   **Root-Based Image**: The container image runs as root by default to guarantee mounted volumes remain writable regardless of host UID/GID mappings. Avoid adding a `USER` directive or runtime UID switching logic to the `Containerfile` or entrypoint.
+-   **Single-Stage Build for Debugging**: The `Containerfile` uses a single-stage build. This is a deliberate choice to keep development tools (like `go`, `git`, etc.) available within the container, which simplifies debugging. Do not refactor this into a multi-stage build, as it would hinder the development workflow.
+-   **"Always on Latest" Update Strategy**: The base image is intentionally set to `fedora:latest`. This ensures the container always benefits from the latest security patches. Builds are versioned and stored in the GitHub Container Registry, allowing for easy rollbacks if an update causes issues. Do not pin the base image to a specific version, as this would prevent automatic security updates.
 
 ### Dependencies Explained
 
@@ -76,7 +88,7 @@ podman run --rm -it \
   SNOWFLAKE_PASSWORD="your_password"
   ```
 
-## The Victoria Fleet
+## Key Components
 
 - **Victoria Entry Point (`victoria_terminal.py`)**: Container-aware bootstrapper that synchronizes configuration from `~/Victoria`, guides first-run setup when needed, and launches the terminal experience end-to-end.
 
@@ -94,10 +106,7 @@ To run the tests:
     ```
     This command will automatically discover and execute all tests in the `tests/` directory.
 
-3.  **Manual Workflow**: A manual test workflow can also be triggered on GitHub Actions for additional verification:
-    ```bash
-    gh workflow run manual-tests.yml
-    ```
+3.  **CI Parity**: GitHub Actions runs the same `pytest` suite through the `ci.yml` workflow. You can mimic the automated lint-and-test pipeline locally with `nox -s lint tests` if you prefer matching the CI environment.
 
 ## Code Style & Conventions
 
@@ -120,6 +129,7 @@ To run the tests:
 - **Title Format**: `[Component] Brief description of changes` (e.g., `[VictoriaTerminal] Add support for new data source`).
 - **Description**: Provide a clear and concise description of the changes.
 - **Testing**: Ensure all tests pass before submitting a pull request.
+- **Linting**: Run `nox -s lint` and resolve any issues before creating a pull request.
 - **Code Review**: All pull requests must be reviewed and approved by at least one other team member.
 
 

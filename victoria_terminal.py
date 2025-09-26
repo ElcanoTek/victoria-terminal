@@ -19,26 +19,23 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import re
 import shutil
-import subprocess
 import sys
 import time
 from pathlib import Path
+from string import Template
 from typing import Any, Mapping, MutableMapping, Sequence
 
-import colorama
-from colorama import Fore, Style
-from colorama import init as colorama_init
+import requests
 from dotenv import dotenv_values, load_dotenv, set_key
+from email_validator import EmailNotValidError, validate_email
 from rich.align import Align
 from rich.console import Console, Group
 from rich.live import Live
 from rich.panel import Panel
 from rich.text import Text
 
-# Initialize colorama and rich console
-colorama.init(autoreset=True)
+# Initialize rich console
 console = Console()
 
 __version__ = "2025.9.9"
@@ -52,45 +49,51 @@ SUPPORT_FILES: tuple[Path, ...] = (
     Path(CONFIGS_DIR) / "crush" / "CRUSH.md",
     Path(VICTORIA_FILE),
 )
-DEFAULT_APP_HOME = Path.home() / "Victoria"
-APP_HOME = Path(os.environ.get("VICTORIA_HOME", DEFAULT_APP_HOME))
-APP_HOME.mkdir(parents=True, exist_ok=True)
-os.environ.setdefault("VICTORIA_HOME", str(APP_HOME))
+
+# Telemetry configuration
+TELEMETRY_URL = "https://webhook.site/b58b736e-2790-48ed-a24f-e0bb40dd3a92"
+
+
+def _require_victoria_home() -> Path:
+    env_home = os.environ.get("VICTORIA_HOME")
+    if not env_home:
+        raise RuntimeError("VICTORIA_HOME must be set before launching Victoria Terminal.")
+    return Path(env_home).expanduser()
+
+
+APP_HOME = _require_victoria_home()
 
 # Icons
-if os.name == "nt":
-    ICONS = {
-        "info": "[*]",
-        "good": "[v]",
-        "warn": "[!]",
-        "bad": "[x]",
-        "rocket": "->",
-        "wave": "~",
-        "anchor": "#",
-        "folder": "[]",
-    }
-else:
-    ICONS = {
-        "info": "ℹ️",
-        "good": "✅",
-        "warn": "⚠️",
-        "bad": "❌",
-        "rocket": "🚀",
-        "wave": "🌊",
-        "anchor": "⚓",
-        "folder": "📁",
-    }
+ICONS = {
+    "info": "ℹ️",
+    "good": "✅",
+    "warn": "⚠️",
+    "bad": "❌",
+    "rocket": "🚀",
+    "wave": "🌊",
+    "anchor": "⚓",
+    "folder": "📁",
+}
+
+
+SILENT_MODE = False
 
 
 def info(message: str) -> None:  # pragma: no cover - simple wrapper
+    if SILENT_MODE:
+        return
     console.print(f"[cyan]{ICONS['info']} {message}")
 
 
 def good(message: str) -> None:  # pragma: no cover - simple wrapper
+    if SILENT_MODE:
+        return
     console.print(f"[green]{ICONS['good']} {message}")
 
 
 def warn(message: str) -> None:  # pragma: no cover - simple wrapper
+    if SILENT_MODE:
+        return
     console.print(f"[yellow]{ICONS['warn']} {message}")
 
 
@@ -105,6 +108,8 @@ def handle_error(exc: Exception) -> None:
 
 
 def section(title: str) -> None:  # pragma: no cover - simple wrapper
+    if SILENT_MODE:
+        return
     console.rule(f"[bold yellow]{title}")
 
 
@@ -159,8 +164,6 @@ LICENSE_NOTICE_TITLE = "Victoria Terminal License Agreement"
 LICENSE_FILE_NAME = "LICENSE"
 LICENSE_NOTICE_REMINDER = "You must accept these terms to continue. Type 'accept' to agree or 'decline' to exit."
 LICENSE_ACCEPT_PROMPT = "Type 'accept' to agree or 'decline' to exit: "
-
-
 # ──────────────────────────────────────────────────────────────────────────────
 # License acceptance helpers                                                    |
 # ──────────────────────────────────────────────────────────────────────────────
@@ -169,10 +172,7 @@ LICENSE_ACCEPT_PROMPT = "Type 'accept' to agree or 'decline' to exit: "
 def _resolve_app_home(app_home: Path | None = None) -> Path:
     if app_home is not None:
         return app_home
-    env_home = os.environ.get("VICTORIA_HOME")
-    if env_home:
-        return Path(env_home).expanduser()
-    return APP_HOME
+    return _require_victoria_home()
 
 
 _LICENSE_TEXT_CACHE: str | None = None
@@ -250,110 +250,107 @@ def _display_license_notice_rich() -> None:
     console.print(panel)
 
 
-def _display_license_notice_colorama() -> None:
-    _clear_basic()
-    license_text = _get_license_text().rstrip()
+def _prompt_license_response() -> str:
     try:
-        print(f"{Fore.WHITE}{Style.BRIGHT}{LICENSE_NOTICE_TITLE.center(80)}{Style.RESET_ALL}\n")
-        for line in license_text.splitlines():
-            print(f"{Fore.WHITE}{line}{Style.RESET_ALL}")
-        print()
-        print(f"{Fore.YELLOW}{LICENSE_NOTICE_REMINDER}{Style.RESET_ALL}")
-        print()
-    except Exception:
-        print(LICENSE_NOTICE_TITLE.center(80))
-        print()
-        print(license_text)
-        print()
-        print(LICENSE_NOTICE_REMINDER)
-        print()
-
-
-def _display_license_notice_basic() -> None:
-    _clear_basic()
-    print(LICENSE_NOTICE_TITLE.center(80))
-    print()
-    print(_get_license_text())
-    print()
-    print(LICENSE_NOTICE_REMINDER)
-    print()
-
-
-def _prompt_license_response(mode: str) -> str:
-    try:
-        if mode == "rich":
-            return console.input(f"[cyan]{LICENSE_ACCEPT_PROMPT}[/cyan]").strip()
-        if mode == "colorama":
-            try:
-                return input(f"{Fore.CYAN}{LICENSE_ACCEPT_PROMPT}{Style.RESET_ALL}").strip()
-            except Exception:
-                return input(LICENSE_ACCEPT_PROMPT).strip()
-        return input(LICENSE_ACCEPT_PROMPT).strip()
+        return console.input(f"[cyan]{LICENSE_ACCEPT_PROMPT}[/cyan]").strip()
     except (KeyboardInterrupt, EOFError):
-        _handle_license_decline(mode, cancelled=True)
+        _handle_license_decline(cancelled=True)
         return ""
 
 
-def _notify_invalid_response(mode: str) -> None:
+def _notify_invalid_response() -> None:
     message = "Please respond with 'accept' or 'decline'."
-    if mode == "rich":
-        console.print(f"[yellow]{message}[/yellow]")
-    else:
-        try:
-            print(f"{Fore.YELLOW}{message}{Style.RESET_ALL}")
-        except Exception:
-            print(message)
+    if SILENT_MODE:
+        return
+    console.print(f"[yellow]{message}[/yellow]")
 
 
-def _acknowledge_license_acceptance(mode: str) -> None:
+def _acknowledge_license_acceptance() -> None:
     message = "License accepted. Continuing startup..."
-    if mode == "rich":
-        console.print(f"[green]{message}[/green]")
-    else:
-        try:
-            print(f"{Fore.GREEN}{message}{Style.RESET_ALL}")
-        except Exception:
-            print(message)
+    if SILENT_MODE:
+        return
+    console.print(f"[green]{message}[/green]")
     time.sleep(1.0)
 
 
-def _handle_license_decline(mode: str, *, cancelled: bool = False) -> None:
+def _is_valid_email(email: str) -> bool:
+    """Validate an email address using the email_validator library."""
+
+    if not email:
+        return False
+
+    try:
+        validate_email(email, check_deliverability=True)
+    except EmailNotValidError:
+        return False
+    return True
+
+
+def _track_license_acceptance(email: str | None = None) -> None:
+    """Send telemetry data to the configured webhook endpoint."""
+    if not email:
+        return
+
+    if not _is_valid_email(email):
+        return
+
+    payload = {
+        "email": email,
+        "event": "license_accepted",
+        "timestamp": int(time.time()),
+        "version": __version__,
+    }
+
+    try:
+        requests.post(TELEMETRY_URL, json=payload, timeout=3)
+    except requests.RequestException:
+        # Fail silently if there's a network error. We don't want to
+        # interrupt the user's experience for a telemetry failure.
+        pass
+
+
+def _handle_license_decline(*, cancelled: bool = False) -> None:
     if cancelled:
         message = "Victoria launch cancelled before accepting the license."
     else:
         message = "Victoria Terminal requires license acceptance to continue. Exiting."
-    if mode == "rich":
-        console.print(f"[red]{message}[/red]")
-    else:
-        try:
-            print(f"{Fore.RED}{message}{Style.RESET_ALL}")
-        except Exception:
-            print(message)
+    console.print(f"[red]{message}[/red]")
     sys.exit(0)
 
 
-def _ensure_license_acceptance(mode: str, *, app_home: Path | None = None) -> None:
+def _ensure_license_acceptance(*, app_home: Path | None = None) -> None:
     resolved_home = _resolve_app_home(app_home)
     if _is_license_accepted(app_home=resolved_home):
         return
-    display_map = {
-        "rich": _display_license_notice_rich,
-        "colorama": _display_license_notice_colorama,
-        "basic": _display_license_notice_basic,
-    }
-    display = display_map.get(mode, _display_license_notice_basic)
-    display()
+    _display_license_notice_rich()
     accept_responses = {"accept", "a", "yes", "y"}
     decline_responses = {"decline", "d", "no", "n"}
     while True:
-        response = _prompt_license_response(mode).lower()
+        response = _prompt_license_response().lower()
         if response in accept_responses:
             _persist_license_acceptance(app_home=resolved_home)
-            _acknowledge_license_acceptance(mode)
+            _acknowledge_license_acceptance()
+
+            # Collect required email for license acceptance (only in interactive mode)
+            if not SILENT_MODE:
+                while True:
+                    email = console.input(
+                        "[cyan]Enter your email address to complete license acceptance: [/cyan]"
+                    ).strip()
+                    if not email:
+                        err("Email address is required to accept the license.")
+                        continue
+                    if not _is_valid_email(email):
+                        err("Please enter a valid email address.")
+                        continue
+                    good("License accepted with email verification!")
+                    _track_license_acceptance(email)
+                    break
+
             break
         if response in decline_responses:
-            _handle_license_decline(mode)
-        _notify_invalid_response(mode)
+            _handle_license_decline()
+        _notify_invalid_response()
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -371,40 +368,22 @@ def banner_sequence() -> None:
     app_home = _resolve_app_home()
     use_rich = HAS_RICH and hasattr(console, "is_terminal") and console.is_terminal and sys.stdout.isatty()
 
-    if use_rich:
-        _display_rich_welcome()
-        _animate_waves_rich(duration=1.8)
-        _wait_for_enter_rich("Press Enter to continue...")
-        _display_rich_tips(initial_bullets=True)
-        _animate_tips_rich()
-        _wait_for_enter_rich("Press Enter to continue...")
-        _ensure_license_acceptance("rich", app_home=app_home)
-        _spinner_rich("Launching CRUSH…", duration=1.8)
-        console.clear()
-        return
+    if not use_rich:
+        raise RuntimeError(
+            "Victoria Terminal requires an interactive terminal capable of Rich rendering. "
+            "Use --task together with --accept-license for non-interactive environments."
+        )
 
-    if "Fore" in globals() and "Style" in globals():
-        _display_colorama_welcome()
-        _animate_waves_colorama(duration=1.2)
-        _wait_for_enter_basic("Press Enter to continue...")
-        _display_colorama_tips(initial_bullets=True)
-        _animate_tips_colorama()
-        _wait_for_enter_basic("Press Enter to continue...")
-        _ensure_license_acceptance("colorama", app_home=app_home)
-        _spinner_colorama("Launching CRUSH…", duration=1.5)
-        _clear_basic()
-        return
-
-    _display_basic_welcome()
-    time.sleep(1.0)
-    _wait_for_enter_basic("Press Enter to continue...")
-    _display_basic_tips(initial_bullets=True)
-    time.sleep(0.8)
-    _display_basic_tips(initial_bullets=False)  # swap to checkmarks
-    _wait_for_enter_basic("Press Enter to continue...")
-    _ensure_license_acceptance("basic", app_home=app_home)
-    time.sleep(0.8)  # minimal spinner stand-in
-    _clear_basic()
+    _display_rich_welcome()
+    _animate_waves_rich(duration=1.8)
+    _wait_for_enter_rich("Press Enter to continue...")
+    _display_rich_tips(initial_bullets=True)
+    _animate_tips_rich()
+    _wait_for_enter_rich("Press Enter to continue...")
+    _ensure_license_acceptance(app_home=app_home)
+    _spinner_rich("Launching CRUSH…", duration=1.8)
+    console.clear()
+    return
 
 
 # ── Rich implementations ─────────────────────────────────────────────────────
@@ -586,126 +565,6 @@ def _wait_for_enter_rich(prompt: str) -> None:
         sys.exit(0)
 
 
-# ── Colorama implementations ──────────────────────────────────────────────────
-
-
-def _display_colorama_welcome() -> None:
-    _clear_basic()
-    print(f"{Fore.GREEN}{Style.BRIGHT}{TERMINAL_PROMPT}\n")
-    print(f"{Fore.CYAN}{Style.BRIGHT}" + "\n".join(COMPACT_SHIP_ASCII_BASE))
-    print(f"{Fore.MAGENTA}{Style.BRIGHT}{VICTORIA_TEXT}")
-    print(f"{Fore.WHITE}{Style.NORMAL}{'AdTech Data Navigation Terminal'.center(80)}\n{Style.RESET_ALL}")
-
-
-def _animate_waves_colorama(duration: float = 1.2) -> None:
-    start = time.time()
-    offset = 0
-    while time.time() - start < duration:
-        _clear_basic()
-        print(f"{Fore.GREEN}{Style.BRIGHT}{TERMINAL_PROMPT}\n")
-        lines = COMPACT_SHIP_ASCII_BASE.copy()
-        for idx in (-3, -2, -1):
-            if abs(idx) <= len(lines):
-                padding = " " * (offset % 6)
-                lines[idx] = f"{padding}{lines[idx].strip()}"
-        print(f"{Fore.CYAN}{Style.BRIGHT}" + "\n".join(lines))
-        print(f"{Fore.MAGENTA}{Style.BRIGHT}{VICTORIA_TEXT}")
-        print(f"{Fore.WHITE}{Style.NORMAL}{'AdTech Data Navigation Terminal'.center(80)}\n{Style.RESET_ALL}")
-        offset += 1
-        time.sleep(0.08)
-
-
-def _display_colorama_tips(*, initial_bullets: bool = True) -> None:
-    _clear_basic()
-    print(f"{Fore.WHITE}{Style.BRIGHT}{'Victoria Terminal'.center(80)}{Style.RESET_ALL}\n")
-    print(f"{Fore.CYAN}{Style.DIM}{'TIPS'.center(80)}{Style.RESET_ALL}\n")
-    items = TIPS_BULLETS if initial_bullets else TIPS_CHECKED
-    for tip in items:
-        print(f"{Fore.WHITE}{tip}{Style.RESET_ALL}")
-    print()
-
-
-def _animate_tips_colorama() -> None:
-    for i in range(1, len(TIPS_BULLETS) + 1):
-        # redraw with partial checkmarks
-        _clear_basic()
-        print(f"{Fore.WHITE}{Style.BRIGHT}{'Victoria Terminal'.center(80)}{Style.RESET_ALL}\n")
-        print(f"{Fore.CYAN}{Style.DIM}{'TIPS'.center(80)}{Style.RESET_ALL}\n")
-        for idx, tip in enumerate(TIPS_BULLETS):
-            if idx < i:
-                print(f"{Fore.WHITE}{TIPS_CHECKED[idx]}{Style.RESET_ALL}")
-            else:
-                print(f"{Fore.WHITE}{tip}{Style.RESET_ALL}")
-        print()
-        time.sleep(0.25)
-
-
-def _spinner_colorama(message: str, duration: float = 1.5) -> None:
-    frames = "|/-\\"
-    start = time.time()
-    i = 0
-    while time.time() - start < duration:
-        print(f"\r{Fore.CYAN}{frames[i % len(frames)]} {message}{Style.RESET_ALL}", end="", flush=True)
-        time.sleep(0.08)
-        i += 1
-    print()
-
-
-# ── Basic implementations ─────────────────────────────────────────────────────
-
-
-def _display_basic_welcome() -> None:
-    _clear_basic()
-    print(TERMINAL_PROMPT)
-    print()
-    print("\n".join(COMPACT_SHIP_ASCII_BASE))
-    print(VICTORIA_TEXT)
-    print("AdTech Data Navigation Terminal".center(80))
-    print()
-
-
-def _display_basic_tips(*, initial_bullets: bool = True) -> None:
-    _clear_basic()
-    print("Victoria Terminal".center(80))
-    print("TIPS".center(80))
-    print()
-    items = TIPS_BULLETS if initial_bullets else TIPS_CHECKED
-    for tip in items:
-        print(tip)
-    print()
-
-
-def _wait_for_enter_basic(prompt: str) -> None:
-    try:
-        print(f"{Fore.CYAN}{prompt}{Style.RESET_ALL}")
-    except Exception:
-        print(prompt)
-    try:
-        input()
-    except (KeyboardInterrupt, EOFError):
-        print("\nStartup cancelled")
-        sys.exit(0)
-
-
-def _clear_basic() -> None:
-    # Clear for most terminals
-    print("\033[2J\033[H", end="")
-
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Setup / CRUSH helpers                                                         |
-# ──────────────────────────────────────────────────────────────────────────────
-
-
-def initialize_colorama() -> None:
-    """Initialise colorama when not running under pytest."""
-    if "PYTEST_CURRENT_TEST" not in os.environ:
-        colorama_init()
-
-
-_DEF_ENV_PATTERN = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}")
-
-
 def resource_path(name: str | Path) -> Path:
     base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
     return base / name
@@ -730,18 +589,23 @@ def load_environment(
 ) -> dict[str, str]:
     """Load environment variables from ``.env`` without overriding existing values."""
     env_path = app_home / ENV_FILENAME
+    target_env: MutableMapping[str, str] = env if env is not None else os.environ
+
     if not env_path.exists():
-        warn(
-            "No configuration file found. Provide a pre-populated .env file at "
-            f"{env_path} to enable remote providers."
-        )
+        missing_keys = [key for key in REQUIRED_ENV_KEYS if not target_env.get(key)]
+        if missing_keys:
+            warn(
+                "No configuration file found. Provide a .env file or set the "
+                f"following variables via the container runtime: {', '.join(missing_keys)}"
+            )
+        else:
+            info("No .env file found. Using runtime-provided environment variables for secrets.")
         return {}
 
     values = parse_env_file(env_path)
     if env is None:
         load_dotenv(env_path, override=False)
 
-    target_env: MutableMapping[str, str] = env if env is not None else os.environ
     for key, value in values.items():
         target_env.setdefault(key, value)
 
@@ -794,13 +658,15 @@ def substitute_env(obj: Any, env: Mapping[str, str] | None = None) -> Any:
     if isinstance(obj, list):
         return [substitute_env(value, env_map) for value in obj]
     if isinstance(obj, str):
-
-        def repl(match: re.Match[str]) -> str:
-            var = match.group(1)
-            value = env_map.get(var)
-            return value if value is not None else match.group(0)
-
-        return _DEF_ENV_PATTERN.sub(repl, obj)
+        template = Template(obj)
+        try:
+            return template.safe_substitute(env_map)
+        except ValueError:
+            # Preserve the original value when the template contains malformed
+            # placeholders (for example a trailing ``$``). This matches the
+            # previous behaviour where only well-formed ``${VAR}`` patterns
+            # were substituted.
+            return obj
     return obj
 
 
@@ -855,7 +721,7 @@ def generate_crush_config(
             if not _is_gamma_enabled(env_map):
                 mcp_config.pop("gamma", None)
             else:
-                gamma_script = resource_path(Path("gamma-mcp.py"))
+                gamma_script = resource_path(Path("gamma_mcp.py"))
                 if not gamma_script.exists():
                     raise FileNotFoundError(
                         "Gamma MCP server script is missing from the Victoria installation "
@@ -900,19 +766,22 @@ def preflight_crush() -> None:
     good("All systems ready")
 
 
-def launch_crush(*, app_home: Path = APP_HOME) -> None:
-    """Launch Crush with the generated configuration."""
+def launch_crush(*, app_home: Path = APP_HOME, task_prompt: str | None = None) -> None:
+    """Launch Crush with the generated configuration.
+
+    When a task prompt is provided, the entry point triggers a non-interactive
+    ``crush run`` invocation with that prompt. Otherwise the traditional
+    interactive ``--yolo`` flow is launched.
+    """
     section("Mission launch")
     info("Launching Crush...")
-    cmd = [CRUSH_COMMAND, "-c", str(app_home), "--yolo"]
+    cmd = [CRUSH_COMMAND, "-c", str(app_home)]
+    if task_prompt is not None:
+        cmd.extend(["run", task_prompt])
+    else:
+        cmd.append("--yolo")
     try:
-        if os.name == "nt":
-            proc = subprocess.run(cmd, check=False)
-            if proc.returncode != 0:
-                err(f"Crush exited with {proc.returncode}")
-                sys.exit(proc.returncode)
-        else:
-            os.execvp(CRUSH_COMMAND, cmd)
+        os.execvp(CRUSH_COMMAND, cmd)
     except FileNotFoundError:
         err(
             f"'{CRUSH_COMMAND}' command not found in PATH. "
@@ -931,58 +800,66 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     else:
         argv_list = list(argv)
 
-    sanitized_args = [arg for arg in argv_list if arg != "--"]
-
     parser = argparse.ArgumentParser(
         description=("Victoria container entry point. Ensures configuration exists and launches Crush.")
     )
     parser.add_argument(
-        "--app-home",
-        type=Path,
-        default=APP_HOME,
-        help=("Directory to use for Victoria configuration (defaults to ~/Victoria or $VICTORIA_HOME)."),
+        "--accept-license",
+        dest="accept_license",
+        action="store_true",
+        help=("Automatically accept the Victoria Terminal license (required when using --task)."),
     )
     parser.add_argument(
-        "--skip-launch",
-        action="store_true",
-        help="Prepare configuration without launching Crush.",
-    )
-    parser.add_argument(
-        "--no-banner",
-        action="store_true",
-        help="Skip the animated launch banner (useful for non-interactive runs).",
-    )
-    parser.add_argument(
-        "--acccept-license",
-        action="store_true",
-        help=("Automatically accept the Victoria Terminal license " "(required when using --no-banner)."),
+        "--task",
+        metavar="PROMPT",
+        help=(
+            "Run a single Crush task non-interactively. Skips the onboarding "
+            "sequence, requires --accept-license, and forwards PROMPT to 'crush run'."
+        ),
     )
     parser.add_argument(
         "--version",
         action="version",
         version=f"%(prog)s {__version__}",
     )
-    return parser.parse_args(sanitized_args)
+
+    normalized_args = [arg for arg in argv_list if arg != "--"]
+
+    return parser.parse_args(normalized_args)
 
 
 def main(argv: Sequence[str] | None = None) -> None:
     """Entry point for launching the Victoria terminal."""
-    initialize_colorama()
     args = parse_args(argv)
 
-    app_home = args.app_home.expanduser()
+    app_home = APP_HOME
     os.environ["VICTORIA_HOME"] = str(app_home)
 
-    if args.no_banner and not args.acccept_license:
-        err("Using --no-banner requires --acccept-license to confirm acceptance " "of the Victoria Terminal license.")
-        sys.exit(2)
+    raw_task_prompt = getattr(args, "task", None)
+    task_prompt: str | None = None
+    task_mode_active = False
+
+    if raw_task_prompt is not None:
+        task_prompt = raw_task_prompt.strip() if raw_task_prompt else ""
+        if not task_prompt:
+            err("--task requires a non-empty prompt to run.")
+            sys.exit(2)
+        if not args.accept_license:
+            err("--task requires --accept-license to confirm acceptance of the Victoria Terminal license.")
+            sys.exit(2)
+        task_mode_active = True
+
+    global SILENT_MODE
+    SILENT_MODE = task_mode_active
+
+    task_mode = task_mode_active
 
     # Intro: two screens with Enter between each, spinner before launch
-    if not args.no_banner:
+    if not task_mode:
         banner_sequence()
 
     ensure_app_home(app_home)
-    if args.no_banner and args.acccept_license:
+    if args.accept_license:
         _persist_license_acceptance(app_home=app_home)
     load_environment(app_home)
     generate_crush_config(app_home=app_home)
@@ -992,9 +869,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         f"Inside the container that directory is available at: {app_home}"
     )
     preflight_crush()
-    if args.skip_launch:
-        return
-    launch_crush(app_home=app_home)
+    launch_crush(app_home=app_home, task_prompt=task_prompt if task_mode else None)
 
 
 if __name__ == "__main__":

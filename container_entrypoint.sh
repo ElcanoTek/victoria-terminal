@@ -3,34 +3,46 @@ set -euo pipefail
 
 DEFAULT_CMD=("python3" "/workspace/victoria_terminal.py")
 
-# If no arguments were provided, launch Victoria.
+configure_runtime_environment() {
+    if [[ -z "${VICTORIA_HOME:-}" ]]; then
+        echo "VICTORIA_HOME must be set." >&2
+        exit 1
+    fi
+
+    export HOME="${VICTORIA_HOME}"
+    mkdir -p "${HOME}"
+
+    mkdir -p "${HOME}/.local/share/crush"
+    if [[ ! -f "${HOME}/.local/share/crush/crush.json" ]]; then
+        cp /workspace/configs/crush/crush.local.json "${HOME}/.local/share/crush/crush.json"
+    fi
+
+    case ":${PATH}:" in
+        *:"${HOME}/.local/bin":*) ;;
+        *) export PATH="${HOME}/.local/bin:${PATH}" ;;
+    esac
+}
+
+configure_runtime_environment
+
 if [[ $# -eq 0 ]]; then
     exec "${DEFAULT_CMD[@]}"
 fi
 
-# Handle a bare `--` separator used to distinguish container options from application arguments.
-# This follows standard Unix conventions where `--` signals the end of options processing.
-# Using `--` is the recommended way to pass arguments to Victoria to avoid confusion
-# between Podman container options and Victoria application flags.
 if [[ "$1" == "--" ]]; then
     shift
 fi
 
-# If nothing remains after stripping `--`, fall back to Victoria.
 if [[ $# -eq 0 ]]; then
     exec "${DEFAULT_CMD[@]}"
 fi
 
-# Treat leading flags as arguments for Victoria.
 if [[ "$1" == -* ]]; then
     exec "${DEFAULT_CMD[@]}" "$@"
 fi
 
-# If the first argument is an executable on PATH, run it directly. This allows
-# commands such as `podman run … bash` to spawn an interactive shell.
 if command -v "$1" >/dev/null 2>&1; then
     exec "$@"
 fi
 
-# Fallback: run Victoria with the provided arguments.
 exec "${DEFAULT_CMD[@]}" "$@"

@@ -38,19 +38,9 @@ Podman is required for every installation option. Install it first, then verify 
 
 ---
 
-## 🚀 Installation options
+## 🚀 Install with the helper script
 
-Victoria supports three installation flows. Use the summary below to pick the path that matches your workflow, then jump to the detailed instructions.
-
-| Stream | Best for | What you get |
-| --- | --- | --- |
-| [Stream 1 – Guided helper script](#stream-1--guided-helper-script) | Analysts and traders who want the quickest setup | Installs Podman prerequisites, provisions the shared workspace, pulls the right image, and adds a `victoria` command to your shell profile. |
-| [Stream 2 – Manual Podman commands](#stream-2--manual-podman-commands) | Operators who prefer to copy/paste each command | Step-by-step Podman instructions for creating the workspace, pulling images, running the container, and passing options. |
-| [Stream 3 – Build from source](#stream-3--build-from-source) | Contributors and teams customizing Victoria | Clone the repository, create a Python environment, and build/test the container locally. |
-
-### Stream 1 – Guided helper script
-
-Let Victoria wire up the remaining pieces for you. The helper scripts validate Podman, ensure your `~/Victoria` workspace exists, detect the host architecture, pull the matching container image tag, and add a reusable `victoria` command to your shell profile.
+The fastest way to get Victoria on your machine is the guided installer. It checks for Podman, ensures your `~/Victoria` workspace exists, detects the host architecture, pulls the matching container image tag, and adds a reusable `victoria` command to your shell profile.
 
 * **macOS / Linux**
   ```bash
@@ -69,129 +59,18 @@ victoria
 
 Re-run the script any time you want to refresh the alias. It will not reinstall Podman, but it will remind you to start `podman machine` on macOS and Windows if needed.
 
-### Stream 2 – Manual Podman commands
+### Automate Victoria with `--task`
 
-Prefer to copy and paste the commands yourself? Follow the steps below to mirror what the helper script does behind the scenes.
-
-#### Create the shared workspace folder
-
-Victoria stores configuration and credentials in a folder that is mounted into the container. Create it once and reuse it for every upgrade:
-
-* **macOS / Linux**
-  ```bash
-  mkdir -p ~/Victoria
-  ```
-* **Windows (PowerShell)**
-  ```powershell
-  New-Item -ItemType Directory -Path "$HOME/Victoria" -Force
-  ```
-* **Windows (Command Prompt)**
-  ```cmd
-  mkdir %USERPROFILE%\Victoria
-  ```
-
-#### Pull the right image for your architecture
-
-Victoria publishes multi-architecture tags. If you're unsure which CPU architecture your Podman host is using, check it with:
+Victoria can execute non-interactive tasks when launched with the `--task` flag. Pair it with `--accept-license` so the container can acknowledge the Business Source License without prompting:
 
 ```bash
-podman info --format '{{.Host.Arch}}'
+victoria --accept-license --task "create a Gamma presentation on this week's optimizations and email it to brad@elcanotek.com"
 ```
 
-Use the table below to pull (or update) the matching image and run it. Re-running the `podman pull` command keeps you on the latest release.
+Use clear, production-ready instructions in the quoted task string—automation jobs frequently power integration tests and CI workflows. The example above mirrors the internal integration scenario we maintain; adapt the prompt to match the workflow you need to validate. When automations require filesystem output, specify both the filename and the directory inside your mounted `~/Victoria` workspace so downstream jobs can inspect the results.
 
-| Platform | CPU architecture | Pull / update | Run |
-| --- | --- | --- | --- |
-| macOS or Linux (Intel/AMD) | `x86_64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest` | `podman run --rm -it -v ~/Victoria:/root/Victoria ghcr.io/elcanotek/victoria-terminal:latest` |
-| macOS or Linux (Arm64) | `arm64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest-arm64` | `podman run --rm -it -v ~/Victoria:/root/Victoria ghcr.io/elcanotek/victoria-terminal:latest-arm64` |
-| Windows PowerShell (Intel/AMD) | `x86_64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest` | `podman run --rm -it -v "$env:USERPROFILE/Victoria:/root/Victoria" ghcr.io/elcanotek/victoria-terminal:latest` |
-| Windows PowerShell (Arm64) | `arm64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest-arm64` | `podman run --rm -it -v "$env:USERPROFILE/Victoria:/root/Victoria" ghcr.io/elcanotek/victoria-terminal:latest-arm64` |
-
-> [!NOTE]
-> The run commands are shown on a single line to work in PowerShell and other shells without additional escaping. On macOS and Linux you can add `\` line continuations if you prefer.
-
-#### Best Practices for Argument Passing
-
-When passing arguments to Victoria inside the container, always use the `--` separator to clearly distinguish between container options and application arguments:
-
-```bash
-# Correct: Arguments after -- go to Victoria
-podman run --rm -it -v ~/Victoria:/root/Victoria ghcr.io/elcanotek/victoria-terminal:latest -- --skip-launch
-
-# Avoid: Ambiguous argument parsing
-podman run --rm -it -v ~/Victoria:/root/Victoria ghcr.io/elcanotek/victoria-terminal:latest --skip-launch
-```
-
-The `--` separator ensures that:
-- Container runtime options (like `--rm`, `-it`, `-v`) are processed by Podman.
-- Application arguments (like `--skip-launch`) are passed to Victoria.
-- Container and application flags remain unambiguous.
-
-On macOS and Linux you can split the run command across multiple lines for readability (the example below shows the `x86_64` tag; swap in the tag from the table above if you are on Arm64):
-
-```bash
-podman run --rm -it \
-  -v ~/Victoria:/root/Victoria \
-  ghcr.io/elcanotek/victoria-terminal:latest -- --skip-launch
-```
-> [!IMPORTANT]
-> Non-interactive runs that skip the launch banner must pass `--accept-license` (for example, together with `--no-banner`). Using this flag automatically accepts the Victoria Terminal Business Source License described in [LICENSE](LICENSE).
-
-Windows users should keep the commands on a single line and use `$env:USERPROFILE/Victoria` in place of `~/Victoria`:
-
-```powershell
-podman run --rm -it -v "$env:USERPROFILE/Victoria:/root/Victoria" ghcr.io/elcanotek/victoria-terminal:latest -- --skip-launch
-```
-
-#### Configure on first run
-
-The container's default command (`victoria_terminal.py`) now assumes you provide a ready-to-use `.env` file inside `~/Victoria`.
-
-- If `~/Victoria/.env` exists, Victoria loads the environment variables and launches immediately.
-- If the file is missing—or lacks a required key—it logs a warning that calls out which integrations will be unavailable until the `.env` file is updated.
-
-Victoria validates your `.env` file on every launch. Pass `--skip-launch` if you only want to perform the configuration checks without starting the UI:
-
-```bash
-podman run --rm -it \
-  -v ~/Victoria:/root/Victoria \
-  ghcr.io/elcanotek/victoria-terminal:latest -- --skip-launch
-```
-
-You can also point the default command at an alternate shared location with `--shared-home /path/to/shared/Victoria`.
-
-> [!IMPORTANT]
-> Victoria no longer prompts for API keys. Provide a curated `.env` file with every deployment so users can drop it into their `~/Victoria` folder and get started immediately.
-
-##### Managing the `.env` file
-
-Victoria reads every environment variable defined in `~/Victoria/.env` and exposes it to the terminal session. Bundle a template that documents each key alongside a fully configured variant for production use.
-
-Use the provided `example.env` file as a template:
-
-```bash
-# Copy the example file and customize it
-cp example.env ~/Victoria/.env
-```
-
-Example configuration:
-
-```dotenv
-# victoria/.env
-OPENROUTER_API_KEY="sk-or-your-api-key-here"
-GAMMA_API_KEY="sk-gamma-your-api-key-here"
-```
-
-- Keep comments in the file to describe why a key is needed or where to request it.
-- Distribute sensitive values through secure channels—Victoria simply reads them at runtime.
-- To rotate a credential, update the `.env` file on the host and restart the container; no interactive wizard is required.
-
-> [!TIP]
-> Swap in the image tag that matches your architecture (from the table above) and adjust the host path syntax for your platform. Windows PowerShell users should run the command on a single line with `$env:USERPROFILE/Victoria`.
-
-### Stream 3 – Build from source
-
-Follow this path if you plan to modify Victoria, integrate it into a custom workflow, or contribute changes upstream. The end-to-end development workflow—including rebuilding the container, updating shared templates, and verifying changes—is documented in detail in [CONTRIBUTING.md](CONTRIBUTING.md).
+> **Need manual commands, pre-built image instructions, or the full development workflow?**
+> Head over to [CONTRIBUTING.md](CONTRIBUTING.md) for step-by-step guidance on running published container images and building Victoria from source.
 
 ## 🤝 Contributing
 

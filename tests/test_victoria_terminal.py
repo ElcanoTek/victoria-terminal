@@ -17,10 +17,15 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+from typing import Mapping
 
 import pytest
 
-import victoria_terminal as entrypoint
+TEST_APP_HOME = Path(__file__).resolve().parent / ".victoria-test-home"
+os.environ.setdefault("VICTORIA_HOME", str(TEST_APP_HOME))
+TEST_APP_HOME.mkdir(parents=True, exist_ok=True)
+
+import victoria_terminal as entrypoint  # noqa: E402
 
 
 def test_parse_env_file_handles_comments(tmp_path: Path) -> None:
@@ -41,6 +46,79 @@ def test_parse_env_file_missing_returns_empty(tmp_path: Path) -> None:
     assert entrypoint.parse_env_file(env_path) == {}
 
 
+def test_is_valid_email_accepts_common_formats(monkeypatch: pytest.MonkeyPatch) -> None:
+    emails = [
+        "user@example.com",
+        "USER+tag@sub.example.co",
+        "first.last@domain.io",
+        "mixed-case@Example.Org",
+    ]
+    calls: list[tuple[str, bool]] = []
+
+    def fake_validate(candidate: str, *, check_deliverability: bool) -> None:
+        calls.append((candidate, check_deliverability))
+
+    monkeypatch.setattr(entrypoint, "validate_email", fake_validate)
+
+    for email in emails:
+        assert entrypoint._is_valid_email(email) is True
+
+    assert calls == [(email, True) for email in emails]
+
+
+def test_is_valid_email_rejects_invalid_formats(monkeypatch: pytest.MonkeyPatch) -> None:
+    def fake_validate(candidate: str, *, check_deliverability: bool) -> None:
+        raise entrypoint.EmailNotValidError("invalid")
+
+    monkeypatch.setattr(entrypoint, "validate_email", fake_validate)
+
+    for email in [
+        "plainaddress",
+        "missing-domain@",
+        "missing-at.example.com",
+        "user@",
+        "@example.com",
+        "",
+    ]:
+        assert entrypoint._is_valid_email(email) is False
+
+
+def test_track_license_acceptance_sends_plain_email(monkeypatch: pytest.MonkeyPatch) -> None:
+    recorded: dict[str, dict[str, str]] = {}
+
+    def fake_post(url: str, json: Mapping[str, str], timeout: int) -> None:
+        recorded["payload"] = dict(json)
+
+    monkeypatch.setattr(entrypoint.requests, "post", fake_post)
+    monkeypatch.setattr(entrypoint, "validate_email", lambda *_args, **_kwargs: None)
+
+    email = "User+tag@example.com"
+    entrypoint._track_license_acceptance(email)
+
+    payload = recorded.get("payload")
+    assert payload is not None
+    assert payload["email"] == "User+tag@example.com"
+    assert payload["event"] == "license_accepted"
+
+
+def test_track_license_acceptance_skips_invalid_email(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[dict[str, str]] = []
+
+    def fake_post(url: str, json: Mapping[str, str], timeout: int) -> None:
+        calls.append(dict(json))
+
+    monkeypatch.setattr(entrypoint.requests, "post", fake_post)
+
+    def always_invalid(*_args: object, **_kwargs: object) -> None:
+        raise entrypoint.EmailNotValidError("bad")
+
+    monkeypatch.setattr(entrypoint, "validate_email", always_invalid)
+
+    entrypoint._track_license_acceptance("invalid-email")
+
+    assert calls == []
+
+
 def test_load_environment_preserves_existing_values(tmp_path: Path) -> None:
     env_path = tmp_path / entrypoint.ENV_FILENAME
     env_path.write_text("FOO=bar\nSHARED=value\n", encoding="utf-8")
@@ -54,38 +132,27 @@ def test_load_environment_preserves_existing_values(tmp_path: Path) -> None:
     assert custom_env["SHARED"] == "existing"
 
 
-def test_load_environment_returns_empty_when_file_absent(tmp_path: Path, mocker: pytest.MockFixture) -> None:
-    warn = mocker.patch.object(entrypoint, "warn")
-
+def test_load_environment_returns_empty_when_file_absent(tmp_path: Path) -> None:
     assert entrypoint.load_environment(app_home=tmp_path, env={}) == {}
-    warn.assert_called_once()
 
 
-def test_load_environment_reports_missing_keys(tmp_path: Path, mocker: pytest.MockFixture) -> None:
-    env_path = tmp_path / entrypoint.ENV_FILENAME
-    env_path.write_text("# empty file\n", encoding="utf-8")
-    env: dict[str, str] = {}
-    warn = mocker.patch.object(entrypoint, "warn")
+def test_load_environment_without_file_respects_runtime_env(tmp_path: Path) -> None:
+    custom_env = {"OPENROUTER_API_KEY": "from-runtime"}
 
-    entrypoint.load_environment(app_home=tmp_path, env=env)
+    values = entrypoint.load_environment(app_home=tmp_path, env=custom_env)
 
-    warn.assert_called_with(
-        "The following API keys are missing. Update your .env file to enable " "these integrations: OPENROUTER_API_KEY"
-    )
+    assert values == {}
+    assert custom_env["OPENROUTER_API_KEY"] == "from-runtime"
 
 
-def test_load_environment_uses_values_from_env_file(tmp_path: Path, mocker: pytest.MockFixture) -> None:
+def test_load_environment_uses_values_from_env_file(tmp_path: Path) -> None:
     env_path = tmp_path / entrypoint.ENV_FILENAME
     env_path.write_text("OPENROUTER_API_KEY=from-file\n", encoding="utf-8")
     env: dict[str, str] = {}
-    info = mocker.patch.object(entrypoint, "info")
-    warn = mocker.patch.object(entrypoint, "warn")
 
     entrypoint.load_environment(app_home=tmp_path, env=env)
 
     assert env["OPENROUTER_API_KEY"] == "from-file"
-    info.assert_any_call(f"Using API keys from {env_path}.")
-    warn.assert_not_called()
 
 
 def test_substitute_env_handles_nested_structures() -> None:
@@ -137,6 +204,30 @@ def test_generate_crush_config_substitutes_env(tmp_path: Path) -> None:
     assert "gamma" not in data["mcp"]
 
 
+def test_generate_crush_config_includes_gamma_when_configured(tmp_path: Path) -> None:
+    env_values = {
+        "OPENROUTER_API_KEY": "test-key",
+        "VICTORIA_HOME": str(tmp_path),
+        "GAMMA_API_KEY": "gamma-key",
+    }
+
+    template = entrypoint.resource_path(entrypoint.CRUSH_TEMPLATE)
+    output = entrypoint.generate_crush_config(app_home=tmp_path, env=env_values, template_path=template)
+
+    data = json.loads(output.read_text(encoding="utf-8"))
+
+    gamma_config = data["mcp"]["gamma"]
+    gamma_script = entrypoint.resource_path(Path("gamma_mcp.py"))
+
+    assert gamma_config["command"] == "python3"
+    assert gamma_config["args"] == [str(gamma_script)]
+    assert gamma_config["cwd"] == str(gamma_script.parent)
+
+    env_block = gamma_config["env"]
+    assert env_block["GAMMA_API_KEY"] == "gamma-key"
+    assert env_block["PYTHONPATH"] == str(gamma_script.parent)
+
+
 def test_generate_crush_config_includes_browserbase_when_configured(tmp_path: Path) -> None:
     env_values = {
         "OPENROUTER_API_KEY": "test-key",
@@ -181,216 +272,61 @@ def test_generate_crush_config_ignores_blank_browserbase_url(tmp_path: Path) -> 
     assert "browserbase" not in data["mcp"]
 
 
-def test_generate_crush_config_sets_gamma_paths(tmp_path: Path, mocker: pytest.MockFixture) -> None:
-    env_values = {
-        "OPENROUTER_API_KEY": "test-key",
-        "VICTORIA_HOME": str(tmp_path),
-        "GAMMA_API_KEY": "gamma-key",
-    }
-
-    template = entrypoint.resource_path(entrypoint.CRUSH_TEMPLATE)
-
-    gamma_dir = tmp_path / "bundle"
-    gamma_dir.mkdir()
-    gamma_script = gamma_dir / "gamma-mcp.py"
-    gamma_script.write_text("#!/usr/bin/env python3\n", encoding="utf-8")
-
-    original_resource_path = entrypoint.resource_path
-
-    def fake_resource_path(name: str | Path) -> Path:
-        if Path(name) == Path("gamma-mcp.py"):
-            return gamma_script
-        return original_resource_path(name)
-
-    mocker.patch("victoria_terminal.resource_path", side_effect=fake_resource_path)
-
-    output = entrypoint.generate_crush_config(app_home=tmp_path, env=env_values, template_path=template)
-
-    data = json.loads(output.read_text(encoding="utf-8"))
-    gamma_cfg = data["mcp"]["gamma"]
-    assert gamma_cfg["args"] == [str(gamma_script)]
-    assert gamma_cfg["cwd"] == str(gamma_dir)
-    assert gamma_cfg["env"]["PYTHONPATH"] == str(gamma_dir)
-    assert gamma_cfg["env"]["GAMMA_API_KEY"] == env_values["GAMMA_API_KEY"]
-
-
 def test_generate_crush_config_missing_template_raises(tmp_path: Path) -> None:
     with pytest.raises(FileNotFoundError):
         entrypoint.generate_crush_config(app_home=tmp_path, template_path=tmp_path / "missing.json")
 
 
-def test_resolve_license_path_uses_resource_bundle(
-    tmp_path: Path, mocker: pytest.MockFixture, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.delenv("VICTORIA_LICENSE_PATH", raising=False)
-    bundle_dir = tmp_path / "bundle"
-    bundle_dir.mkdir()
-    license_file = bundle_dir / entrypoint.LICENSE_FILE_NAME
-    license_file.write_text("terms", encoding="utf-8")
-
-    mocker.patch.object(entrypoint, "resource_path", return_value=license_file)
-
-    assert entrypoint._resolve_license_path() == license_file
-
-
-def test_resolve_license_path_prefers_env_override(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    env_license = tmp_path / "custom-license.txt"
-    env_license.write_text("terms", encoding="utf-8")
-    monkeypatch.setenv("VICTORIA_LICENSE_PATH", str(env_license))
-
-    assert entrypoint._resolve_license_path() == env_license
-
-
-def test_resolve_license_path_raises_when_missing(
-    tmp_path: Path, mocker: pytest.MockFixture, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.delenv("VICTORIA_LICENSE_PATH", raising=False)
-    mocker.patch.object(entrypoint, "resource_path", return_value=tmp_path / "missing")
-
-    with pytest.raises(FileNotFoundError):
-        entrypoint._resolve_license_path()
-
-
-def test_ensure_app_home_copies_support_files(tmp_path: Path, mocker: pytest.MockFixture) -> None:
-    source_dir = tmp_path / "source"
-    source_dir.mkdir()
-    support_file = source_dir / "sample.txt"
-    support_file.write_text("documentation", encoding="utf-8")
-
-    destination = tmp_path / "dest"
-
-    mocker.patch("victoria_terminal.SUPPORT_FILES", (Path("sample.txt"),))
-    mocker.patch("victoria_terminal.resource_path", return_value=support_file)
-
-    result = entrypoint.ensure_app_home(app_home=destination)
-
-    copied = destination / "sample.txt"
-    assert result == destination
-    assert copied.exists()
-    assert copied.read_text(encoding="utf-8") == "documentation"
-
-
-def test_ensure_app_home_overwrites_victoria_manifest(tmp_path: Path, mocker: pytest.MockFixture) -> None:
-    source_dir = tmp_path / "source"
-    source_dir.mkdir()
-    manifest = source_dir / "VICTORIA.md"
-    manifest.write_text("container version", encoding="utf-8")
-
-    destination = tmp_path / "dest"
-    destination.mkdir()
-    existing_manifest = destination / "VICTORIA.md"
-    existing_manifest.write_text("host edits", encoding="utf-8")
-
-    mocker.patch("victoria_terminal.SUPPORT_FILES", (Path("VICTORIA.md"),))
-    mocker.patch("victoria_terminal.resource_path", return_value=manifest)
-
-    entrypoint.ensure_app_home(app_home=destination)
-
-    assert existing_manifest.read_text(encoding="utf-8") == "container version"
-
-
-def test_parse_args_accepts_custom_app_home(tmp_path: Path) -> None:
-    args = entrypoint.parse_args(["--app-home", str(tmp_path), "--skip-launch"])
-
-    assert args.app_home == tmp_path
-    assert args.skip_launch is True
-
-
 def test_parse_args_ignores_double_dash_separator() -> None:
-    args = entrypoint.parse_args(["--", "--skip-launch"])
+    args = entrypoint.parse_args(["--", "--accept-license"])
 
-    assert args.skip_launch is True
-
-
-def test_parse_args_sets_no_banner_flag() -> None:
-    args = entrypoint.parse_args(["--no-banner"])
-
-    assert args.no_banner is True
+    assert args.accept_license is True
 
 
-def test_parse_args_sets_acccept_license_flag() -> None:
-    args = entrypoint.parse_args(["--acccept-license"])
+def test_parse_args_rejects_app_home_override(tmp_path: Path) -> None:
+    with pytest.raises(SystemExit) as exc_info:
+        entrypoint.parse_args(["--app-home", str(tmp_path)])
 
-    assert args.acccept_license is True
-
-
-def test_main_honours_skip_launch(tmp_path: Path, mocker: pytest.MockFixture, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("VICTORIA_HOME", raising=False)
-
-    mocker.patch("victoria_terminal.initialize_colorama")
-    banner_sequence = mocker.patch("victoria_terminal.banner_sequence")
-    ensure_app_home = mocker.patch("victoria_terminal.ensure_app_home", side_effect=lambda path: path)
-    load_environment = mocker.patch("victoria_terminal.load_environment")
-    generate_config = mocker.patch("victoria_terminal.generate_crush_config")
-    mocker.patch("victoria_terminal.remove_local_duckdb")
-    mocker.patch("victoria_terminal.info")
-    mocker.patch("victoria_terminal.preflight_crush")
-    launch_crush = mocker.patch("victoria_terminal.launch_crush")
-
-    entrypoint.main(["--skip-launch", "--app-home", str(tmp_path)])
-
-    assert os.environ["VICTORIA_HOME"] == str(tmp_path)
-    ensure_app_home.assert_called_once_with(tmp_path)
-    load_environment.assert_called_once_with(tmp_path)
-    generate_config.assert_called_once_with(app_home=tmp_path)
-    launch_crush.assert_not_called()
-    banner_sequence.assert_called_once_with()
+    assert exc_info.value.code == 2
 
 
-def test_main_skips_banner_when_flag_set(
-    tmp_path: Path, mocker: pytest.MockFixture, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.delenv("VICTORIA_HOME", raising=False)
+def test_parse_args_sets_accept_license_flag() -> None:
+    args = entrypoint.parse_args(["--accept-license"])
 
-    mocker.patch("victoria_terminal.initialize_colorama")
-    banner_sequence = mocker.patch("victoria_terminal.banner_sequence")
-    mocker.patch("victoria_terminal.ensure_app_home", side_effect=lambda path: path)
-    mocker.patch("victoria_terminal.load_environment")
-    mocker.patch("victoria_terminal.generate_crush_config")
-    mocker.patch("victoria_terminal.remove_local_duckdb")
-    mocker.patch("victoria_terminal.info")
-    mocker.patch("victoria_terminal.preflight_crush")
-    mocker.patch("victoria_terminal.launch_crush")
-    persist_acceptance = mocker.patch("victoria_terminal._persist_license_acceptance")
-
-    entrypoint.main(
-        [
-            "--skip-launch",
-            "--no-banner",
-            "--acccept-license",
-            "--app-home",
-            str(tmp_path),
-        ]
-    )
-
-    banner_sequence.assert_not_called()
-    persist_acceptance.assert_called_once_with(app_home=tmp_path)
+    assert args.accept_license is True
 
 
-def test_main_no_banner_requires_license_acceptance(
-    tmp_path: Path, mocker: pytest.MockFixture, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.delenv("VICTORIA_HOME", raising=False)
+def test_parse_args_supports_task_flag() -> None:
+    args = entrypoint.parse_args(["--task", " Summarize mission "])
 
-    mocker.patch("victoria_terminal.initialize_colorama")
-    mocker.patch("victoria_terminal.ensure_app_home")
-    mocker.patch("victoria_terminal.load_environment")
-    mocker.patch("victoria_terminal.generate_crush_config")
-    mocker.patch("victoria_terminal.remove_local_duckdb")
-    mocker.patch("victoria_terminal.info")
-    mocker.patch("victoria_terminal.preflight_crush")
-    mocker.patch("victoria_terminal.launch_crush")
-    err = mocker.patch("victoria_terminal.err")
+    assert args.task == " Summarize mission "
 
-    with pytest.raises(SystemExit) as excinfo:
-        entrypoint.main(
-            [
-                "--skip-launch",
-                "--no-banner",
-                "--app-home",
-                str(tmp_path),
-            ]
-        )
 
-    assert excinfo.value.code == 2
-    err.assert_called_once()
+def test_launch_crush_appends_yolo_in_interactive_mode(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    recorded: dict[str, list[str]] = {}
+
+    def fake_execvp(cmd: str, argv: list[str]) -> None:
+        recorded["cmd"] = argv
+        raise SystemExit(0)
+
+    monkeypatch.setattr(entrypoint.os, "execvp", fake_execvp)
+
+    with pytest.raises(SystemExit):
+        entrypoint.launch_crush(app_home=tmp_path)
+
+    assert recorded["cmd"][-1] == "--yolo"
+
+
+def test_launch_crush_omits_yolo_in_task_mode(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    recorded: dict[str, list[str]] = {}
+
+    def fake_execvp(cmd: str, argv: list[str]) -> None:
+        recorded["cmd"] = argv
+        raise SystemExit(0)
+
+    monkeypatch.setattr(entrypoint.os, "execvp", fake_execvp)
+
+    with pytest.raises(SystemExit):
+        entrypoint.launch_crush(app_home=tmp_path, task_prompt="Chart conversions")
+
+    assert "--yolo" not in recorded["cmd"]

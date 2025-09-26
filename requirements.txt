@@ -1,7 +1,7 @@
 altair
 black
-colorama
 duckdb
+email-validator
 flake8
 httpx
 ipykernel
@@ -18,11 +18,11 @@ pyarrow
 pylsp-mypy
 pytest
 pytest-cov
-pytest-mock
 pytest-timeout
 python-dotenv
 python-lsp-ruff
 python-lsp-server
+requests
 rich
 scikit-learn
 scipy
