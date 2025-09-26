@@ -1,45 +1,21 @@
-# Ignore everything except the ad reporting data
+# Keep crush project configuration accessible
 !crush.json
 !.crush.json
 !VICTORIA.md
 
-# Ignore common development files
+# Ignore common environment and system artifacts
 .git/
 node_modules/
 .env
 *.log
 .DS_Store
+Thumbs.db
 *.tmp
 *.temp
 
-# Ignore documentation and images (Victoria should focus on data analysis)
-*.md
-!victoria_prompt.md
-*.png
-*.jpg
-*.jpeg
-*.gif
-*.svg
-
-# Ignore code files (not relevant for adtech analysis)
-*.js
-*.ts
-*.py
-*.go
-*.java
-*.cpp
-*.c
-*.h
-*.css
-*.html
-*.json
-!crush.json
-!.crush.json
-
-# Ignore build and dist directories
+# Ignore build outputs
 build/
 dist/
 target/
 bin/
 obj/
-
