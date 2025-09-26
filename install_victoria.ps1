@@ -121,7 +121,6 @@ $functionBlockLines = @(
     '        return',
     '    }',
     '    & podman run --rm -it `',
-    '        -e VICTORIA_HOME=/workspace/Victoria `',
     '        -v `"$env:USERPROFILE/Victoria:/workspace/Victoria`" `',
     "        $image @Args",
     '}',

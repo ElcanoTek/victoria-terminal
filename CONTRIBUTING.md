@@ -47,17 +47,19 @@ Use the commands below to stay current with the published images. Re-running `po
 
 | Platform | CPU architecture | Pull / update | Run |
 | --- | --- | --- | --- |
-| macOS or Linux (Intel/AMD) | `x86_64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest` | `podman run --rm -it --userns=keep-id --security-opt=no-new-privileges --cap-drop=all -e VICTORIA_HOME=/workspace/Victoria -v ~/Victoria:/workspace/Victoria:z ghcr.io/elcanotek/victoria-terminal:latest` |
-| macOS or Linux (Arm64) | `arm64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest-arm64` | `podman run --rm -it --userns=keep-id --security-opt=no-new-privileges --cap-drop=all -e VICTORIA_HOME=/workspace/Victoria -v ~/Victoria:/workspace/Victoria:z ghcr.io/elcanotek/victoria-terminal:latest-arm64` |
-| Windows PowerShell (Intel/AMD) | `x86_64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest` | `podman run --rm -it -e VICTORIA_HOME=/workspace/Victoria -v "$env:USERPROFILE/Victoria:/workspace/Victoria" ghcr.io/elcanotek/victoria-terminal:latest` |
-| Windows PowerShell (Arm64) | `arm64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest-arm64` | `podman run --rm -it -e VICTORIA_HOME=/workspace/Victoria -v "$env:USERPROFILE/Victoria:/workspace/Victoria" ghcr.io/elcanotek/victoria-terminal:latest-arm64` |
+| macOS or Linux (Intel/AMD) | `x86_64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest` | `podman run --rm -it -v ~/Victoria:/workspace/Victoria:z ghcr.io/elcanotek/victoria-terminal:latest` |
+| macOS or Linux (Arm64) | `arm64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest-arm64` | `podman run --rm -it -v ~/Victoria:/workspace/Victoria:z ghcr.io/elcanotek/victoria-terminal:latest-arm64` |
+| Windows PowerShell (Intel/AMD) | `x86_64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest` | `podman run --rm -it -v "$env:USERPROFILE/Victoria:/workspace/Victoria" ghcr.io/elcanotek/victoria-terminal:latest` |
+| Windows PowerShell (Arm64) | `arm64` | `podman pull ghcr.io/elcanotek/victoria-terminal:latest-arm64` | `podman run --rm -it -v "$env:USERPROFILE/Victoria:/workspace/Victoria" ghcr.io/elcanotek/victoria-terminal:latest-arm64` |
 
 > **Tip:** The run commands are shown on a single line for PowerShell compatibility. On macOS and Linux you can add `\` line continuations for readability.
+
+The container image exports `VICTORIA_HOME=/workspace/Victoria` by default, so mounting your host directory at `/workspace/Victoria` is all that is required to persist configuration and logs between runs.
 
 When you need to pass arguments through to Victoria, include `--` after the image name so Podman stops parsing options. For example:
 
 ```bash
-podman run --rm -it --userns=keep-id --security-opt=no-new-privileges --cap-drop=all -e VICTORIA_HOME=/workspace/Victoria -v ~/Victoria:/workspace/Victoria ghcr.io/elcanotek/victoria-terminal:latest -- --skip-launch
+podman run --rm -it -v ~/Victoria:/workspace/Victoria ghcr.io/elcanotek/victoria-terminal:latest -- --skip-launch
 ```
 
 The same command on Windows stays on a single line and uses `$env:USERPROFILE/Victoria` for the shared folder path.
@@ -75,10 +77,6 @@ Victoria validates your `.env` file on every launch. Pass `--skip-launch` if you
 
 ```bash
 podman run --rm -it \
-  --userns=keep-id \
-  --security-opt=no-new-privileges \
-  --cap-drop=all \
-  -e VICTORIA_HOME=/workspace/Victoria \
   -v ~/Victoria:/workspace/Victoria \
   ghcr.io/elcanotek/victoria-terminal:latest -- --skip-launch
 ```
@@ -133,10 +131,6 @@ Run the image you just built and mount your shared workspace. Pass arguments aft
 **Linux or macOS (Bash):**
 ```bash
 podman run --rm -it \
-  --userns=keep-id \
-  --security-opt=no-new-privileges \
-  --cap-drop=all \
-  -e VICTORIA_HOME=/workspace/Victoria \
   -v ~/Victoria:/workspace/Victoria:z \
   victoria-terminal
 ```
@@ -144,7 +138,6 @@ podman run --rm -it \
 **Windows (PowerShell):**
 ```powershell
 podman run --rm -it `
-  -e VICTORIA_HOME=/workspace/Victoria `
   -v "$env:USERPROFILE/Victoria:/workspace/Victoria" `
   victoria-terminal
 ```
@@ -167,40 +160,28 @@ Victoria standardizes on Nox sessions for linting and tests. Run them through Po
 **Linting**
 ```bash
 podman run --rm -it \
-  --userns=keep-id \
-  --security-opt=no-new-privileges \
-  --cap-drop=all \
-  -e VICTORIA_HOME=/workspace/Victoria \
   -v ~/Victoria:/workspace/Victoria \
   victoria-terminal -- nox -s lint
 ```
 
 ```powershell
-podman run --rm -it -e VICTORIA_HOME=/workspace/Victoria -v "$env:USERPROFILE/Victoria:/workspace/Victoria" victoria-terminal -- nox -s lint
+podman run --rm -it -v "$env:USERPROFILE/Victoria:/workspace/Victoria" victoria-terminal -- nox -s lint
 ```
 
 **Tests**
 ```bash
 podman run --rm -it \
-  --userns=keep-id \
-  --security-opt=no-new-privileges \
-  --cap-drop=all \
-  -e VICTORIA_HOME=/workspace/Victoria \
   -v ~/Victoria:/workspace/Victoria \
   victoria-terminal -- nox -s tests
 ```
 
 ```powershell
-podman run --rm -it -e VICTORIA_HOME=/workspace/Victoria -v "$env:USERPROFILE/Victoria:/workspace/Victoria" victoria-terminal -- nox -s tests
+podman run --rm -it -v "$env:USERPROFILE/Victoria:/workspace/Victoria" victoria-terminal -- nox -s tests
 ```
 
 To target specific pytest paths or keywords, append them after `-- pytest`, for example:
 ```bash
 podman run --rm -it \
-  --userns=keep-id \
-  --security-opt=no-new-privileges \
-  --cap-drop=all \
-  -e VICTORIA_HOME=/workspace/Victoria \
   -v ~/Victoria:/workspace/Victoria \
   victoria-terminal -- pytest tests/test_victoria_terminal.py -k "happy_path"
 ```
@@ -212,15 +193,11 @@ Local virtual environments are optional. If you experiment outside Podman, recre
 Open a shell inside the image when you need to inspect the runtime environment:
 ```bash
 podman run --rm -it \
-  --userns=keep-id \
-  --security-opt=no-new-privileges \
-  --cap-drop=all \
-  -e VICTORIA_HOME=/workspace/Victoria \
   -v ~/Victoria:/workspace/Victoria \
   victoria-terminal bash
 ```
 ```powershell
-podman run --rm -it -e VICTORIA_HOME=/workspace/Victoria -v "$env:USERPROFILE/Victoria:/workspace/Victoria" victoria-terminal bash
+podman run --rm -it -v "$env:USERPROFILE/Victoria:/workspace/Victoria" victoria-terminal bash
 ```
 Inside the shell you can run `env | sort`, inspect `/workspace/Victoria`, or execute `nox` and `pytest` directly. Files you create outside the mounted directory disappear when the container stops.
 
