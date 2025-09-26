@@ -1,6 +1,7 @@
 altair
 black
 duckdb
+email-validator
 flake8
 httpx
 ipykernel
