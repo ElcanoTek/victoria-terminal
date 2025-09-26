@@ -82,10 +82,11 @@ Update the quoted instruction to match your integration test or CI scenario. Whe
 
 ### 3. Configure on first run
 
-The container's default command (`victoria_terminal.py`) assumes you provide a ready-to-use `.env` file inside `~/Victoria`.
+The container's default command (`victoria_terminal.py`) assumes you provide a ready-to-use `.env` file inside `~/Victoria`, or that you inject the required secrets via container environment variables.
 
 - If `~/Victoria/.env` exists, Victoria loads the environment variables and launches immediately.
-- If the file is missing—or lacks a required key—it logs a warning that calls out which integrations will be unavailable until the `.env` file is updated.
+- If the file is missing but you provide credentials through `podman run -e KEY=value`, Victoria uses those runtime variables and notes that no `.env` file was found.
+- If neither a `.env` file nor runtime variables provide the required keys, Victoria logs a warning that calls out which integrations will be unavailable until they are set.
 
 Victoria validates your `.env` file on every launch.
 
@@ -100,8 +101,8 @@ Victoria reads every environment variable defined in `~/Victoria/.env` and expos
 
 ```dotenv
 # victoria/.env (sample deployment bundle)
-OPENROUTER_API_KEY="sk-or-your-api-key-here"
-GAMMA_API_KEY="sk-gamma-your-api-key-here"
+OPENROUTER_API_KEY="sk-or-v1-live-example-1234567890abcd"
+GAMMA_API_KEY="sk-gamma-prod-example-9876543210"
 ```
 
 - Keep comments in the template to describe why a key is needed or where to request it.
@@ -109,6 +110,24 @@ GAMMA_API_KEY="sk-gamma-your-api-key-here"
 - To rotate a credential, update the `.env` file on the host and restart the container; no interactive wizard is required.
 
 Swap in the image tag that matches your architecture (from the table above) and adjust the host path syntax for your platform. Windows PowerShell users should run the command on a single line with `$env:USERPROFILE/Victoria`.
+
+#### Passing ephemeral secrets with `podman run`
+
+Advanced users who prefer not to distribute a shared `.env` file can provide credentials directly at launch. This pattern keeps secrets within your Podman context while still enabling remote providers inside Victoria. Omit `-it` when you trigger non-interactive tasks and drop all capabilities when you are not mounting any host directories:
+
+```bash
+podman run --rm \
+  --cap-drop all \
+  -e OPENROUTER_API_KEY="sk-or-v1-live-example-1234567890abcd" \
+  -e GAMMA_API_KEY="sk-gamma-prod-example-9876543210" \
+  ghcr.io/elcanotek/victoria-terminal:latest \
+  --accept-license \
+  --task "Create a Gamma briefing for this week's campaign optimizations"
+```
+
+Podman passes the `-e` variables to the entry point so Victoria can generate the `crush.json` configuration without touching the host filesystem. Provide any other keys that your workflow requires, and remember to include `--accept-license` when using `--task` for non-interactive runs.
+
+> **Note:** Dropping all capabilities prevents the container from writing to shared volumes. If you need to persist outputs back to `~/Victoria`, omit `--cap-drop all` or mount the directory in a separate, trusted run.
 
 #### Using local LLM providers
 

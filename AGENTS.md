@@ -129,6 +129,7 @@ To run the tests:
 - **Title Format**: `[Component] Brief description of changes` (e.g., `[VictoriaTerminal] Add support for new data source`).
 - **Description**: Provide a clear and concise description of the changes.
 - **Testing**: Ensure all tests pass before submitting a pull request.
+- **Linting**: Run `nox -s lint` and resolve any issues before creating a pull request.
 - **Code Review**: All pull requests must be reviewed and approved by at least one other team member.
 
 
