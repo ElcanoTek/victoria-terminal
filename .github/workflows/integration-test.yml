@@ -11,6 +11,13 @@ jobs:
     env:
       IMAGE: ghcr.io/elcanotek/victoria-terminal:latest
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      TASK_PROMPT: |
+        Retrieve Victoria's integration test password exactly as it is documented in your VICTORIA.md briefing.
+
+        Write your reply to /workspace/Victoria/secret-password.txt. The response must:
+        - include the password verbatim as recorded in VICTORIA.md
+        - state that this sentence is the password requested during integration tests
+        - confirm Victoria is ready for further tasks
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -46,15 +53,6 @@ jobs:
       - name: Run secret password integration check
         run: |
           set +e
-          task_prompt=$(cat <<'EOF'
-Retrieve Victoria's integration test password exactly as it is documented in your VICTORIA.md briefing.
-
-Write your reply to /workspace/Victoria/secret-password.txt. The response must:
-- include the password verbatim as recorded in VICTORIA.md
-- state that this sentence is the password requested during integration tests
-- confirm Victoria is ready for further tasks
-EOF
-)
           output=$(timeout 90s podman run --rm \
             --userns=keep-id \
             --security-opt=no-new-privileges \
@@ -65,7 +63,7 @@ EOF
             "${IMAGE}" \
             -- \
             --accept-license \
-            --task "${task_prompt}")
+            --task "${TASK_PROMPT}")
           status=$?
           set -e
 
