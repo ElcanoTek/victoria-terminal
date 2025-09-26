@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This document provides instructions and guidelines for AI agents working on the Victoria project. Victoria is a fleet of AI-powered applications designed to help programmatic advertising traders analyze data and optimize campaigns.
+This document provides instructions and guidelines for AI agents working on the Victoria Terminal project. Victoria Terminal is Elcano's container-first interface for analyzing programmatic advertising data with help from AI copilots.
 
 ## Project Overview
 
@@ -10,7 +10,6 @@ Victoria connects to advertising data sources (CSVs, Excel files, Snowflake) and
 - Python 3.8+
 - `crush` as the AI coding agent
 - `rich` for terminal UI
-- `colorama` for cross-platform terminal colors
 
 ## Core Philosophy
 
@@ -52,7 +51,7 @@ For local development, we strongly recommend using a virtual environment to isol
 
 ### Podman Containers
 
-Victoria now provides a Podman container image that ships with Python and the `crush` CLI pre-installed. Developers can build it locally with `podman build -t victoria-terminal .` or run the published image from `ghcr.io/elcanotek/victoria-terminal:latest`. Mount `~/Victoria` into the container to reuse configuration created by the entry point.
+Victoria Terminal ships as a Podman container image that includes Python and the `crush` CLI. Developers can build it locally with `podman build -t victoria-terminal .` or run the published image from `ghcr.io/elcanotek/victoria-terminal:latest`. Mount `~/Victoria` into the container to reuse configuration created by the entry point.
 
 ```bash
 podman run --rm -it -v ~/Victoria:/workspace/Victoria:z ghcr.io/elcanotek/victoria-terminal:latest
@@ -89,7 +88,7 @@ The container setup for Victoria is intentionally designed to balance reliabilit
   SNOWFLAKE_PASSWORD="your_password"
   ```
 
-## The Victoria Fleet
+## Key Components
 
 - **Victoria Entry Point (`victoria_terminal.py`)**: Container-aware bootstrapper that synchronizes configuration from `~/Victoria`, guides first-run setup when needed, and launches the terminal experience end-to-end.
 
@@ -107,10 +106,7 @@ To run the tests:
     ```
     This command will automatically discover and execute all tests in the `tests/` directory.
 
-3.  **Manual Workflow**: A manual test workflow can also be triggered on GitHub Actions for additional verification:
-    ```bash
-    gh workflow run manual-tests.yml
-    ```
+3.  **CI Parity**: GitHub Actions runs the same `pytest` suite through the `ci.yml` workflow. You can mimic the automated lint-and-test pipeline locally with `nox -s lint tests` if you prefer matching the CI environment.
 
 ## Code Style & Conventions
 
