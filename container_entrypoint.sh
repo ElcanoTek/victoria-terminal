@@ -88,7 +88,9 @@ if [ "$(id -u)" = "0" ]; then
     # The Crush bootstrap config ships with restrictive permissions, so without
     # updating ownership the mapped UID would fail to read it and exit with the
     # "permission denied" error reported by users.
-    chown -R "${TARGET_UID}:${TARGET_GID}" "/home/${USERNAME}"
+    if ! chown -R "${TARGET_UID}:${TARGET_GID}" "/home/${USERNAME}"; then
+        echo "warning: unable to adjust ownership of /home/${USERNAME}; continuing with fallback if needed" >&2
+    fi
 
     # Re-execute the script as the victoria user, preserving the environment.
     # The `setpriv` command is used to drop root privileges and execute the
