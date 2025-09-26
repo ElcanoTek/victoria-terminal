@@ -54,11 +54,7 @@ jobs:
         run: |
           set +e
           output=$(timeout 90s podman run --rm \
-            --userns=keep-id \
-            --security-opt=no-new-privileges \
-            --cap-drop=all \
             -e OPENROUTER_API_KEY \
-            -e VICTORIA_HOME=/workspace/Victoria \
             -v "${PWD}/victoria-home:/workspace/Victoria:Z" \
             "${IMAGE}" \
             -- \

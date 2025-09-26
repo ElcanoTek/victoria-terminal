@@ -55,21 +55,21 @@ For local development, we strongly recommend using a virtual environment to isol
 Victoria now provides a Podman container image that ships with Python and the `crush` CLI pre-installed. Developers can build it locally with `podman build -t victoria-terminal .` or run the published image from `ghcr.io/elcanotek/victoria-terminal:latest`. Mount `~/Victoria` into the container to reuse configuration created by the entry point.
 
 ```bash
-podman run --rm -it \
-  --userns=keep-id \
-  --security-opt=no-new-privileges \
-  --cap-drop=all \
-  -e VICTORIA_HOME=/workspace/Victoria \
-  -v ~/Victoria:/workspace/Victoria \
-  ghcr.io/elcanotek/victoria-terminal:latest
+podman run --rm -it -v ~/Victoria:/workspace/Victoria:z ghcr.io/elcanotek/victoria-terminal:latest
 ```
 
-### Container Security Philosophy
+Windows PowerShell users should keep the command on a single line and substitute the host path syntax:
 
-The container setup for Victoria is intentionally designed to balance security with developer productivity and cross-platform compatibility. Agents working on this project should adhere to the following principles and avoid making changes that contradict them:
+```powershell
+podman run --rm -it -v "$env:USERPROFILE/Victoria:/workspace/Victoria" ghcr.io/elcanotek/victoria-terminal:latest
+```
 
--   **Runtime Security is Paramount**: Security is enforced primarily at runtime using Podman's security features. The flags `--security-opt=no-new-privileges` and `--cap-drop=all` are critical. They significantly limit the container's privileges, providing a strong security posture without complicating the build process.
--   **Flexible User Management**: The container uses `--userns=keep-id` to map the host user's ID to the container user. This is essential for seamless file sharing on mounted volumes and avoids permission issues. **Do not** add a `USER` instruction to the `Containerfile`, as it will break this workflow.
+### Container Runtime Philosophy
+
+The container setup for Victoria is intentionally designed to balance reliability with developer productivity and cross-platform compatibility. Agents working on this project should adhere to the following principles and avoid making changes that contradict them:
+
+-   **Prefer the Default Podman Security Profile**: The streamlined `podman run` command above intentionally omits additional security flags that previously caused permission issues on macOS, Linux, and Windows hosts. Do not reintroduce `--userns=keep-id`, `--security-opt`, or `--cap-drop` defaults unless a regression is demonstrated and thoroughly tested across platforms.
+-   **Root-Based Image**: The container image runs as root by default to guarantee mounted volumes remain writable regardless of host UID/GID mappings. Avoid adding a `USER` directive or runtime UID switching logic to the `Containerfile` or entrypoint.
 -   **Single-Stage Build for Debugging**: The `Containerfile` uses a single-stage build. This is a deliberate choice to keep development tools (like `go`, `git`, etc.) available within the container, which simplifies debugging. Do not refactor this into a multi-stage build, as it would hinder the development workflow.
 -   **"Always on Latest" Update Strategy**: The base image is intentionally set to `fedora:latest`. This ensures the container always benefits from the latest security patches. Builds are versioned and stored in the GitHub Container Registry, allowing for easy rollbacks if an update causes issues. Do not pin the base image to a specific version, as this would prevent automatic security updates.
 
