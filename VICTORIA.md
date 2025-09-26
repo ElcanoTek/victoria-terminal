@@ -980,19 +980,121 @@ The final step is to bring the story to life with a visually stunning presentati
 **Presentation Best Practices:**
 
 *   **Tell a Story:** Don't just present data; tell a story. Start with the big picture, drill down into the details, and end with a clear set of actionable recommendations.
-*   **Visualize Everything:** Use a wide variety of charts to make the data engaging and easy to understand. Gamma supports a rich set of chart types, so get creative! Here are some ideas based on the analysis phases:
+*   **Create Professional Charts with Structured Briefs:** To generate publication-quality visualizations, use structured "Chart Briefs" within your presentation content. This approach transforms basic chart requests into professional, insight-driven visualizations that maintain Elcano brand consistency.
 
-| Analysis Phase                  | Suggested Chart Types                                                                                                                                                           |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Executive Summary**           | Big number callouts, progress bars for goal attainment.                                                                                                                         |
-| **Platform Performance**        | Horizontal bar charts for rankings, pie or donut charts for distribution.                                                                                                       |
-| **Campaign Optimization Journey** | Dual-axis line and bar charts to show the relationship between optimizations and performance over time.                                                                         |
-| **Geographic Analysis**         | Geographic heatmaps, bubble maps.                                                                                                                                               |
-| **Temporal Analysis**           | Line charts for trends, heatmaps for hour-of-day/day-of-week analysis.                                                                                                          |
-| **Creative & Content Analysis** | Bubble charts to show the relationship between three variables (e.g., CTR, CVR, and spend), stacked bar charts for creative format comparison.                                      |
-| **Quirky Insights**             | Scatter plots to show unexpected correlations, annotated line charts to highlight anomalies.                                                                                    |
+#### Chart Brief Template
 
-*   **Leverage Gamma's AI:** Let Gamma's AI enhance your presentation with beautiful design, relevant icons, and a professional layout. Focus on providing high-quality, well-structured content in markdown, and let Gamma handle the rest.
+For every chart, include a structured brief that provides Gamma with specific instructions:
+
+```markdown
+**Chart Brief:**
+- **Chart Type**: [Specific chart type - be precise]
+- **Title**: "[Clear, descriptive title]"
+- **X-Axis Title**: "[Axis label with units]" (if applicable)
+- **Y-Axis Title**: "[Axis label with units]" (if applicable)
+- **Data Labels**: [Specific instructions for labels]
+- **Sorting**: [How to organize the data]
+- **Color Palette**: Use Elcano brand colors
+- **Purpose**: [What story the chart should tell]
+- **Key Insight**: [Main takeaway to highlight]
+
+**Data:**
+[Clean markdown table with your data]
+```
+
+#### Chart Type Selection Guide
+
+Choose the most appropriate chart type based on your data relationship:
+
+| Data Relationship | Recommended Chart Type | Best Use Case | Example |
+|-------------------|----------------------|---------------|---------|
+| **Compare Categories** | Horizontal Bar Chart | Platform performance, budget allocation | Ad spend by platform |
+| **Show Trends Over Time** | Line Chart | Performance optimization, seasonal patterns | CTR improvement over campaign duration |
+| **Display Proportions** | Donut Chart | Budget distribution, audience segments | Marketing spend by channel |
+| **Reveal Correlations** | Scatter Plot | Spend vs. conversions, engagement relationships | Ad spend correlation with conversions |
+| **Geographic Data** | Heatmap/Bubble Map | Regional performance, location insights | Conversion rates by state |
+| **Multiple Metrics** | Dual-Axis Chart | Volume and rate metrics combined | Impressions and CTR over time |
+| **Key Performance Indicators** | Big Number Callouts | Executive summaries, goal achievement | Total conversions vs. target |
+
+#### Enhanced Chart Examples by Analysis Phase
+
+| Analysis Phase | Chart Brief Example |
+|----------------|-------------------|
+| **Executive Summary** | `**Chart Brief:** Chart Type: Big Number Callouts, Title: "Q4 2025 Key Performance Indicators", Purpose: Highlight metrics exceeding targets, Key Insight: All KPIs surpassed goals by 15-28%` |
+| **Platform Performance** | `**Chart Brief:** Chart Type: Horizontal Bar Chart, Title: "Ad Spend Distribution by Platform", Sorting: Sort from highest to lowest spend, Key Insight: Google Ads represents 52% of total spend with highest ROI` |
+| **Campaign Optimization** | `**Chart Brief:** Chart Type: Line Chart, Title: "CTR Improvement Over Campaign Duration", Purpose: Show optimization success over time, Key Insight: 85% CTR improvement demonstrates successful optimization` |
+| **Geographic Analysis** | `**Chart Brief:** Chart Type: Geographic Heatmap, Title: "Conversion Rate by State", Purpose: Identify regional performance patterns, Key Insight: West Coast states show 40% higher conversion rates` |
+| **Temporal Analysis** | `**Chart Brief:** Chart Type: Heatmap, Title: "Performance by Hour and Day", Purpose: Reveal optimal timing patterns, Key Insight: Tuesday-Thursday 2-4 PM shows peak performance` |
+| **Creative Analysis** | `**Chart Brief:** Chart Type: Bubble Chart, Title: "Creative Performance: CTR vs CVR vs Spend", Purpose: Show three-variable relationships, Key Insight: Video creatives achieve highest engagement with moderate spend` |
+
+#### Professional Chart Standards
+
+Every chart generated through Victoria Terminal meets these quality standards:
+
+**Content Quality:**
+- Appropriate chart type for the data relationship and communication goal
+- Clear, descriptive titles that immediately convey the chart's purpose
+- Properly labeled axes with units and meaningful scales
+- Logical data sorting (highest to lowest for comparisons, chronological for trends)
+- Highlighted key insights that drive actionable conclusions
+
+**Visual Design:**
+- Consistent Elcano brand color palette throughout all visualizations
+- Professional formatting with adequate spacing and readable fonts
+- Uncluttered appearance that focuses attention on key data points
+- Strategic use of color to highlight important information
+- Data labels that enhance rather than obscure the visualization
+
+**Data Integrity:**
+- Accurate representation with appropriate scales and context
+- Complete data sets that tell the full story
+- Credible data sources with proper attribution when necessary
+- No misleading proportions or truncated scales
+- Sufficient context to support decision-making
+
+#### Implementation Example
+
+Here's how to structure content for professional chart generation:
+
+```markdown
+# Campaign Performance Analysis
+
+## Executive Summary
+**Chart Brief:**
+- **Chart Type**: Big Number Callouts
+- **Title**: "Q4 2025 Key Performance Indicators"
+- **Purpose**: Highlight critical metrics that exceeded targets
+- **Key Insight**: All primary KPIs surpassed goals, with CTR exceeding target by 28%
+
+**Data:**
+| Metric | Actual | Target | Variance |
+|--------|--------|--------|----------|
+| Total Conversions | 45,600 | 40,000 | +14% |
+| Average CTR | 3.2% | 2.5% | +28% |
+| Cost per Conversion | $28.50 | $35.00 | -18.6% |
+
+## Platform Performance Comparison
+**Chart Brief:**
+- **Chart Type**: Horizontal Bar Chart
+- **Title**: "Ad Spend Distribution by Platform - Q4 2025"
+- **X-Axis Title**: "Total Spend (USD)"
+- **Y-Axis Title**: "Advertising Platform"
+- **Data Labels**: Show spend values formatted as currency
+- **Sorting**: Sort from highest to lowest spend
+- **Color Palette**: Use Elcano brand colors with primary color for top performer
+- **Purpose**: Compare investment levels across advertising platforms
+- **Key Insight**: Google Ads represents 52% of total spend with highest ROI
+
+**Data:**
+| Platform | Spend | Conversions | ROI |
+|----------|-------|-------------|-----|
+| Google Ads | $1,250,000 | 24,000 | 285% |
+| Facebook Ads | $750,000 | 15,200 | 245% |
+| LinkedIn Ads | $300,000 | 4,800 | 195% |
+| Twitter Ads | $150,000 | 1,600 | 165% |
+```
+
+*   **Leverage Enhanced Gamma Integration:** The Victoria Terminal Gamma integration now includes comprehensive chart-specific instructions that automatically guide chart type selection, ensure professional formatting, optimize data presentation, maintain visual consistency, and enhance readability. Focus on providing well-structured Chart Briefs, and let the enhanced integration handle the professional presentation standards.
 
 By following this protocol, Victoria can deliver a campaign wrap-up that is not only comprehensive and insightful but also engaging and actionable, setting a new standard for programmatic analysis.
 
