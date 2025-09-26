@@ -59,7 +59,7 @@ The container image exports `VICTORIA_HOME=/workspace/Victoria` by default, so m
 When you need to pass arguments through to Victoria, include `--` after the image name so Podman stops parsing options. For example:
 
 ```bash
-podman run --rm -it -v ~/Victoria:/workspace/Victoria ghcr.io/elcanotek/victoria-terminal:latest -- --skip-launch
+podman run --rm -it -v ~/Victoria:/workspace/Victoria ghcr.io/elcanotek/victoria-terminal:latest -- --accept-license
 ```
 
 The same command on Windows stays on a single line and uses `$env:USERPROFILE/Victoria` for the shared folder path.
@@ -81,13 +81,7 @@ The container's default command (`victoria_terminal.py`) assumes you provide a r
 - If `~/Victoria/.env` exists, Victoria loads the environment variables and launches immediately.
 - If the file is missing—or lacks a required key—it logs a warning that calls out which integrations will be unavailable until the `.env` file is updated.
 
-Victoria validates your `.env` file on every launch. Pass `--skip-launch` if you only want to perform the configuration checks without starting the UI:
-
-```bash
-podman run --rm -it \
-  -v ~/Victoria:/workspace/Victoria \
-  ghcr.io/elcanotek/victoria-terminal:latest -- --skip-launch
-```
+Victoria validates your `.env` file on every launch.
 
 You can also point the default command at an alternate shared location with `--shared-home /path/to/shared/Victoria`.
 
@@ -150,7 +144,7 @@ podman run --rm -it `
   victoria-terminal
 ```
 
-The entrypoint provisions a writable home directory, synchronizes configuration from your mounted workspace, and then launches the terminal UI. Append flags such as `-- --skip-launch` to run configuration checks without starting the UI.
+The entrypoint provisions a writable home directory, synchronizes configuration from your mounted workspace, and then launches the terminal UI.
 
 ## Workspace Layout
 

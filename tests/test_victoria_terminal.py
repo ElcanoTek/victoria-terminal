@@ -15,9 +15,14 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 import pytest
+
+TEST_APP_HOME = Path(__file__).resolve().parent / ".victoria-test-home"
+os.environ.setdefault("VICTORIA_HOME", str(TEST_APP_HOME))
+TEST_APP_HOME.mkdir(parents=True, exist_ok=True)
 
 import victoria_terminal as entrypoint
 
@@ -165,17 +170,17 @@ def test_generate_crush_config_missing_template_raises(tmp_path: Path) -> None:
         entrypoint.generate_crush_config(app_home=tmp_path, template_path=tmp_path / "missing.json")
 
 
-def test_parse_args_accepts_custom_app_home(tmp_path: Path) -> None:
-    args = entrypoint.parse_args(["--app-home", str(tmp_path), "--skip-launch"])
-
-    assert args.app_home == tmp_path
-    assert args.skip_launch is True
-
-
 def test_parse_args_ignores_double_dash_separator() -> None:
-    args = entrypoint.parse_args(["--", "--skip-launch"])
+    args = entrypoint.parse_args(["--", "--accept-license"])
 
-    assert args.skip_launch is True
+    assert args.accept_license is True
+
+
+def test_parse_args_rejects_app_home_override(tmp_path: Path) -> None:
+    with pytest.raises(SystemExit) as exc_info:
+        entrypoint.parse_args(["--app-home", str(tmp_path)])
+
+    assert exc_info.value.code == 2
 
 
 def test_parse_args_sets_accept_license_flag() -> None:
