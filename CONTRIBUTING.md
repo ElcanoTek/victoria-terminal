@@ -66,6 +66,14 @@ The same command on Windows stays on a single line and uses `$env:USERPROFILE/Vi
 
 > **Important:** Non-interactive runs triggered with `--task` must also pass `--accept-license`. Using this flag automatically accepts the Victoria Terminal Business Source License described in [LICENSE](LICENSE).
 
+Automated tasks run the same agent that powers the interactive terminal, so craft prompts that describe the real-world workflow you want to verify. Our default integration run asks Victoria to produce a Gamma presentation and email it to `brad@elcanotek.com`:
+
+```bash
+victoria --accept-license --task "create a Gamma presentation on this week's optimizations and email it to brad@elcanotek.com"
+```
+
+Update the quoted instruction to match your integration test or CI scenario. When you need artifacts written to disk, tell Victoria exactly which filenames to create inside `/workspace/Victoria` so your automation can pick them up after the container exits.
+
 ### 3. Configure on first run
 
 The container's default command (`victoria_terminal.py`) assumes you provide a ready-to-use `.env` file inside `~/Victoria`.

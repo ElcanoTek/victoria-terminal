@@ -59,6 +59,16 @@ victoria
 
 Re-run the script any time you want to refresh the alias. It will not reinstall Podman, but it will remind you to start `podman machine` on macOS and Windows if needed.
 
+### Automate Victoria with `--task`
+
+Victoria can execute non-interactive tasks when launched with the `--task` flag. Pair it with `--accept-license` so the container can acknowledge the Business Source License without prompting:
+
+```bash
+victoria --accept-license --task "create a Gamma presentation on this week's optimizations and email it to brad@elcanotek.com"
+```
+
+Use clear, production-ready instructions in the quoted task string—automation jobs frequently power integration tests and CI workflows. The example above mirrors the internal integration scenario we maintain; adapt the prompt to match the workflow you need to validate. When automations require filesystem output, specify both the filename and the directory inside your mounted `~/Victoria` workspace so downstream jobs can inspect the results.
+
 > **Need manual commands, pre-built image instructions, or the full development workflow?**
 > Head over to [CONTRIBUTING.md](CONTRIBUTING.md) for step-by-step guidance on running published container images and building Victoria from source.
 
