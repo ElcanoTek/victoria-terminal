@@ -543,9 +543,7 @@ def load_environment(
                 f"following variables via the container runtime: {', '.join(missing_keys)}"
             )
         else:
-            info(
-                "No .env file found. Using runtime-provided environment variables for secrets."
-            )
+            info("No .env file found. Using runtime-provided environment variables for secrets.")
         return {}
 
     values = parse_env_file(env_path)
