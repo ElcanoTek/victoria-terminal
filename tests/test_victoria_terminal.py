@@ -121,6 +121,30 @@ def test_generate_crush_config_substitutes_env(tmp_path: Path) -> None:
     assert "gamma" not in data["mcp"]
 
 
+def test_generate_crush_config_includes_gamma_when_configured(tmp_path: Path) -> None:
+    env_values = {
+        "OPENROUTER_API_KEY": "test-key",
+        "VICTORIA_HOME": str(tmp_path),
+        "GAMMA_API_KEY": "gamma-key",
+    }
+
+    template = entrypoint.resource_path(entrypoint.CRUSH_TEMPLATE)
+    output = entrypoint.generate_crush_config(app_home=tmp_path, env=env_values, template_path=template)
+
+    data = json.loads(output.read_text(encoding="utf-8"))
+
+    gamma_config = data["mcp"]["gamma"]
+    gamma_script = entrypoint.resource_path(Path("gamma_mcp.py"))
+
+    assert gamma_config["command"] == "python3"
+    assert gamma_config["args"] == [str(gamma_script)]
+    assert gamma_config["cwd"] == str(gamma_script.parent)
+
+    env_block = gamma_config["env"]
+    assert env_block["GAMMA_API_KEY"] == "gamma-key"
+    assert env_block["PYTHONPATH"] == str(gamma_script.parent)
+
+
 def test_generate_crush_config_includes_browserbase_when_configured(tmp_path: Path) -> None:
     env_values = {
         "OPENROUTER_API_KEY": "test-key",

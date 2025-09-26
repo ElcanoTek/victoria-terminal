@@ -14,6 +14,12 @@ By submitting a contribution you agree to the [ElcanoTek Contributor License Agr
 > **Windows line endings**
 > Podman runs shell scripts from this repository. Configure Git with `git config --global core.autocrlf false` before cloning so scripts keep Unix line endings. If you already cloned the repository, run `git reset --hard` after changing the setting or use Windows Subsystem for Linux (WSL).
 
+## File naming conventions
+
+- Prefer `snake_case` filenames for Python modules (for example `gamma_mcp.py`).
+- Keep MCP server modules in the repository root for straightforward packaging and resource discovery.
+- Use descriptive prefixes (such as the service name) so configuration references remain obvious.
+
 ## Run pre-built images
 
 Use this path when you want to run the latest Victoria release without building the container yourself.
@@ -189,6 +195,70 @@ podman run --rm -it \
 ```
 
 Local virtual environments are optional. If you experiment outside Podman, recreate the container to ensure your changes are reflected in future runs.
+
+## Model Context Protocol (MCP) servers
+
+Victoria relies on MCP servers to expose structured tools to Crush and the terminal experience. Keep these guidelines in mind when you add or update a server:
+
+- Implement servers as standalone Python scripts that run over stdio using the FastMCP framework.
+- Document every server in this guide and ensure the required environment variables appear in `example.env`.
+- Store secrets in the shared `.env` file mounted at `~/Victoria/.env`.
+
+### Gamma server (`gamma_mcp.py`)
+
+The Gamma MCP server bridges Victoria to Gamma's presentation generation API.
+
+**Capabilities**
+
+- Generate Gamma presentations from markdown input.
+- Check on the status of presentation generation requests.
+- Securely read the `GAMMA_API_KEY` environment variable at runtime.
+
+**Crush configuration snippet**
+
+```json
+{
+  "gamma": {
+    "type": "stdio",
+    "command": "python3",
+    "args": ["${GAMMA_MCP_SCRIPT}"],
+    "cwd": "${GAMMA_MCP_DIR}",
+    "env": {
+      "GAMMA_API_KEY": "${GAMMA_API_KEY}",
+      "PYTHONPATH": "${GAMMA_MCP_DIR}"
+    }
+  }
+}
+```
+
+`victoria_terminal.generate_crush_config` fills in `GAMMA_MCP_SCRIPT` and `GAMMA_MCP_DIR`
+with the bundled `gamma_mcp.py` path, so you only need to provide the `GAMMA_API_KEY`
+in your environment.
+
+### Adding or iterating on servers
+
+Use the following pattern to stay consistent:
+
+```python
+#!/usr/bin/env python3
+from mcp.server.fastmcp import FastMCP
+
+mcp = FastMCP("server_name")
+
+@mcp.tool()
+async def tool_function(param: str) -> dict:
+    """Tool description."""
+    # Implementation
+    return result
+
+if __name__ == "__main__":
+    mcp.run(transport="stdio")
+```
+
+- Reuse the container's bundled dependencies—avoid creating extra requirement files.
+- Return structured errors and log diagnostics to `stderr`.
+- Write comprehensive docstrings for every tool definition.
+- Test locally with `python your_server.py` or `npx @modelcontextprotocol/inspector python your_server.py` before shipping.
 
 ## Interactive Debugging
 
