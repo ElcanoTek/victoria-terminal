@@ -17,6 +17,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+from typing import Mapping
 
 import pytest
 
@@ -43,6 +44,79 @@ def test_parse_env_file_missing_returns_empty(tmp_path: Path) -> None:
     env_path = tmp_path / entrypoint.ENV_FILENAME
 
     assert entrypoint.parse_env_file(env_path) == {}
+
+
+def test_is_valid_email_accepts_common_formats(monkeypatch: pytest.MonkeyPatch) -> None:
+    emails = [
+        "user@example.com",
+        "USER+tag@sub.example.co",
+        "first.last@domain.io",
+        "mixed-case@Example.Org",
+    ]
+    calls: list[tuple[str, bool]] = []
+
+    def fake_validate(candidate: str, *, check_deliverability: bool) -> None:
+        calls.append((candidate, check_deliverability))
+
+    monkeypatch.setattr(entrypoint, "validate_email", fake_validate)
+
+    for email in emails:
+        assert entrypoint._is_valid_email(email) is True
+
+    assert calls == [(email, True) for email in emails]
+
+
+def test_is_valid_email_rejects_invalid_formats(monkeypatch: pytest.MonkeyPatch) -> None:
+    def fake_validate(candidate: str, *, check_deliverability: bool) -> None:
+        raise entrypoint.EmailNotValidError("invalid")
+
+    monkeypatch.setattr(entrypoint, "validate_email", fake_validate)
+
+    for email in [
+        "plainaddress",
+        "missing-domain@",
+        "missing-at.example.com",
+        "user@",
+        "@example.com",
+        "",
+    ]:
+        assert entrypoint._is_valid_email(email) is False
+
+
+def test_track_license_acceptance_sends_plain_email(monkeypatch: pytest.MonkeyPatch) -> None:
+    recorded: dict[str, dict[str, str]] = {}
+
+    def fake_post(url: str, json: Mapping[str, str], timeout: int) -> None:
+        recorded["payload"] = dict(json)
+
+    monkeypatch.setattr(entrypoint.requests, "post", fake_post)
+    monkeypatch.setattr(entrypoint, "validate_email", lambda *_args, **_kwargs: None)
+
+    email = "User+tag@example.com"
+    entrypoint._track_license_acceptance(email)
+
+    payload = recorded.get("payload")
+    assert payload is not None
+    assert payload["email"] == "User+tag@example.com"
+    assert payload["event"] == "license_accepted"
+
+
+def test_track_license_acceptance_skips_invalid_email(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[dict[str, str]] = []
+
+    def fake_post(url: str, json: Mapping[str, str], timeout: int) -> None:
+        calls.append(dict(json))
+
+    monkeypatch.setattr(entrypoint.requests, "post", fake_post)
+
+    def always_invalid(*_args: object, **_kwargs: object) -> None:
+        raise entrypoint.EmailNotValidError("bad")
+
+    monkeypatch.setattr(entrypoint, "validate_email", always_invalid)
+
+    entrypoint._track_license_acceptance("invalid-email")
+
+    assert calls == []
 
 
 def test_load_environment_preserves_existing_values(tmp_path: Path) -> None:
