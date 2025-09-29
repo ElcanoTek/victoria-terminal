@@ -944,7 +944,13 @@ This phase mirrors a traditional campaign wrap-up, providing a comprehensive ove
 
 **Analysis Steps:**
 
-1.  **Executive Summary:** Synthesize the most critical information upfront. This should include top-line metrics (Total Spend, Conversions, CPA, etc.), key performance highlights, and a summary of strategic recommendations.
+1.  **Executive Summary:** Synthesize the most critical information upfront following this specific layout structure:
+    - **Key Numbers at Top:** Display four primary KPIs prominently at the top of the slide:
+      - Total Spend (with descriptive subtitle like "Campaign investment over [X]-day period")
+      - Impressions (with subtitle like "Total ad impressions delivered")
+      - Total Clicks (with subtitle like "User engagement interactions")
+      - Overall CTR (with subtitle like "Click-through rate performance")
+    - **Highlights and Recommendations Together:** Below the numbers, include a single concise paragraph that combines key performance highlights with strategic recommendations in one cohesive narrative.
 2.  **Platform & Partner Performance:** Analyze the performance of different platforms, exchanges, or partners. Identify top and bottom performers and provide insights into what drove their performance.
 3.  **Campaign Optimization Journey:** Tell the story of the campaign's optimization. Visualize the impact of changes made during the campaign, such as site removals, budget shifts, or targeting adjustments.
 4.  **Geographic Analysis:** Analyze performance by geographic location (DMA, state, country). Identify high-performing regions and opportunities for geographic targeting optimization.
@@ -978,6 +984,21 @@ This is where Victoria's unique analytical capabilities shine. The goal is to mo
 ### 3. Gamma Presentation Generation
 
 The final step is to bring the story to life with a visually stunning presentation using Gamma AI. The presentation should be a narrative that weaves together the findings from both the standard analysis and the quirky insight discovery.
+
+**Presentation Structure for Wrap-Up Protocol:**
+
+The presentation should follow this specific slide sequence to match the established template:
+
+1. **Title Slide:** `[Client Name] — Programmatic Campaign Performance Report` with date range and brief purpose statement
+2. **Executive Summary:** Four key metrics at top (Total Spend, Impressions, Total Clicks, Overall CTR) with highlights and recommendations in a single paragraph below
+3. **Data Sources & Methodology:** Four-section breakdown (DSP General Data, Platform Breakouts, Fee Structure Analysis, Ratio Calculations)
+4. **Platform Economics Overview:** Horizontal bar chart showing spend/revenue breakdown by platform
+5. **Daily Performance Trends:** Line chart with contextual text and callout box for key insights
+6. **Strategy Performance Analysis:** Horizontal bar chart analyzing different strategy performance
+7. **Geographic Performance Leaders:** Top 3 performing locations with numbered highlights
+8. **Device & Browser Insights:** Two-column layout with operating system and browser performance bullets
+9. **Strategic Recommendations:** Three key recommendations with target efficiency goals
+10. **Thank You Slide:** Simple closing with Elcano branding and next steps prompt
 
 **Presentation Best Practices:**
 
