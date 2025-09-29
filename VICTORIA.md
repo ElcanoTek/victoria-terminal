@@ -990,19 +990,56 @@ The final step is to bring the story to life with a visually stunning presentati
 
 The presentation should follow this specific slide sequence to match the established template:
 
-1. **Title Slide:** Client and Elcano logos with the campaign year.
-2. **AI-Powered Performance:** A title and a brief description of the project.
-3. **Meet Victoria:** A brief introduction to the Victoria AI agent.
-4. **Delivering Supply-side Performance:** "The Challenge" and "The Results" sections.
-5. **How We Did It:** A diagram illustrating the workflow.
-6. **Executive Summary:** Four key metrics at top (Total Investment, Total Conversions, Conversion Rate, Cost per Acquisition), with Campaign Performance Highlights on the left and Strategic Recommendations on the right.
-7. **Platform Performance Analysis:** A table with platform metrics, a donut chart for conversion distribution, and key platform insights.
-8. **Campaign Lifecycle Optimization:** A line chart for CPA optimization and a section for optimization actions.
-9. **Conversion Spike Analysis:** A line chart for conversion spikes and a section for spike event details.
-10. **Winning Inventory Combinations:** A bar chart for conversions by site category and a section for content theme analysis.
-11. **Key Learnings & Next Steps:** "Key Learnings" and "Next Steps" sections.
-12. **Thank You Slide:** A simple "Thank You" message with contact information.
-13. **Appendix:** An appendix slide.
+# Presentation Structure for Wrap-Up Protocol
+
+The presentation must follow this exact sequence and layout to align with the established template:
+
+---
+
+### 1. Title Slide
+- **Left**: Client name (text) or client logo image  
+- **Right**: Elcano logo (from the Gamma theme)  
+- **Bottom (centered)**: Campaign year  
+- **Background**: Full-width card style using an accent image from the Elcano Gamma theme  
+### 2. Executive Summary
+- **Top row**: Four key metrics  
+  - Total Investment  
+  - Total Conversions  
+  - Conversion Rate  
+  - Cost per Acquisition  
+- **Bottom left**: Campaign Performance Highlights  
+- **Bottom right**: Strategic Recommendations  
+### 3. Platform Performance Analysis
+- **Top**: Table with platform performance metrics  
+- **Bottom left**: Donut chart for conversion distribution  
+- **Bottom right**: Key platform insights  
+### 4. Campaign Lifecycle Optimization
+- **Left**: Line chart for CPA optimization over time  
+- **Right**: Section for optimization actions  
+### 5. Conversion Spike Analysis
+- **Left**: Line chart of conversion spikes  
+- **Right**: Section for spike event details  
+- **Bottom**: Immediate Actions  
+### 6. Winning Inventory Combinations
+- **Left**: Bar chart showing conversions by site category/theme  
+- **Right**: Content Theme Analysis  
+- **Bottom**: Recommendation  
+### 7. Geographic Performance Insights
+- **Left**: Geographic heat map showing top 3 DMA locations  
+- **Right**: DMA Performance Analysis with key highlights  
+- **Table**: DMA locations with CTR and Spend Share  
+### 8. Day of Week Analysis
+- **Top**: Bar chart of total conversions by day of week  
+- **Bottom**: Summary section with 4 key highlights in card format  
+### 9. Key Learnings & Next Steps
+- **Two sections**:  
+  - Key Learnings  
+  - Next Steps  
+### 10. Thank You Slide
+- **Center**: "Thank You" text  
+- **Bottom/Right**: Elcano logo (from Gamma theme) 
+- **Background**: Full-width card style using an accent image from the Elcano Gamma theme  
+
 
 **Presentation Best Practices:**
 
