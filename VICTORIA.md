@@ -945,12 +945,13 @@ This phase mirrors a traditional campaign wrap-up, providing a comprehensive ove
 **Analysis Steps:**
 
 1.  **Executive Summary:** Synthesize the most critical information upfront following this specific layout structure:
-    - **Key Numbers at Top:** Display four primary KPIs prominently at the top of the slide:
-      - Total Spend (with descriptive subtitle like "Campaign investment over [X]-day period")
-      - Impressions (with subtitle like "Total ad impressions delivered")
-      - Total Clicks (with subtitle like "User engagement interactions")
-      - Overall CTR (with subtitle like "Click-through rate performance")
-    - **Highlights and Recommendations Together:** Below the numbers, include a single concise paragraph that combines key performance highlights with strategic recommendations in one cohesive narrative.
+    - **Key Metrics (Top):** Display four primary KPIs prominently at the top of the slide:
+      - Total Investment
+      - Total Conversions
+      - Conversion Rate
+      - Cost per Acquisition
+    - **Campaign Performance Highlights (Left):** A list of key performance highlights.
+    - **Strategic Recommendations (Right):** A numbered list of strategic recommendations.
 2.  **Platform & Partner Performance:** Analyze the performance of different platforms, exchanges, or partners. Identify top and bottom performers and provide insights into what drove their performance.
 3.  **Campaign Optimization Journey:** Tell the story of the campaign's optimization. Visualize the impact of changes made during the campaign, such as site removals, budget shifts, or targeting adjustments.
 4.  **Geographic Analysis:** Analyze performance by geographic location (DMA, state, country). Identify high-performing regions and opportunities for geographic targeting optimization.
@@ -989,16 +990,19 @@ The final step is to bring the story to life with a visually stunning presentati
 
 The presentation should follow this specific slide sequence to match the established template:
 
-1. **Title Slide:** `[Client Name] — Programmatic Campaign Performance Report` with date range and brief purpose statement
-2. **Executive Summary:** Four key metrics at top (Total Spend, Impressions, Total Clicks, Overall CTR) with highlights and recommendations in a single paragraph below
-3. **Data Sources & Methodology:** Four-section breakdown (DSP General Data, Platform Breakouts, Fee Structure Analysis, Ratio Calculations)
-4. **Platform Economics Overview:** Horizontal bar chart showing spend/revenue breakdown by platform
-5. **Daily Performance Trends:** Line chart with contextual text and callout box for key insights
-6. **Strategy Performance Analysis:** Horizontal bar chart analyzing different strategy performance
-7. **Geographic Performance Leaders:** Top 3 performing locations with numbered highlights
-8. **Device & Browser Insights:** Two-column layout with operating system and browser performance bullets
-9. **Strategic Recommendations:** Three key recommendations with target efficiency goals
-10. **Thank You Slide:** Simple closing with Elcano branding and next steps prompt
+1. **Title Slide:** Client and Elcano logos with the campaign year.
+2. **AI-Powered Performance:** A title and a brief description of the project.
+3. **Meet Victoria:** A brief introduction to the Victoria AI agent.
+4. **Delivering Supply-side Performance:** "The Challenge" and "The Results" sections.
+5. **How We Did It:** A diagram illustrating the workflow.
+6. **Executive Summary:** Four key metrics at top (Total Investment, Total Conversions, Conversion Rate, Cost per Acquisition), with Campaign Performance Highlights on the left and Strategic Recommendations on the right.
+7. **Platform Performance Analysis:** A table with platform metrics, a donut chart for conversion distribution, and key platform insights.
+8. **Campaign Lifecycle Optimization:** A line chart for CPA optimization and a section for optimization actions.
+9. **Conversion Spike Analysis:** A line chart for conversion spikes and a section for spike event details.
+10. **Winning Inventory Combinations:** A bar chart for conversions by site category and a section for content theme analysis.
+11. **Key Learnings & Next Steps:** "Key Learnings" and "Next Steps" sections.
+12. **Thank You Slide:** A simple "Thank You" message with contact information.
+13. **Appendix:** An appendix slide.
 
 **Presentation Best Practices:**
 
