@@ -84,7 +84,7 @@ async def make_gamma_request(method: str, url: str, json: Optional[Dict[str, Any
         return {"error": error_msg}
 
 DEFAULT_THEME = "Elcano"
-AVAILABLE_THEMES = {"Elcano", "Elcano_Light"}
+AVAILABLE_THEMES = {"Elcano"}
 
 
 def _resolve_theme_name(theme_name: str) -> str:
