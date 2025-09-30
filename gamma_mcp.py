@@ -174,9 +174,7 @@ async def generate_presentation(
         },
         "additionalInstructions": additional_instructions,
         "imageOptions": {
-            "source": "aiGenerated",
-            "model": "imagen-4-pro",
-            "style": "photorealistic",
+            "source": "noImages",
         },
         "exportAs": export_as,
     }
