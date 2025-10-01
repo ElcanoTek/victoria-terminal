@@ -11,7 +11,8 @@ import logging
 import os
 import sys
 from datetime import datetime
-from typing import Any, Dict, Optional
+from enum import Enum
+from typing import Any, Dict, Optional, List
 
 import httpx
 from mcp.server.fastmcp import FastMCP
@@ -351,6 +352,191 @@ async def generate_and_wait_for_presentation(
     )
     
     return completion_result
+
+
+# Chart Brief Generation Functionality
+
+class ChartType(Enum):
+    """Supported chart types for Gamma presentations."""
+    BAR = "bar"
+    COLUMN = "column"
+    LINE = "line"
+    PIE = "pie"
+    DONUT = "donut"
+    SCATTER = "scatter"
+    BUBBLE = "bubble"
+    HEATMAP = "heatmap"
+    AREA = "area"
+
+
+@mcp.tool()
+async def generate_chart_brief(
+    chart_type: str,
+    title: str,
+    data: List[Dict[str, Any]],
+    x_axis_title: str = "",
+    y_axis_title: str = "",
+    key_insight: str = "",
+    color_palette: str = "Elcano brand colors",
+    sort_order: str = ""
+) -> Dict[str, Any]:
+    """
+    Generate a structured chart brief for Gamma AI presentations.
+    
+    This tool creates professional chart briefs that follow the Chart Brief Template
+    documented in VICTORIA.md, ensuring high-quality visualizations in presentations.
+    
+    Args:
+        chart_type: Type of chart (bar, column, line, pie, donut, scatter, bubble, heatmap, area)
+        title: Clear, descriptive title for the chart
+        data: List of data dictionaries containing the chart data
+        x_axis_title: Title for X-axis (optional)
+        y_axis_title: Title for Y-axis (optional)
+        key_insight: Main takeaway to highlight (optional)
+        color_palette: Color palette to use (default: Elcano brand colors)
+        sort_order: How to organize the data (optional)
+        
+    Returns:
+        Dictionary containing the formatted chart brief and metadata
+    """
+    try:
+        # Validate chart type
+        try:
+            chart_enum = ChartType(chart_type.lower())
+        except ValueError:
+            return {
+                "error": f"Invalid chart type '{chart_type}'. Supported types: {[t.value for t in ChartType]}"
+            }
+        
+        # Get chart-specific instructions
+        chart_instructions = _get_chart_instructions(chart_enum)
+        
+        # Build the chart brief
+        brief = f"""**Chart Brief:**
+- **Chart Type**: {chart_instructions['type_name']}
+- **Title**: "{title}"
+"""
+        
+        if x_axis_title:
+            brief += f"- **X-Axis Title**: \"{x_axis_title}\"\n"
+        if y_axis_title:
+            brief += f"- **Y-Axis Title**: \"{y_axis_title}\"\n"
+            
+        brief += f"- **Data Labels**: {chart_instructions['data_labels']}\n"
+        
+        if sort_order:
+            brief += f"- **Sorting**: {sort_order}\n"
+        elif chart_instructions['default_sort']:
+            brief += f"- **Sorting**: {chart_instructions['default_sort']}\n"
+            
+        brief += f"- **Color Palette**: Use {color_palette}\n"
+        brief += f"- **Purpose**: {chart_instructions['purpose']}\n"
+        
+        if key_insight:
+            brief += f"- **Key Insight**: {key_insight}\n"
+            
+        # Add data table
+        brief += "\n**Data:**\n"
+        brief += _format_data_table(data)
+        
+        return {
+            "chart_brief": brief,
+            "chart_type": chart_instructions['type_name'],
+            "data_points": len(data),
+            "success": True
+        }
+        
+    except Exception as e:
+        logger.error(f"Error generating chart brief: {str(e)}")
+        return {"error": f"Failed to generate chart brief: {str(e)}"}
+
+
+def _get_chart_instructions(chart_type: ChartType) -> Dict[str, str]:
+    """Get chart-specific instructions based on chart type."""
+    
+    instructions = {
+        ChartType.BAR: {
+            "type_name": "Horizontal Bar Chart",
+            "purpose": "Compare values across different categories",
+            "data_labels": "Show values on bars, formatted appropriately",
+            "default_sort": "Sort bars from highest to lowest for easy comparison"
+        },
+        ChartType.COLUMN: {
+            "type_name": "Vertical Column Chart", 
+            "purpose": "Compare values across different categories",
+            "data_labels": "Show values on top of columns, formatted appropriately",
+            "default_sort": "Sort columns from highest to lowest for easy comparison"
+        },
+        ChartType.LINE: {
+            "type_name": "Line Chart",
+            "purpose": "Show trends and changes over time",
+            "data_labels": "Add markers for each data point to improve readability",
+            "default_sort": "Sort by time/sequence in chronological order"
+        },
+        ChartType.PIE: {
+            "type_name": "Pie Chart",
+            "purpose": "Show proportions of each category as part of the whole",
+            "data_labels": "Label each slice with category name and percentage",
+            "default_sort": "Sort slices from largest to smallest, limit to 5 categories max"
+        },
+        ChartType.DONUT: {
+            "type_name": "Donut Chart",
+            "purpose": "Show proportions with emphasis on the total in the center",
+            "data_labels": "Label each segment with category name and percentage",
+            "default_sort": "Sort segments from largest to smallest, limit to 5 categories max"
+        },
+        ChartType.SCATTER: {
+            "type_name": "Scatter Plot",
+            "purpose": "Show relationships and correlations between two variables",
+            "data_labels": "Label key data points, include trendline if correlation exists",
+            "default_sort": None
+        },
+        ChartType.BUBBLE: {
+            "type_name": "Bubble Chart",
+            "purpose": "Show relationships between three variables using position and size",
+            "data_labels": "Label significant bubbles, use size to represent third variable",
+            "default_sort": None
+        },
+        ChartType.HEATMAP: {
+            "type_name": "Heatmap",
+            "purpose": "Show patterns and intensity across two categorical dimensions",
+            "data_labels": "Use color intensity to represent values, include legend",
+            "default_sort": "Arrange categories logically (e.g., time, alphabetical)"
+        },
+        ChartType.AREA: {
+            "type_name": "Area Chart",
+            "purpose": "Show cumulative totals and trends over time",
+            "data_labels": "Label key points and show total values",
+            "default_sort": "Sort by time/sequence in chronological order"
+        }
+    }
+    
+    return instructions.get(chart_type, {
+        "type_name": "Chart",
+        "purpose": "Visualize the data effectively",
+        "data_labels": "Include appropriate labels",
+        "default_sort": None
+    })
+
+
+def _format_data_table(data: List[Dict[str, Any]]) -> str:
+    """Format data as a markdown table."""
+    if not data:
+        return "| No data provided |\n|---|\n"
+        
+    # Get headers from first row
+    headers = list(data[0].keys())
+    
+    # Create table header
+    table = "| " + " | ".join(headers) + " |\n"
+    table += "|" + "|".join(["---"] * len(headers)) + "|\n"
+    
+    # Add data rows
+    for row in data:
+        values = [str(row.get(header, "")) for header in headers]
+        table += "| " + " | ".join(values) + " |\n"
+        
+    return table
 
 
 if __name__ == "__main__":
