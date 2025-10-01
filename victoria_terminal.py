@@ -581,6 +581,7 @@ def parse_env_file(path: Path) -> dict[str, str]:
 REQUIRED_ENV_KEYS = ("OPENROUTER_API_KEY",)
 BROWSERBASE_ENV_KEY = "SMITHERY_BROWSERBASE_URL"
 GAMMA_ENV_KEY = "GAMMA_API_KEY"
+SENDGRID_ENV_KEY = "SENDGRID_API_KEY"
 
 
 def load_environment(
@@ -670,8 +671,8 @@ def substitute_env(obj: Any, env: Mapping[str, str] | None = None) -> Any:
     return obj
 
 
-def _is_browserbase_enabled(env_map: Mapping[str, str]) -> bool:
-    value = env_map.get(BROWSERBASE_ENV_KEY)
+def _has_valid_env_value(env_map: Mapping[str, str], key: str) -> bool:
+    value = env_map.get(key)
     if value is None:
         return False
     trimmed = value.strip()
@@ -682,20 +683,18 @@ def _is_browserbase_enabled(env_map: Mapping[str, str]) -> bool:
     if "<" in trimmed or ">" in trimmed:
         return False
     return True
+
+
+def _is_browserbase_enabled(env_map: Mapping[str, str]) -> bool:
+    return _has_valid_env_value(env_map, BROWSERBASE_ENV_KEY)
 
 
 def _is_gamma_enabled(env_map: Mapping[str, str]) -> bool:
-    value = env_map.get(GAMMA_ENV_KEY)
-    if value is None:
-        return False
-    trimmed = value.strip()
-    if not trimmed:
-        return False
-    if trimmed.startswith("${") and trimmed.endswith("}"):
-        return False
-    if "<" in trimmed or ">" in trimmed:
-        return False
-    return True
+    return _has_valid_env_value(env_map, GAMMA_ENV_KEY)
+
+
+def _is_sendgrid_enabled(env_map: Mapping[str, str]) -> bool:
+    return _has_valid_env_value(env_map, SENDGRID_ENV_KEY)
 
 
 def generate_crush_config(
@@ -730,6 +729,21 @@ def generate_crush_config(
 
                 resolved_env["GAMMA_MCP_SCRIPT"] = str(gamma_script)
                 resolved_env["GAMMA_MCP_DIR"] = str(gamma_script.parent)
+
+        sendgrid_config = mcp_config.get("sendgrid")
+        if isinstance(sendgrid_config, dict):
+            if not _is_sendgrid_enabled(env_map):
+                mcp_config.pop("sendgrid", None)
+            else:
+                sendgrid_script = resource_path(Path("sendgrid_mcp.py"))
+                if not sendgrid_script.exists():
+                    raise FileNotFoundError(
+                        "SendGrid MCP server script is missing from the Victoria installation "
+                        f"(expected at {sendgrid_script})."
+                    )
+
+                resolved_env["SENDGRID_MCP_SCRIPT"] = str(sendgrid_script)
+                resolved_env["SENDGRID_MCP_DIR"] = str(sendgrid_script.parent)
     resolved = substitute_env(config, resolved_env)
     output_path = app_home / CRUSH_CONFIG_NAME
     _write_json(output_path, resolved)

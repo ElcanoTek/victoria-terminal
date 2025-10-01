@@ -107,6 +107,18 @@
         "GAMMA_API_KEY": "${GAMMA_API_KEY}",
         "PYTHONPATH": "${GAMMA_MCP_DIR}"
       }
+    },
+    "sendgrid": {
+      "type": "stdio",
+      "command": "python3",
+      "args": [
+        "${SENDGRID_MCP_SCRIPT}"
+      ],
+      "cwd": "${SENDGRID_MCP_DIR}",
+      "env": {
+        "SENDGRID_API_KEY": "${SENDGRID_API_KEY}",
+        "PYTHONPATH": "${SENDGRID_MCP_DIR}"
+      }
     }
   }
 }
