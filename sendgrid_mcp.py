@@ -3,13 +3,16 @@
 
 from __future__ import annotations
 
+import asyncio
+import json
 import logging
 import os
 import sys
-from typing import Any, Mapping, MutableMapping, Sequence
+from typing import Any, Callable, Mapping, MutableMapping, Sequence
 
-import httpx
 from mcp.server.fastmcp import FastMCP
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Content, Email, Mail, Personalization
 
 logging.basicConfig(
     level=logging.INFO,
@@ -19,10 +22,9 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 mcp = FastMCP("sendgrid")
-
-SENDGRID_BASE_URL = "https://api.sendgrid.com/v3"
-DEFAULT_TIMEOUT = 30.0
 DEFAULT_CONTENT_TYPE = "text/plain"
+
+_CLIENT: SendGridAPIClient | None = None
 
 
 class SendGridConfigurationError(RuntimeError):
@@ -54,76 +56,89 @@ def _resolve_from_email(explicit_from: str | None = None) -> str:
     return env_from
 
 
+def _get_sendgrid_client() -> SendGridAPIClient:
+    """Return a cached SendGrid API client instance."""
+
+    global _CLIENT
+    if _CLIENT is None:
+        api_key = _get_api_key()
+        _CLIENT = SendGridAPIClient(api_key)
+    return _CLIENT
+
+
+def _decode_response_body(body: Any) -> str:
+    if body in (None, b"", ""):
+        return ""
+    if isinstance(body, bytes):
+        return body.decode("utf-8", errors="replace")
+    return str(body)
+
+
 async def _sendgrid_request(
-    method: str,
-    path: str,
+    operation: Callable[[SendGridAPIClient], Any],
     *,
-    json: Mapping[str, Any] | None = None,
-    params: Mapping[str, Any] | None = None,
     expected_status: Sequence[int] | None = None,
     parse_json: bool = True,
 ) -> MutableMapping[str, Any]:
-    api_key = _get_api_key()
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json",
-        "User-Agent": "victoria-terminal-sendgrid-mcp/1.0",
-    }
+    try:
+        client = _get_sendgrid_client()
+    except SendGridConfigurationError as exc:
+        return {"error": str(exc)}
 
     expected = tuple(expected_status) if expected_status is not None else (200, 201, 202, 204)
 
-    url = f"{SENDGRID_BASE_URL}{path}"
-    logger.info("Calling SendGrid API: %s %s", method.upper(), url)
-
     try:
-        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT) as client:
-            response = await client.request(
-                method=method.upper(),
-                url=url,
-                headers=headers,
-                json=dict(json) if json is not None else None,
-                params=dict(params) if params is not None else None,
-            )
-    except httpx.TimeoutException as exc:  # pragma: no cover - network timeout
-        message = f"SendGrid request timed out after {DEFAULT_TIMEOUT}s: {exc}"
-        logger.error(message)
-        return {"error": message}
-    except httpx.RequestError as exc:  # pragma: no cover - connection issue
+        response = await asyncio.to_thread(operation, client)
+    except Exception as exc:  # pragma: no cover - network/SDK error
         message = f"SendGrid request error: {exc}"
         logger.error(message)
         return {"error": message}
 
-    status_code = response.status_code
+    status_code = getattr(response, "status_code", None)
     logger.info("SendGrid response status: %s", status_code)
 
     if status_code not in expected:
-        error_detail: Any
-        try:
-            error_detail = response.json()
-        except ValueError:
-            error_detail = response.text
-        message = f"SendGrid API error ({status_code}): {error_detail}"
+        body_text = _decode_response_body(getattr(response, "body", ""))
+        details: Any
+        if parse_json and body_text:
+            try:
+                details = json.loads(body_text)
+            except json.JSONDecodeError:
+                details = body_text
+        else:
+            details = body_text
+        message = f"SendGrid API error ({status_code}): {details}"
         logger.error(message)
-        return {"error": message, "status_code": status_code, "details": error_detail}
+        return {"error": message, "status_code": status_code, "details": details}
 
     payload: MutableMapping[str, Any] = {"status_code": status_code}
-    message_id = response.headers.get("x-message-id")
+
+    headers = getattr(response, "headers", {}) or {}
+    try:
+        header_items = headers.items()
+    except AttributeError:
+        header_items = []
+    header_map = {str(key).lower(): str(value) for key, value in header_items}
+    message_id = header_map.get("x-message-id")
     if message_id:
         payload["message_id"] = message_id
 
-    if parse_json and response.content:
+    body_text = _decode_response_body(getattr(response, "body", ""))
+    if parse_json and body_text:
         try:
-            payload["data"] = response.json()
-        except ValueError:
-            payload["raw"] = response.text
+            payload["data"] = json.loads(body_text)
+        except json.JSONDecodeError:
+            payload["raw"] = body_text
+    elif body_text:
+        payload["raw"] = body_text
 
     return payload
 
 
-def _normalize_recipients(addresses: Sequence[str] | None) -> list[dict[str, str]]:
+def _normalize_recipients(addresses: Sequence[str] | None) -> list[Email]:
     if not addresses:
         return []
-    return [{"email": address} for address in addresses if address]
+    return [Email(address) for address in addresses if address]
 
 
 @mcp.tool()
@@ -144,31 +159,25 @@ async def send_email(
     except SendGridConfigurationError as exc:
         return {"error": str(exc)}
 
-    personalization: MutableMapping[str, Any] = {
-        "to": [{"email": to_email}],
-    }
+    mail = Mail(from_email=sender, subject=subject)
 
-    cc = _normalize_recipients(cc_emails)
-    if cc:
-        personalization["cc"] = cc
+    personalization = Personalization()
+    personalization.add_to(Email(to_email))
 
-    bcc = _normalize_recipients(bcc_emails)
-    if bcc:
-        personalization["bcc"] = bcc
+    for cc in _normalize_recipients(cc_emails):
+        personalization.add_cc(cc)
 
-    payload: Mapping[str, Any] = {
-        "personalizations": [personalization],
-        "from": {"email": sender},
-        "subject": subject,
-        "content": [
-            {
-                "type": content_type or DEFAULT_CONTENT_TYPE,
-                "value": content,
-            }
-        ],
-    }
+    for bcc in _normalize_recipients(bcc_emails):
+        personalization.add_bcc(bcc)
 
-    result = await _sendgrid_request("POST", "/mail/send", json=payload, expected_status=(202,))
+    mail.add_personalization(personalization)
+    mail.add_content(Content(content_type or DEFAULT_CONTENT_TYPE, content))
+
+    result = await _sendgrid_request(
+        lambda client: client.send(mail),
+        expected_status=(202,),
+        parse_json=False,
+    )
     if "error" in result:
         return result
 
@@ -192,21 +201,18 @@ async def send_template_email(
     except SendGridConfigurationError as exc:
         return {"error": str(exc)}
 
-    personalization: MutableMapping[str, Any] = {
-        "to": [{"email": to_email}],
-        "dynamic_template_data": dict(dynamic_template_data),
-    }
+    mail = Mail(from_email=sender, to_emails=[to_email])
+    mail.template_id = template_id
+    mail.dynamic_template_data = dict(dynamic_template_data)
 
     if subject:
-        personalization["subject"] = subject
+        mail.subject = subject
 
-    payload: Mapping[str, Any] = {
-        "personalizations": [personalization],
-        "from": {"email": sender},
-        "template_id": template_id,
-    }
-
-    result = await _sendgrid_request("POST", "/mail/send", json=payload, expected_status=(202,))
+    result = await _sendgrid_request(
+        lambda client: client.send(mail),
+        expected_status=(202,),
+        parse_json=False,
+    )
     if "error" in result:
         return result
 
@@ -229,9 +235,7 @@ async def validate_email_address(
     }
 
     return await _sendgrid_request(
-        "POST",
-        "/validations/email",
-        json=payload,
+        lambda client: client.client.validations.email.post(request_body=payload),
         expected_status=(200, 202),
     )
 
@@ -241,8 +245,7 @@ async def get_suppression_status(email_address: str) -> MutableMapping[str, Any]
     """Check if an email address is on any SendGrid suppression lists."""
 
     result = await _sendgrid_request(
-        "GET",
-        f"/asm/suppressions/{email_address}",
+        lambda client: client.client.asm.suppressions._(email_address).get(),
         expected_status=(200, 404),
     )
 
