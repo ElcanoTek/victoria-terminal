@@ -110,7 +110,7 @@ DEFAULT_ADDITIONAL_INSTRUCTIONS = (
     "5) Add labels if readability improves. "
     "6) Highlight only key insights. "
     "7) Keep formatting clean with spacing, headings, readable fonts. "
-    "8) Use catyling (borders, shadows, padding) to group important insights, summaries, or recs; apply sparingly for emphasis."
+    "8) Use styling (borders, shadows, padding) to group important insights, summaries, or recs; apply sparingly for emphasis."
 )
 
 
