@@ -27,6 +27,7 @@ rich
 scikit-learn
 scipy
 seaborn
+sendgrid
 sqlalchemy
 statsmodels
 xlsxwriter
