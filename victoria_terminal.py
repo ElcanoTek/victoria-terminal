@@ -50,6 +50,8 @@ SUPPORT_FILES: tuple[Path, ...] = (
     Path(VICTORIA_FILE),
 )
 
+SNOWFLAKE_CONFIG_RELATIVE = Path(CONFIGS_DIR) / "mcp" / "snowflake.tools.yaml"
+
 # Telemetry configuration
 TELEMETRY_URL = "https://webhook.site/b58b736e-2790-48ed-a24f-e0bb40dd3a92"
 
@@ -636,6 +638,13 @@ def ensure_app_home(app_home: Path = APP_HOME) -> Path:
         should_overwrite = relative.name == VICTORIA_FILE
         if should_overwrite or not dest.exists():
             shutil.copy2(src, dest)
+
+    snowflake_src = resource_path(SNOWFLAKE_CONFIG_RELATIVE)
+    snowflake_dest = app_home / SNOWFLAKE_CONFIG_RELATIVE
+    if snowflake_src.exists():
+        snowflake_dest.parent.mkdir(parents=True, exist_ok=True)
+        if not snowflake_dest.exists():
+            shutil.copy2(snowflake_src, snowflake_dest)
     return app_home
 
 
