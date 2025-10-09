@@ -99,9 +99,7 @@
     "gamma": {
       "type": "stdio",
       "command": "python3",
-      "args": [
-        "${GAMMA_MCP_SCRIPT}"
-      ],
+      "args": ["${GAMMA_MCP_SCRIPT}"],
       "cwd": "${GAMMA_MCP_DIR}",
       "env": {
         "GAMMA_API_KEY": "${GAMMA_API_KEY}",
@@ -111,13 +109,31 @@
     "sendgrid": {
       "type": "stdio",
       "command": "python3",
-      "args": [
-        "${SENDGRID_MCP_SCRIPT}"
-      ],
+      "args": ["${SENDGRID_MCP_SCRIPT}"],
       "cwd": "${SENDGRID_MCP_DIR}",
       "env": {
         "SENDGRID_API_KEY": "${SENDGRID_API_KEY}",
         "PYTHONPATH": "${SENDGRID_MCP_DIR}"
+      }
+    },
+    "snowflake": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "snowflake-labs-mcp",
+        "--service-config-file",
+        "${SNOWFLAKE_MCP_CONFIG}",
+        "--connection-name",
+        "default"
+      ],
+      "env": {
+        "SNOWFLAKE_ACCOUNT": "${SNOWFLAKE_ACCOUNT}",
+        "SNOWFLAKE_USER": "${SNOWFLAKE_USER}",
+        "SNOWFLAKE_PASSWORD": "${SNOWFLAKE_PASSWORD}",
+        "SNOWFLAKE_ROLE": "${SNOWFLAKE_ROLE}",
+        "SNOWFLAKE_WAREHOUSE": "${SNOWFLAKE_WAREHOUSE}",
+        "SNOWFLAKE_DATABASE": "${SNOWFLAKE_DATABASE}",
+        "SNOWFLAKE_SCHEMA": "${SNOWFLAKE_SCHEMA}"
       }
     }
   }
