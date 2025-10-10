@@ -12,15 +12,44 @@ Make sure to set your environment variables before running this script.
 '''
 
 import os
+from pathlib import Path
+
 import pandas as pd
 import snowflake.connector
+from dotenv import find_dotenv, load_dotenv
 from snowflake.connector import ProgrammingError
+
+ENV_LOADED = False
+
+
+def load_environment_variables() -> None:
+    """Load environment variables from a local .env file if available."""
+    global ENV_LOADED
+
+    if ENV_LOADED:
+        return
+
+    env_path = find_dotenv(usecwd=True, raise_error_if_not_found=False)
+    fallback_path = Path(__file__).resolve().parent / ".env"
+
+    selected_path = env_path or (str(fallback_path) if fallback_path.exists() else "")
+
+    if selected_path:
+        load_dotenv(selected_path, override=False)
+        print(f"Loaded environment variables from {selected_path}.")
+    else:
+        print("No .env file found. Ensure environment variables are set before running the script.")
+
+    ENV_LOADED = True
+
 
 def get_snowflake_connection():
     """
     Establishes a connection to Snowflake using environment variables.
     """
-    required_vars = ["SNOWFLAKE_USER", "SNOWFLAKE_PASSWORD", "SNOWFLAKE_ACCOUNT", 
+    load_environment_variables()
+
+    required_vars = ["SNOWFLAKE_USER", "SNOWFLAKE_PASSWORD", "SNOWFLAKE_ACCOUNT",
                     "SNOWFLAKE_WAREHOUSE", "SNOWFLAKE_DATABASE", "SNOWFLAKE_SCHEMA"]
     
     missing_vars = [var for var in required_vars if not os.getenv(var)]
@@ -119,7 +148,7 @@ def main():
     """
     print("Snowflake Advanced Query Example")
     print("=" * 50)
-    
+
     conn = get_snowflake_connection()
     if not conn:
         return
