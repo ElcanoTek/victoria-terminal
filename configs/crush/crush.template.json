@@ -121,9 +121,7 @@
       "command": "snowflake-labs-mcp",
       "args": [
         "--service-config-file",
-        "${SNOWFLAKE_MCP_CONFIG}",
-        "--connection-name",
-        "default"
+        "${SNOWFLAKE_MCP_CONFIG}"
       ],
       "env": {
         "SNOWFLAKE_ACCOUNT": "${SNOWFLAKE_ACCOUNT}",
