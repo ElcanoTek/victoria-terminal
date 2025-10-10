@@ -1,0 +1,57 @@
+# Snowflake MCP Service Configuration
+# This file defines what Snowflake services and tools are available through the MCP server
+
+# Cortex Agent services (AI agents for complex workflows)
+# Leave empty if you don't have Cortex Agent services configured in Snowflake
+agent_services: []
+
+# Cortex Search services (for RAG applications with unstructured data)
+# Leave empty if you don't have Cortex Search services configured in Snowflake
+search_services: []
+
+# Cortex Analyst services (for structured data analysis with semantic models)
+# Leave empty if you don't have Cortex Analyst services configured in Snowflake
+analyst_services: []
+
+# Basic Snowflake tools - enable the ones you want to use
+other_services:
+  object_manager: true    # Enable tools for creating/dropping/managing Snowflake objects (tables, views, etc.)
+  query_manager: true     # Enable SQL query execution tools
+  semantic_manager: false # Disable semantic view tools (can enable if you use semantic views)
+
+# SQL statement permissions - controls what SQL operations are allowed
+# Set to true to allow, false to disallow specific SQL statement types
+sql_statement_permissions:
+  # Basic query operations
+  - Select: true          # Allow SELECT statements
+  - Describe: true        # Allow DESCRIBE statements  
+  - Show: true           # Allow SHOW statements
+  - Use: true            # Allow USE statements (switching database/schema)
+  
+  # Data modification operations
+  - Insert: true         # Allow INSERT statements
+  - Update: true         # Allow UPDATE statements
+  - Delete: true         # Allow DELETE statements
+  - Merge: true          # Allow MERGE statements
+  
+  # Object management operations
+  - Create: true         # Allow CREATE statements (tables, views, etc.)
+  - Drop: true           # Allow DROP statements
+  - Alter: false         # Disable ALTER statements for safety (can enable if needed)
+  - TruncateTable: true  # Allow TRUNCATE TABLE statements
+  
+  # Transaction operations
+  - Commit: true         # Allow COMMIT statements
+  - Rollback: true       # Allow ROLLBACK statements
+  - Transaction: true    # Allow transaction control
+  
+  # Comments and other operations
+  - Comment: true        # Allow COMMENT statements
+  - Command: true        # Allow command-type statements
+  
+  # Safety settings
+  - Unknown: false       # Disable unknown/unmapped statement types for security
+  
+# Note: To allow ALL SQL operations, you can instead use:
+# sql_statement_permissions:
+#   - All: true
