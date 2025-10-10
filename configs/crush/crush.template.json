@@ -118,9 +118,8 @@
     },
     "snowflake": {
       "type": "stdio",
-      "command": "uvx",
+      "command": "snowflake-labs-mcp",
       "args": [
-        "snowflake-labs-mcp",
         "--service-config-file",
         "${SNOWFLAKE_MCP_CONFIG}",
         "--connection-name",
