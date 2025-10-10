@@ -82,14 +82,18 @@ def load_environment_variables() -> None:
     ENV_LOADED = True
 
 def get_snowflake_connection():
-    """
-    Establishes a connection to Snowflake using environment variables.
-    """
-    required_vars = ["SNOWFLAKE_USER", "SNOWFLAKE_PASSWORD", "SNOWFLAKE_ACCOUNT", 
+    """Establish a connection to Snowflake using environment variables."""
+
     load_environment_variables()
 
-    required_vars = ["SNOWFLAKE_USER", "SNOWFLAKE_PASSWORD", "SNOWFLAKE_ACCOUNT",
-                    "SNOWFLAKE_WAREHOUSE", "SNOWFLAKE_DATABASE", "SNOWFLAKE_SCHEMA"]
+    required_vars = [
+        "SNOWFLAKE_USER",
+        "SNOWFLAKE_PASSWORD",
+        "SNOWFLAKE_ACCOUNT",
+        "SNOWFLAKE_WAREHOUSE",
+        "SNOWFLAKE_DATABASE",
+        "SNOWFLAKE_SCHEMA",
+    ]
     
     missing_vars = [var for var in required_vars if not os.getenv(var)]
     if missing_vars:
