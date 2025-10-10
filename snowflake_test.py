@@ -13,6 +13,7 @@ Make sure to set your environment variables before running this script.
 
 import os
 from pathlib import Path
+from typing import Iterable, List, Optional, Set
 
 import pandas as pd
 import snowflake.connector
@@ -22,31 +23,69 @@ from snowflake.connector import ProgrammingError
 ENV_LOADED = False
 
 
+def _candidate_env_files() -> Iterable[Path]:
+    """Yield plausible `.env` locations in priority order."""
+
+    manual_path = os.getenv("VICTORIA_ENV_FILE")
+    if manual_path:
+        yield Path(manual_path).expanduser()
+
+    discovered = find_dotenv(usecwd=True, raise_error_if_not_found=False)
+    if discovered:
+        yield Path(discovered)
+
+    script_dir = Path(__file__).resolve().parent
+    home = Path.home()
+
+    search_roots: List[Path] = [
+        script_dir,
+        Path.cwd(),
+        home,
+        home / "Victoria",
+        Path("/workspace"),
+        Path("/workspace/Victoria"),
+    ]
+
+    for root in search_roots:
+        yield root / ".env"
+
+
 def load_environment_variables() -> None:
-    """Load environment variables from a local .env file if available."""
+    """Load environment variables from known .env locations if available."""
     global ENV_LOADED
 
     if ENV_LOADED:
         return
 
-    env_path = find_dotenv(usecwd=True, raise_error_if_not_found=False)
-    fallback_path = Path(__file__).resolve().parent / ".env"
+    loaded_path: Optional[Path] = None
+    seen_paths: Set[Path] = set()
 
-    selected_path = env_path or (str(fallback_path) if fallback_path.exists() else "")
+    for candidate in _candidate_env_files():
+        candidate = candidate.expanduser().resolve()
+        if candidate in seen_paths:
+            continue
+        seen_paths.add(candidate)
 
-    if selected_path:
-        load_dotenv(selected_path, override=False)
-        print(f"Loaded environment variables from {selected_path}.")
+        if candidate.is_file():
+            load_dotenv(candidate, override=False)
+            loaded_path = candidate
+            break
+
+    if loaded_path:
+        print(f"Loaded environment variables from {loaded_path}.")
     else:
-        print("No .env file found. Ensure environment variables are set before running the script.")
+        print(
+            "No .env file found. Ensure environment variables are set before running the script. "
+            "You can also set VICTORIA_ENV_FILE to point to your credentials file."
+        )
 
     ENV_LOADED = True
-
 
 def get_snowflake_connection():
     """
     Establishes a connection to Snowflake using environment variables.
     """
+    required_vars = ["SNOWFLAKE_USER", "SNOWFLAKE_PASSWORD", "SNOWFLAKE_ACCOUNT", 
     load_environment_variables()
 
     required_vars = ["SNOWFLAKE_USER", "SNOWFLAKE_PASSWORD", "SNOWFLAKE_ACCOUNT",
