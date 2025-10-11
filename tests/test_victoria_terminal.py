@@ -28,6 +28,19 @@ TEST_APP_HOME.mkdir(parents=True, exist_ok=True)
 import victoria_terminal as entrypoint  # noqa: E402
 
 
+def test_ensure_app_home_syncs_support_resources(tmp_path: Path) -> None:
+    app_home = tmp_path / "victoria-home"
+
+    entrypoint.ensure_app_home(app_home)
+
+    assert (app_home / "CRUSH.md").is_file()
+    assert (app_home / "VICTORIA.md").is_file()
+
+    snowflake_config = app_home / "configs" / "mcp" / "snowflake_services.yaml"
+    assert snowflake_config.is_file()
+
+    original = entrypoint.resource_path(entrypoint.SNOWFLAKE_MCP_CONFIG)
+    assert snowflake_config.read_text(encoding="utf-8") == original.read_text(encoding="utf-8")
 def test_parse_env_file_handles_comments(tmp_path: Path) -> None:
     env_path = tmp_path / entrypoint.ENV_FILENAME
     env_path.write_text(
