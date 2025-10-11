@@ -28,6 +28,26 @@ TEST_APP_HOME.mkdir(parents=True, exist_ok=True)
 import victoria_terminal as entrypoint  # noqa: E402
 
 
+def test_ensure_app_home_restores_mcp_configs(tmp_path: Path) -> None:
+    home = tmp_path / "victoria"
+
+    entrypoint.ensure_app_home(app_home=home)
+
+    config_path = home / "configs" / "mcp" / "snowflake_services.yaml"
+    assert config_path.is_file()
+
+
+def test_ensure_app_home_preserves_existing_configs(tmp_path: Path) -> None:
+    home = tmp_path / "victoria"
+    config_path = home / "configs" / "mcp" / "snowflake_services.yaml"
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    config_path.write_text("custom: true\n", encoding="utf-8")
+
+    entrypoint.ensure_app_home(app_home=home)
+
+    assert config_path.read_text(encoding="utf-8") == "custom: true\n"
+
+
 def test_parse_env_file_handles_comments(tmp_path: Path) -> None:
     env_path = tmp_path / entrypoint.ENV_FILENAME
     env_path.write_text(

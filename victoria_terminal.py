@@ -49,6 +49,9 @@ SUPPORT_FILES: tuple[Path, ...] = (
     Path(CONFIGS_DIR) / "crush" / "CRUSH.md",
     Path(VICTORIA_FILE),
 )
+SUPPORT_DIRECTORIES: tuple[Path, ...] = (
+    Path(CONFIGS_DIR) / "mcp",
+)
 
 # Telemetry configuration
 TELEMETRY_URL = "https://webhook.site/b58b736e-2790-48ed-a24f-e0bb40dd3a92"
@@ -636,6 +639,13 @@ def ensure_app_home(app_home: Path = APP_HOME) -> Path:
         should_overwrite = relative.name == VICTORIA_FILE
         if should_overwrite or not dest.exists():
             shutil.copy2(src, dest)
+    for relative in SUPPORT_DIRECTORIES:
+        src_dir = resource_path(relative)
+        if not src_dir.is_dir():
+            continue
+
+        dest_dir = app_home / relative
+        _sync_directory(src_dir, dest_dir)
     return app_home
 
 
@@ -649,6 +659,17 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
     with path.open("w", encoding="utf-8", newline="\n") as handle:
         json.dump(payload, handle, ensure_ascii=False, indent=2)
         handle.write("\n")
+
+
+def _sync_directory(src: Path, dest: Path) -> None:
+    dest.mkdir(parents=True, exist_ok=True)
+    for entry in src.iterdir():
+        dest_entry = dest / entry.name
+        if entry.is_dir():
+            _sync_directory(entry, dest_entry)
+        else:
+            if not dest_entry.exists():
+                shutil.copy2(entry, dest_entry)
 
 
 def substitute_env(obj: Any, env: Mapping[str, str] | None = None) -> Any:
