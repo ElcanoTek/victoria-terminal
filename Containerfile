@@ -8,7 +8,7 @@ ENV PATH="/root/.local/bin:${PATH}" \
     VICTORIA_HOME="/workspace/Victoria"
 
 RUN dnf -y upgrade && \
-    dnf -y install python3 python3-pip git curl golang helix uv shadow-utils && \
+    dnf -y install python3 python3-pip git curl golang helix shadow-utils && \
     GOBIN=/usr/local/bin go install github.com/charmbracelet/crush@latest && \
     dnf clean all && rm -rf /var/cache/dnf && rm -rf /root/go/pkg/mod
 

@@ -8,6 +8,7 @@ ipykernel
 isort
 matplotlib
 mcp[cli]
+mcp-server-motherduck>=0.7.1
 nox
 numpy
 openpyxl
