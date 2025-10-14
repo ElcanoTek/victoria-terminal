@@ -1,7 +1,7 @@
 {
   "models": {
     "large": {
-      "model": "openai/gpt-5",
+      "model": "google/gemini-2.5-pro",
       "provider": "openrouter",
       "max_tokens": 64000
     },
