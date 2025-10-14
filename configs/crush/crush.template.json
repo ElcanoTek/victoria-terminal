@@ -85,9 +85,8 @@
   "mcp": {
     "motherduck": {
       "type": "stdio",
-      "command": "uvx",
+      "command": "mcp-server-motherduck",
       "args": [
-        "mcp-server-motherduck",
         "--db-path",
         "${VICTORIA_HOME}/adtech.duckdb"
       ]

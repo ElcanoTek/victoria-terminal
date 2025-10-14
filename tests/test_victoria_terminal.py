@@ -194,9 +194,8 @@ def test_generate_crush_config_substitutes_env(tmp_path: Path) -> None:
     assert "typescript" not in data["lsp"]
 
     motherduck_cfg = data["mcp"]["motherduck"]
-    assert motherduck_cfg["command"] == "uvx"
+    assert motherduck_cfg["command"] == "mcp-server-motherduck"
     assert motherduck_cfg["args"] == [
-        "mcp-server-motherduck",
         "--db-path",
         str(tmp_path / "adtech.duckdb"),
     ]
