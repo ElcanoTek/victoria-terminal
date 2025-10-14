@@ -117,21 +117,8 @@
       }
     },
     "snowflake": {
-      "type": "stdio",
-      "command": "snowflake-labs-mcp",
-      "args": [
-        "--service-config-file",
-        "/workspace/configs/mcp/snowflake_services.yaml"
-      ],
-      "env": {
-        "SNOWFLAKE_ACCOUNT": "${SNOWFLAKE_ACCOUNT}",
-        "SNOWFLAKE_USER": "${SNOWFLAKE_USER}",
-        "SNOWFLAKE_PASSWORD": "${SNOWFLAKE_PASSWORD}",
-        "SNOWFLAKE_ROLE": "${SNOWFLAKE_ROLE}",
-        "SNOWFLAKE_WAREHOUSE": "${SNOWFLAKE_WAREHOUSE}",
-        "SNOWFLAKE_DATABASE": "${SNOWFLAKE_DATABASE}",
-        "SNOWFLAKE_SCHEMA": "${SNOWFLAKE_SCHEMA}"
-      }
+      "type": "http",
+      "url": "http://host.containers.internal:9000/snowflake-mcp"
     }
   }
 }
