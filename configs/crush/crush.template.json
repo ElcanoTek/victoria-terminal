@@ -121,7 +121,7 @@
       "command": "snowflake-labs-mcp",
       "args": [
         "--service-config-file",
-        "${VICTORIA_HOME}/configs/mcp/snowflake_services.yaml"
+        "/workspace/configs/mcp/snowflake_services.yaml"
       ],
       "env": {
         "SNOWFLAKE_ACCOUNT": "${SNOWFLAKE_ACCOUNT}",
