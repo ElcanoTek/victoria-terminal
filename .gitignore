@@ -330,3 +330,13 @@ yarn-error.log*
 
 # Vagrant
 .vagrant/
+
+
+# =============================================================================
+# PRIVATE CONFIGURATION FILES
+# =============================================================================
+
+# Private instructions and configuration
+private.md
+**/private.md
+
