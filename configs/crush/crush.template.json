@@ -77,7 +77,7 @@
     }
   },
   "options": {
-    "context_paths": ["VICTORIA.md"],
+    "context_paths": ["VICTORIA.md", "configs/mcp/private.md"],
     "tui": {
       "compact_mode": true
     }
