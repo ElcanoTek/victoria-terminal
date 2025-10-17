@@ -337,6 +337,7 @@ yarn-error.log*
 # =============================================================================
 
 # Private instructions and configuration
+PRIVATE.md
 private.md
 **/private.md
 

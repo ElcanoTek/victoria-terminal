@@ -40,6 +40,7 @@ console = Console()
 
 __version__ = "2025.9.9"
 VICTORIA_FILE = "VICTORIA.md"
+PRIVATE_FILE = "PRIVATE.md"
 CONFIGS_DIR = "configs"
 CRUSH_TEMPLATE = Path(CONFIGS_DIR) / "crush" / "crush.template.json"
 CRUSH_CONFIG_NAME = "crush.json"
@@ -48,7 +49,7 @@ CRUSH_COMMAND = "crush"
 SUPPORT_FILES: tuple[Path, ...] = (
     Path(CONFIGS_DIR) / "crush" / "CRUSH.md",
     Path(VICTORIA_FILE),
-    Path(CONFIGS_DIR) / "mcp" / "private.md",
+    Path(PRIVATE_FILE)
 )
 
 # Telemetry configuration
