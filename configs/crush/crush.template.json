@@ -86,10 +86,7 @@
     "motherduck": {
       "type": "stdio",
       "command": "mcp-server-motherduck",
-      "args": [
-        "--db-path",
-        "${VICTORIA_HOME}/adtech.duckdb"
-      ]
+      "args": ["--db-path", "${VICTORIA_HOME}/adtech.duckdb"]
     },
     "browserbase": {
       "type": "http",
@@ -98,9 +95,7 @@
     "gamma": {
       "type": "stdio",
       "command": "python3",
-      "args": [
-        "${GAMMA_MCP_SCRIPT}"
-      ],
+      "args": ["${GAMMA_MCP_SCRIPT}"],
       "cwd": "${GAMMA_MCP_DIR}",
       "env": {
         "GAMMA_API_KEY": "${GAMMA_API_KEY}",
@@ -110,13 +105,26 @@
     "sendgrid": {
       "type": "stdio",
       "command": "python3",
-      "args": [
-        "${SENDGRID_MCP_SCRIPT}"
-      ],
+      "args": ["${SENDGRID_MCP_SCRIPT}"],
       "cwd": "${SENDGRID_MCP_DIR}",
       "env": {
         "SENDGRID_API_KEY": "${SENDGRID_API_KEY}",
         "PYTHONPATH": "${SENDGRID_MCP_DIR}"
+      }
+    },
+    "snowflake": {
+      "type": "stdio",
+      "command": "snowflake-labs-mcp",
+      "args": [
+        "--service-config-file",
+        "/workspace/configs/mcp/snowflake.tools.yaml",
+        "--connection-name",
+        "default"
+      ],
+      "env": {
+        "SNOWFLAKE_ACCOUNT": "${SNOWFLAKE_ACCOUNT}",
+        "SNOWFLAKE_USER": "${SNOWFLAKE_USER}",
+        "SNOWFLAKE_PASSWORD": "${SNOWFLAKE_PASSWORD}"
       }
     }
   }

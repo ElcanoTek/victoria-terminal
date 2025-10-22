@@ -32,3 +32,4 @@ sendgrid
 sqlalchemy
 statsmodels
 xlsxwriter
+snowflake-labs-mcp
