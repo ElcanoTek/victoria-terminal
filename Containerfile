@@ -2,7 +2,6 @@ FROM registry.fedoraproject.org/fedora:latest
 
 ENV PATH="/root/.local/bin:${PATH}" \
     PYTHONUNBUFFERED="1" \
-    GOSUMDB="sum.golang.org" \
     PIP_ROOT_USER_ACTION="ignore" \
     VICTORIA_HOME="/workspace/Victoria"
 
