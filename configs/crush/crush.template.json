@@ -117,9 +117,7 @@
       "command": "snowflake-labs-mcp",
       "args": [
         "--service-config-file",
-        "/workspace/configs/mcp/snowflake.tools.yaml",
-        "--connection-name",
-        "default"
+        "/workspace/configs/mcp/snowflake.tools.yaml"
       ],
       "env": {
         "SNOWFLAKE_ACCOUNT": "${SNOWFLAKE_ACCOUNT}",
