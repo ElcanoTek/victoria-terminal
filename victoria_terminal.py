@@ -42,6 +42,7 @@ __version__ = "2025.9.9"
 VICTORIA_FILE = "VICTORIA.md"
 CONFIGS_DIR = "configs"
 CRUSH_TEMPLATE = Path(CONFIGS_DIR) / "crush" / "crush.template.json"
+CRUSH_LOCAL = Path(CONFIGS_DIR) / "crush" / "crush.local.json"
 CRUSH_CONFIG_NAME = "crush.json"
 ENV_FILENAME = ".env"
 CRUSH_COMMAND = "crush"
@@ -702,6 +703,31 @@ def _is_snowflake_enabled(env_map: Mapping[str, str]) -> bool:
     return all(_has_valid_env_value(env_map, key) for key in SNOWFLAKE_ENV_KEYS)
 
 
+def copy_crush_local_config(
+    *,
+    app_home: Path = APP_HOME,
+    local_config_path: Path | None = None,
+) -> Path:
+    """Copy crush.local.json to the user's local crush config directory."""
+    local_config = local_config_path or resource_path(CRUSH_LOCAL)
+    if not local_config.exists():
+        raise FileNotFoundError(f"Missing Crush local config at {local_config}")
+    
+    # Create the .local/share/crush directory in the app home
+    crush_config_dir = app_home / ".local" / "share" / "crush"
+    crush_config_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Copy crush.local.json to .local/share/crush/crush.json
+    dest_path = crush_config_dir / CRUSH_CONFIG_NAME
+    if not dest_path.exists():
+        shutil.copy2(local_config, dest_path)
+        good(f"Local Crush configuration copied to {dest_path}")
+    else:
+        info(f"Local Crush configuration already exists at {dest_path}")
+    
+    return dest_path
+
+
 def generate_crush_config(
     *,
     app_home: Path = APP_HOME,
@@ -886,6 +912,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         _persist_license_acceptance(app_home=app_home)
     load_environment(app_home)
     generate_crush_config(app_home=app_home)
+    copy_crush_local_config(app_home=app_home)
     remove_local_duckdb(app_home=app_home)
     info(
         "Place files to analyze in the Victoria folder on your host (~/Victoria by default). "
