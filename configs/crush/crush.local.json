@@ -1,6 +1,14 @@
 {
   "models": {
-    "large": {"model":"google/gemini-2.5-pro","provider":"openrouter","reasoning_effort":"medium","max_tokens":32768},
-    "small": {"model":"x-ai/grok-code-fast-1","provider":"openrouter","reasoning_effort":"medium","max_tokens":5000}
+    "large": {
+      "model": "google/gemini-2.5-pro",
+      "provider": "openrouter",
+      "max_tokens": 64000
+    },
+    "small": {
+      "model": "x-ai/grok-code-fast-1",
+      "provider": "openrouter",
+      "max_tokens": 5000
+    }
   }
 }
