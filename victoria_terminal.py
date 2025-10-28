@@ -582,6 +582,7 @@ REQUIRED_ENV_KEYS = ("OPENROUTER_API_KEY",)
 BROWSERBASE_ENV_KEY = "SMITHERY_BROWSERBASE_URL"
 GAMMA_ENV_KEY = "GAMMA_API_KEY"
 SENDGRID_ENV_KEY = "SENDGRID_API_KEY"
+SNOWFLAKE_ENV_KEYS = ("SNOWFLAKE_ACCOUNT", "SNOWFLAKE_USER", "SNOWFLAKE_PASSWORD")
 
 
 def load_environment(
@@ -697,6 +698,10 @@ def _is_sendgrid_enabled(env_map: Mapping[str, str]) -> bool:
     return _has_valid_env_value(env_map, SENDGRID_ENV_KEY)
 
 
+def _is_snowflake_enabled(env_map: Mapping[str, str]) -> bool:
+    return all(_has_valid_env_value(env_map, key) for key in SNOWFLAKE_ENV_KEYS)
+
+
 def generate_crush_config(
     *,
     app_home: Path = APP_HOME,
@@ -744,6 +749,10 @@ def generate_crush_config(
 
                 resolved_env["SENDGRID_MCP_SCRIPT"] = str(sendgrid_script)
                 resolved_env["SENDGRID_MCP_DIR"] = str(sendgrid_script.parent)
+
+        snowflake_config = mcp_config.get("snowflake")
+        if isinstance(snowflake_config, dict) and not _is_snowflake_enabled(env_map):
+            mcp_config.pop("snowflake", None)
     resolved = substitute_env(config, resolved_env)
     output_path = app_home / CRUSH_CONFIG_NAME
     _write_json(output_path, resolved)
