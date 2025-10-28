@@ -826,7 +826,7 @@ def launch_crush(*, app_home: Path = APP_HOME, task_prompt: str | None = None) -
     info("Launching Crush...")
     cmd = [CRUSH_COMMAND, "-c", str(app_home)]
     if task_prompt is not None:
-        cmd.extend(["run", "-q", task_prompt])
+        cmd.extend(["run", "--yolo", "-q", task_prompt])
     else:
         cmd.append("--yolo")
     try:
