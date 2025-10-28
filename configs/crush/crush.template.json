@@ -17,14 +17,14 @@
       "name": "OpenRouter",
       "models": [
         {
-          "id": "openai/chatgpt-5",
+          "id": "openai/gpt-5",
           "name": "ChatGPT 5",
           "context_window": 256000,
           "default_max_tokens": 4096,
           "supports_tools": true
         },
         {
-          "id": "openai/chatgpt-5-mini",
+          "id": "openai/gpt-5-mini",
           "name": "ChatGPT 5 Mini",
           "context_window": 128000,
           "default_max_tokens": 2048,
