@@ -313,10 +313,11 @@ def test_launch_crush_appends_yolo_in_interactive_mode(monkeypatch: pytest.Monke
     with pytest.raises(SystemExit):
         entrypoint.launch_crush(app_home=tmp_path)
 
-    assert recorded["cmd"][-1] == "--yolo"
+    assert recorded["cmd"][:2] == ["crush", "--yolo"]
+    assert "-c" in recorded["cmd"]
 
 
-def test_launch_crush_omits_yolo_in_task_mode(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_launch_crush_includes_yolo_in_task_mode(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     recorded: dict[str, list[str]] = {}
 
     def fake_execvp(cmd: str, argv: list[str]) -> None:
@@ -328,7 +329,8 @@ def test_launch_crush_omits_yolo_in_task_mode(monkeypatch: pytest.MonkeyPatch, t
     with pytest.raises(SystemExit):
         entrypoint.launch_crush(app_home=tmp_path, task_prompt="Chart conversions")
 
-    assert "--yolo" not in recorded["cmd"]
+    assert recorded["cmd"][:2] == ["crush", "--yolo"]
+    assert recorded["cmd"].index("--yolo") < recorded["cmd"].index("run")
     assert "-q" in recorded["cmd"]
     prompt_index = recorded["cmd"].index("-q") + 1
     assert recorded["cmd"][prompt_index] == "Chart conversions"
