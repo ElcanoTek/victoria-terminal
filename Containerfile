@@ -1,11 +1,16 @@
 FROM registry.fedoraproject.org/fedora:latest AS builder
 
-# Install Go and build Crush from source. Fedora currently packages Go 1.24, so
-# we pin the toolchain download to Go 1.25 in order to satisfy Crush's minimum
-# version requirement.
-RUN dnf -y install golang && \
-    dnf clean all && \
-    GOTOOLCHAIN=go1.25.2 go install github.com/charmbracelet/crush@latest
+ENV PATH="/root/.local/bin:${PATH}" \
+    PYTHONUNBUFFERED="1" \
+    GOTOOLCHAIN="auto" \
+    GOSUMDB="sum.golang.org" \
+    PIP_ROOT_USER_ACTION="ignore"
+
+RUN dnf -y upgrade && \
+    dnf -y install python3 python3-pip git curl golang helix && \
+    # Change @latest to a pinned version if we ever need to lock Crush.
+    GOBIN=/usr/local/bin go install github.com/charmbracelet/crush@latest && \
+    dnf clean all && rm -rf /var/cache/dnf && rm -rf /root/go/pkg/mod
 
 # Final stage - without Go compiler
 FROM registry.fedoraproject.org/fedora:latest
