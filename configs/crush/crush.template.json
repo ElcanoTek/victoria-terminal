@@ -77,7 +77,7 @@
     }
   },
   "options": {
-    "context_paths": ["VICTORIA.md"],
+    "context_paths": ["VICTORIA.md", "PRIVATE.md"],
     "tui": {
       "compact_mode": true
     }

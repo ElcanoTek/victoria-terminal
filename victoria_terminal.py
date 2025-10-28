@@ -40,6 +40,7 @@ console = Console()
 
 __version__ = "2025.9.9"
 VICTORIA_FILE = "VICTORIA.md"
+PRIVATE_FILE = "PRIVATE.md"
 CONFIGS_DIR = "configs"
 CRUSH_TEMPLATE = Path(CONFIGS_DIR) / "crush" / "crush.template.json"
 CRUSH_LOCAL = Path(CONFIGS_DIR) / "crush" / "crush.local.json"
@@ -49,6 +50,7 @@ CRUSH_COMMAND = "crush"
 SUPPORT_FILES: tuple[Path, ...] = (
     Path(CONFIGS_DIR) / "crush" / "CRUSH.md",
     Path(VICTORIA_FILE),
+    Path(PRIVATE_FILE),
 )
 
 # Telemetry configuration
@@ -631,7 +633,12 @@ def ensure_app_home(app_home: Path = APP_HOME) -> Path:
     app_home.mkdir(parents=True, exist_ok=True)
     for relative in SUPPORT_FILES:
         src = resource_path(relative)
-        dest = app_home / relative.name
+         # Preserve directory structure for files in subdirectories
+        if relative.name == "private.md":
+            dest = app_home / relative
+            dest.parent.mkdir(parents=True, exist_ok=True)
+        else:
+            dest = app_home / relative.name
         if not src.exists():
             continue
 
