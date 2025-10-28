@@ -634,7 +634,7 @@ def ensure_app_home(app_home: Path = APP_HOME) -> Path:
     for relative in SUPPORT_FILES:
         src = resource_path(relative)
         # Preserve directory structure for files in subdirectories
-        if relative.name == "private.md":
+        if relative.name == PRIVATE_FILE:
             dest = app_home / relative
             dest.parent.mkdir(parents=True, exist_ok=True)
         else:
