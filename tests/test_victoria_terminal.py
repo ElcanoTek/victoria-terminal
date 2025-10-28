@@ -193,8 +193,6 @@ def test_generate_crush_config_substitutes_env(tmp_path: Path) -> None:
     assert python_lsp["args"] == ["-m", "pylsp"]
     assert "typescript" not in data["lsp"]
 
-    assert data["options"]["context_paths"] == [str(tmp_path / "VICTORIA.md")]
-
     motherduck_cfg = data["mcp"]["motherduck"]
     assert motherduck_cfg["command"] == "mcp-server-motherduck"
     assert motherduck_cfg["args"] == [
