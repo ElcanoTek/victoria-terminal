@@ -21,7 +21,7 @@ ENV PATH="/root/.local/bin:${PATH}" \
     VICTORIA_HOME="/workspace/Victoria"
 
 # Copy crush binary from builder
-COPY --from=builder /root/go/bin/crush /usr/local/bin/crush
+COPY --from=builder /usr/local/bin/crush /usr/local/bin/crush
 
 # Install runtime dependencies
 RUN dnf -y upgrade && \
