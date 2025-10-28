@@ -193,6 +193,8 @@ def test_generate_crush_config_substitutes_env(tmp_path: Path) -> None:
     assert python_lsp["args"] == ["-m", "pylsp"]
     assert "typescript" not in data["lsp"]
 
+    assert data["options"]["context_paths"] == [str(tmp_path / "VICTORIA.md")]
+
     motherduck_cfg = data["mcp"]["motherduck"]
     assert motherduck_cfg["command"] == "mcp-server-motherduck"
     assert motherduck_cfg["args"] == [
@@ -313,6 +315,8 @@ def test_launch_crush_appends_yolo_in_interactive_mode(monkeypatch: pytest.Monke
     with pytest.raises(SystemExit):
         entrypoint.launch_crush(app_home=tmp_path)
 
+    expected_config_dir = tmp_path / entrypoint.CRUSH_CONFIG_SUBDIR
+    assert recorded["cmd"][:3] == [entrypoint.CRUSH_COMMAND, "-c", str(expected_config_dir)]
     assert recorded["cmd"][-1] == "--yolo"
 
 
@@ -328,6 +332,8 @@ def test_launch_crush_omits_yolo_in_task_mode(monkeypatch: pytest.MonkeyPatch, t
     with pytest.raises(SystemExit):
         entrypoint.launch_crush(app_home=tmp_path, task_prompt="Chart conversions")
 
+    expected_config_dir = tmp_path / entrypoint.CRUSH_CONFIG_SUBDIR
+    assert recorded["cmd"][:3] == [entrypoint.CRUSH_COMMAND, "-c", str(expected_config_dir)]
     assert "--yolo" not in recorded["cmd"]
     assert "-q" in recorded["cmd"]
     prompt_index = recorded["cmd"].index("-q") + 1

@@ -43,6 +43,8 @@ VICTORIA_FILE = "VICTORIA.md"
 CONFIGS_DIR = "configs"
 CRUSH_TEMPLATE = Path(CONFIGS_DIR) / "crush" / "crush.template.json"
 CRUSH_CONFIG_NAME = "crush.json"
+CRUSH_CONFIG_SUBDIR = Path(".local") / "share" / "crush"
+CRUSH_CONFIG_RELATIVE_PATH = CRUSH_CONFIG_SUBDIR / CRUSH_CONFIG_NAME
 ENV_FILENAME = ".env"
 CRUSH_COMMAND = "crush"
 SUPPORT_FILES: tuple[Path, ...] = (
@@ -754,7 +756,7 @@ def generate_crush_config(
         if isinstance(snowflake_config, dict) and not _is_snowflake_enabled(env_map):
             mcp_config.pop("snowflake", None)
     resolved = substitute_env(config, resolved_env)
-    output_path = app_home / CRUSH_CONFIG_NAME
+    output_path = app_home / CRUSH_CONFIG_RELATIVE_PATH
     _write_json(output_path, resolved)
     good(f"Configuration written to {output_path}")
     return output_path
@@ -798,7 +800,8 @@ def launch_crush(*, app_home: Path = APP_HOME, task_prompt: str | None = None) -
     """
     section("Mission launch")
     info("Launching Crush...")
-    cmd = [CRUSH_COMMAND, "-c", str(app_home)]
+    config_dir = app_home / CRUSH_CONFIG_SUBDIR
+    cmd = [CRUSH_COMMAND, "-c", str(config_dir)]
     if task_prompt is not None:
         cmd.extend(["run", "-q", task_prompt])
     else:
