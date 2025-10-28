@@ -36,7 +36,8 @@ from rich.panel import Panel
 from rich.text import Text
 
 # Initialize rich console
-console = Console()
+# Disable force_terminal to avoid TTY issues in CI/non-interactive environments
+console = Console(force_terminal=False, force_interactive=False)
 
 __version__ = "2025.9.9"
 VICTORIA_FILE = "VICTORIA.md"
