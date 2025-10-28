@@ -1,5 +1,23 @@
-# Keep it simple (read-mostly); you can enable more later.
-other_services:
-  object_manager: false     # start safe; turn on when you’re ready
-  query_manager: true       # enable SQL execution via your role/warehouse
-  semantic_manager: false   # turn on if/when you use Semantic Views
+other_services: # Set desired tool groups to true to enable tools for that group
+  object_manager: false # Perform basic operations against Snowflake's most common objects such as creation, dropping, updating, and more.
+  query_manager: true # Run LLM-generated SQL managed by user-configured permissions.
+  semantic_manager: true # Discover and query Snowflake Semantic Views and their components.
+sql_statement_permissions: # List SQL statements to explicitly allow (true) or disallow (false).
+  # - All: true # To allow everything, uncomment and set All: true.
+  - Alter: false
+  - Command: false
+  - Comment: false
+  - Commit: false
+  - Create: false
+  - Delete: false
+  - Describe: true
+  - Drop: false
+  - Insert: false
+  - Merge: false
+  - Rollback: false
+  - Select: true
+  - Transaction: false
+  - TruncateTable: false
+  - Unknown: false # To allow unknown or unmapped statement types, set Unknown: true.
+  - Update: false
+  - Use: true
