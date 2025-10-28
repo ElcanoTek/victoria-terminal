@@ -1,9 +1,11 @@
 FROM registry.fedoraproject.org/fedora:latest AS builder
 
-# Install Go and build Crush from source
+# Install Go and build Crush from source. Fedora currently packages Go 1.24, so
+# we pin the toolchain download to Go 1.25 in order to satisfy Crush's minimum
+# version requirement.
 RUN dnf -y install golang && \
     dnf clean all && \
-    go install github.com/charmbracelet/crush@latest
+    GOTOOLCHAIN=go1.25.2 go install github.com/charmbracelet/crush@latest
 
 # Final stage - without Go compiler
 FROM registry.fedoraproject.org/fedora:latest
