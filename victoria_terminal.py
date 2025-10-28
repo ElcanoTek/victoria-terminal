@@ -824,11 +824,9 @@ def launch_crush(*, app_home: Path = APP_HOME, task_prompt: str | None = None) -
     """
     section("Mission launch")
     info("Launching Crush...")
-    cmd = [CRUSH_COMMAND, "-c", str(app_home)]
+    cmd = [CRUSH_COMMAND, "--yolo", "-c", str(app_home)]
     if task_prompt is not None:
-        cmd.extend(["run", "--yolo", "-q", task_prompt])
-    else:
-        cmd.append("--yolo")
+        cmd.extend(["run", "-q", task_prompt])
     try:
         os.execvp(CRUSH_COMMAND, cmd)
     except FileNotFoundError:
