@@ -633,7 +633,7 @@ def ensure_app_home(app_home: Path = APP_HOME) -> Path:
     app_home.mkdir(parents=True, exist_ok=True)
     for relative in SUPPORT_FILES:
         src = resource_path(relative)
-         # Preserve directory structure for files in subdirectories
+        # Preserve directory structure for files in subdirectories
         if relative.name == "private.md":
             dest = app_home / relative
             dest.parent.mkdir(parents=True, exist_ok=True)
@@ -719,11 +719,11 @@ def copy_crush_local_config(
     local_config = local_config_path or resource_path(CRUSH_LOCAL)
     if not local_config.exists():
         raise FileNotFoundError(f"Missing Crush local config at {local_config}")
-    
+
     # Create the .local/share/crush directory in the app home
     crush_config_dir = app_home / ".local" / "share" / "crush"
     crush_config_dir.mkdir(parents=True, exist_ok=True)
-    
+
     # Copy crush.local.json to .local/share/crush/crush.json
     dest_path = crush_config_dir / CRUSH_CONFIG_NAME
     if not dest_path.exists():
@@ -731,7 +731,7 @@ def copy_crush_local_config(
         good(f"Local Crush configuration copied to {dest_path}")
     else:
         info(f"Local Crush configuration already exists at {dest_path}")
-    
+
     return dest_path
 
 
