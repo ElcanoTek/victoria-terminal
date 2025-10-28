@@ -12,11 +12,9 @@ configure_runtime_environment() {
     export HOME="${VICTORIA_HOME}"
     mkdir -p "${HOME}"
 
-    local crush_config_dir="${VICTORIA_HOME}/.local/share/crush"
-    local crush_config_path="${crush_config_dir}/crush.json"
-    mkdir -p "${crush_config_dir}"
-    if [[ ! -f "${crush_config_path}" ]]; then
-        cp /workspace/configs/crush/crush.local.json "${crush_config_path}"
+    mkdir -p "${HOME}/.local/share/crush"
+    if [[ ! -f "${HOME}/.local/share/crush/crush.json" ]]; then
+        cp /workspace/configs/crush/crush.local.json "${HOME}/.local/share/crush/crush.json"
     fi
 
     case ":${PATH}:" in
