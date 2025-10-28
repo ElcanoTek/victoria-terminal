@@ -1,0 +1,5 @@
+# Keep it simple (read-mostly); you can enable more later.
+other_services:
+  object_manager: false     # start safe; turn on when you’re ready
+  query_manager: true       # enable SQL execution via your role/warehouse
+  semantic_manager: false   # turn on if/when you use Semantic Views
