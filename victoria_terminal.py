@@ -831,8 +831,10 @@ def launch_crush(*, app_home: Path = APP_HOME, task_prompt: str | None = None) -
     """
     section("Mission launch")
     info("Launching Crush...")
-    cmd = [CRUSH_COMMAND, "--yolo", "-c", str(app_home)]
-    if task_prompt is not None:
+    cmd = [CRUSH_COMMAND, "-c", str(app_home)]
+    if task_prompt is None:
+        cmd.insert(1, "--yolo")
+    else:
         cmd.extend(["run", "-q", task_prompt])
     try:
         os.execvp(CRUSH_COMMAND, cmd)
