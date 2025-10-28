@@ -329,3 +329,6 @@ def test_launch_crush_omits_yolo_in_task_mode(monkeypatch: pytest.MonkeyPatch, t
         entrypoint.launch_crush(app_home=tmp_path, task_prompt="Chart conversions")
 
     assert "--yolo" not in recorded["cmd"]
+    assert "-q" in recorded["cmd"]
+    prompt_index = recorded["cmd"].index("-q") + 1
+    assert recorded["cmd"][prompt_index] == "Chart conversions"
