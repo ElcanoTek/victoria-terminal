@@ -1,31 +1,31 @@
-FROM registry.fedoraproject.org/fedora:latest AS builder
-
-ENV PATH="/root/.local/bin:${PATH}" \
-    PYTHONUNBUFFERED="1" \
-    GOTOOLCHAIN="auto" \
-    GOSUMDB="sum.golang.org" \
-    PIP_ROOT_USER_ACTION="ignore"
-
-RUN dnf -y upgrade && \
-    dnf -y install python3 python3-pip git curl golang helix && \
-    # Change @latest to a pinned version if we ever need to lock Crush.
-    GOBIN=/usr/local/bin go install github.com/charmbracelet/crush@latest && \
-    dnf clean all && rm -rf /var/cache/dnf && rm -rf /root/go/pkg/mod
-
-# Final stage - without Go compiler
 FROM registry.fedoraproject.org/fedora:latest
 
 ENV PATH="/root/.local/bin:${PATH}" \
     PYTHONUNBUFFERED="1" \
     PIP_ROOT_USER_ACTION="ignore" \
+    GOTOOLCHAIN="auto" \
+    GOSUMDB="sum.golang.org" \
     VICTORIA_HOME="/workspace/Victoria"
 
-# Copy crush binary from builder
-COPY --from=builder /usr/local/bin/crush /usr/local/bin/crush
-
-# Install runtime dependencies
+# Install runtime and build dependencies plus crush
 RUN dnf -y upgrade && \
-    dnf -y install python3 python3-pip git curl helix && \
+    dnf -y install \
+        python3 \
+        python3-pip \
+        python3-devel \
+        git \
+        curl \
+        helix \
+        golang \
+        gcc \
+        gcc-c++ \
+        make \
+        cmake \
+        libffi-devel \
+        openssl-devel \
+        redhat-rpm-config && \
+    # Change @latest to a pinned version if we ever need to lock Crush.
+    GOBIN=/usr/local/bin go install github.com/charmbracelet/crush@latest && \
     dnf clean all && rm -rf /var/cache/dnf && rm -rf /root/go/pkg/mod
 
 WORKDIR /workspace
