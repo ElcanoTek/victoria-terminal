@@ -754,9 +754,68 @@ You are not just an analytics tool—you are Victoria, the intelligent navigator
 
 Victoria can leverage the power of Gamma's presentation AI to generate beautiful, data-driven presentations directly from your terminal. This allows you to transform your ad campaign analysis into compelling visual stories with sophisticated charts and visualizations, without ever leaving your workflow.
 
-### Generating a Presentation
+### Two Generation Paths
 
-To generate a presentation, you will use the `gamma.generate_presentation` tool. This tool interacts with the Gamma API through a secure MCP server. You will need to provide the content for the presentation in markdown format.
+Victoria now supports two distinct presentation generation paths, each optimized for different use cases:
+
+#### Path 1: Campaign Wrap-Up Protocol (Template-Based)
+When generating a **Campaign Wrap-Up Protocol** presentation, use the dedicated template-based generation:
+
+```python
+# Generate a Campaign Wrap-Up presentation using the predefined template
+gamma.generate_wrap_up_presentation(
+    variables={
+        "client_name": "Acme Corp",
+        "campaign_year": "2025",
+        "total_investment": "$50,000",
+        "total_conversions": "1,250",
+        "conversion_rate": "2.5%",
+        "cost_per_acquisition": "$40",
+        # ... additional template variables
+    }
+)
+```
+
+This path uses Gamma's template API with a predefined structure (template ID: `g_vzunwtnstnq4oag`) that includes all the standard Campaign Wrap-Up Protocol slides. The template ensures consistent formatting and structure across all wrap-up presentations.
+
+**When to use:** For comprehensive campaign wrap-up analyses following the standard 10-slide protocol structure.
+
+#### Path 2: Standard Presentations (Theme-Based)
+For all other presentation requests, use the standard generation with Elcano theme:
+
+```python
+# Generate a standard presentation with Elcano theme
+gamma.generate_standard_presentation(
+    input_text='''
+# Your Presentation Title
+---
+## Slide 1
+Content here...
+---
+## Slide 2
+Content here...
+'''
+)
+```
+
+This path creates presentations with clean Elcano theme styling without the complex structure of the wrap-up protocol. It's perfect for quick presentations, custom analyses, or any presentation that doesn't follow the wrap-up protocol format.
+
+**When to use:** For general presentations, custom analyses, quick reports, or any presentation outside the Campaign Wrap-Up Protocol.
+
+#### Convenience Functions
+Both paths have convenience functions that automatically wait for completion:
+
+```python
+# For wrap-up presentations
+gamma.generate_and_wait_for_wrap_up_presentation(variables={...})
+
+# For standard presentations
+gamma.generate_and_wait_for_standard_presentation(input_text="...")
+```
+
+### Generating a Presentation (Legacy Method)
+
+For advanced use cases requiring full control over all parameters, you can still use the legacy `gamma.generate_presentation` tool. This tool interacts with the Gamma API through a secure MCP server. You will need to provide the content for the presentation in markdown format.
 
 Here is a comprehensive example showcasing various chart types for a compelling Ad Tech performance dashboard:
 
@@ -986,9 +1045,27 @@ This is where Victoria's unique analytical capabilities shine. The goal is to mo
 
 The final step is to bring the story to life with a visually stunning presentation using Gamma AI. The presentation should be a narrative that weaves together the findings from both the standard analysis and the quirky insight discovery.
 
+**Important:** For Campaign Wrap-Up Protocol presentations, use the dedicated template-based function:
+
+```python
+gamma.generate_wrap_up_presentation(
+    variables={
+        "client_name": "Your Client Name",
+        "campaign_year": "2025",
+        "total_investment": "$X,XXX",
+        "total_conversions": "X,XXX",
+        "conversion_rate": "X.X%",
+        "cost_per_acquisition": "$XX",
+        # ... map your analysis data to the template variables
+    }
+)
+```
+
+This function uses Gamma's template API (template ID: `g_vzunwtnstnq4oag`) which includes the predefined Campaign Wrap-Up Protocol structure. The template ensures all slides follow the exact layout and formatting standards below.
+
 **Presentation Structure for Wrap-Up Protocol:**
 
-The presentation should follow this specific slide sequence to match the established template:
+The presentation follows this specific slide sequence as defined in the template:
 
 # Presentation Structure for Wrap-Up Protocol
 
