@@ -764,19 +764,31 @@ When generating a **Campaign Wrap-Up Protocol** presentation, use the dedicated 
 ```python
 # Generate a Campaign Wrap-Up presentation using the predefined template
 gamma.generate_wrap_up_presentation(
-    variables={
-        "client_name": "Acme Corp",
-        "campaign_year": "2025",
-        "total_investment": "$50,000",
-        "total_conversions": "1,250",
-        "conversion_rate": "2.5%",
-        "cost_per_acquisition": "$40",
-        # ... additional template variables
-    }
+    prompt="""
+    Create a campaign wrap-up presentation for Acme Corp's 2025 digital marketing campaign.
+
+    Key Metrics:
+    - Total Investment: $50,000
+    - Total Conversions: 1,250
+    - Conversion Rate: 2.5%
+    - Cost per Acquisition: $40
+
+    Campaign Performance Highlights:
+    - Exceeded conversion goals by 25%
+    - Reduced CPA by 15% through optimization
+    - Top performing platform: Paid Search (45% of conversions)
+
+    Strategic Recommendations:
+    1. Increase budget allocation to top-performing channels
+    2. Expand geographic targeting to high-performing DMAs
+    3. Test new creative variations in Q1 2026
+
+    Include the client logo: https://example.com/acme-logo.png
+    """
 )
 ```
 
-This path uses Gamma's template API with a predefined structure (template ID: `g_vzunwtnstnq4oag`) that includes all the standard Campaign Wrap-Up Protocol slides. The template ensures consistent formatting and structure across all wrap-up presentations.
+This path uses Gamma's template API (v1.0) with a predefined structure (template ID: `g_vzunwtnstnq4oag`) that includes all the standard Campaign Wrap-Up Protocol slides. The template ensures consistent formatting and structure across all wrap-up presentations. You provide campaign data and instructions as a text prompt, and Gamma will intelligently populate the template slides.
 
 **When to use:** For comprehensive campaign wrap-up analyses following the standard 10-slide protocol structure.
 
@@ -807,10 +819,14 @@ Both paths have convenience functions that automatically wait for completion:
 
 ```python
 # For wrap-up presentations
-gamma.generate_and_wait_for_wrap_up_presentation(variables={...})
+gamma.generate_and_wait_for_wrap_up_presentation(
+    prompt="Create a campaign wrap-up for Acme Corp with key metrics..."
+)
 
 # For standard presentations
-gamma.generate_and_wait_for_standard_presentation(input_text="...")
+gamma.generate_and_wait_for_standard_presentation(
+    input_text="# Your Presentation\n---\n## Slide 1\nContent..."
+)
 ```
 
 ### Generating a Presentation (Legacy Method)
@@ -1049,19 +1065,39 @@ The final step is to bring the story to life with a visually stunning presentati
 
 ```python
 gamma.generate_wrap_up_presentation(
-    variables={
-        "client_name": "Your Client Name",
-        "campaign_year": "2025",
-        "total_investment": "$X,XXX",
-        "total_conversions": "X,XXX",
-        "conversion_rate": "X.X%",
-        "cost_per_acquisition": "$XX",
-        # ... map your analysis data to the template variables
-    }
+    prompt="""
+    Create a comprehensive campaign wrap-up presentation for [Client Name]'s [Year] campaign.
+
+    Executive Summary Metrics:
+    - Total Investment: $X,XXX
+    - Total Conversions: X,XXX
+    - Conversion Rate: X.X%
+    - Cost per Acquisition: $XX
+
+    Campaign Performance Highlights:
+    - [Highlight 1]
+    - [Highlight 2]
+    - [Highlight 3]
+
+    Platform Performance Data:
+    [Include your platform analysis with metrics and insights]
+
+    Campaign Lifecycle Journey:
+    [Describe optimization actions and their impact on CPA over time]
+
+    Geographic Insights:
+    [Top performing DMAs with metrics]
+
+    Temporal Analysis:
+    [Day of week performance patterns]
+
+    Key Learnings & Strategic Recommendations:
+    [Your top insights and actionable recommendations]
+    """
 )
 ```
 
-This function uses Gamma's template API (template ID: `g_vzunwtnstnq4oag`) which includes the predefined Campaign Wrap-Up Protocol structure. The template ensures all slides follow the exact layout and formatting standards below.
+This function uses Gamma's template API (v1.0 endpoint with template ID: `g_vzunwtnstnq4oag`) which includes the predefined Campaign Wrap-Up Protocol structure. The template ensures all slides follow the exact layout and formatting standards below. Simply provide your campaign data and insights in the prompt, and Gamma will intelligently populate the template.
 
 **Presentation Structure for Wrap-Up Protocol:**
 

@@ -30,6 +30,7 @@ mcp = FastMCP("gamma")
 
 # Constants
 GAMMA_API_BASE = "https://public-api.gamma.app/v0.2"
+GAMMA_API_V1_BASE = "https://public-api.gamma.app/v1.0"
 USER_AGENT = "victoria-terminal/1.0"
 DEFAULT_TIMEOUT = 60.0  # Increased timeout for presentation generation
 
@@ -206,39 +207,59 @@ async def generate_presentation(
 
 @mcp.tool()
 async def generate_wrap_up_presentation(
-    variables: Dict[str, Any],
+    prompt: str,
+    theme_id: Optional[str] = None,
+    folder_ids: Optional[List[str]] = None,
     export_as: str = "pptx",
+    image_model: Optional[str] = None,
+    image_style: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Generate a Campaign Wrap-Up presentation using the predefined Gamma template.
 
-    This function uses Gamma's template API to create presentations following the
+    This function uses Gamma's template API (v1.0) to create presentations following the
     Campaign Wrap-Up Protocol structure. The template (g_vzunwtnstnq4oag) includes
     predefined pages and layouts optimized for campaign analysis reporting.
 
     Args:
-        variables: Dictionary of template variables to populate the presentation.
-                  The structure should match the template's expected variables.
-                  Example: {
-                      "client_name": "Acme Corp",
-                      "campaign_year": "2025",
-                      "total_investment": "$50,000",
-                      "total_conversions": "1,250",
-                      ...
-                  }
-        export_as: Export format (default: pptx)
+        prompt: Text content, image URLs, and instructions for how to modify the template.
+               Can include specific data to populate the template slides.
+               Example: "Create a campaign wrap-up for Acme Corp's 2025 campaign.
+                        Total Investment: $50,000, Total Conversions: 1,250,
+                        Conversion Rate: 2.5%, Cost per Acquisition: $40.
+                        Include this image for the title: https://example.com/logo.png"
+        theme_id: Optional theme ID to override the template's default theme
+        folder_ids: Optional list of folder IDs where the gamma should be stored
+        export_as: Export format - "pdf" or "pptx" (default: pptx)
+        image_model: Optional AI image model to use (e.g., "flux-1-pro", "imagen-4-pro")
+        image_style: Optional style description for AI-generated images (e.g., "photorealistic")
 
     Returns:
         Dictionary containing the generation ID or error information
     """
     logger.info("Generating Campaign Wrap-Up presentation from template")
 
-    url = f"{GAMMA_API_BASE}/generations"
+    url = f"{GAMMA_API_V1_BASE}/generations/from-template"
     payload = {
-        "templateId": WRAP_UP_PROTOCOL_TEMPLATE_ID,
-        "variables": variables,
+        "gammaId": WRAP_UP_PROTOCOL_TEMPLATE_ID,
+        "prompt": prompt,
         "exportAs": export_as,
     }
+
+    # Add optional parameters
+    if theme_id:
+        payload["themeId"] = theme_id
+    if folder_ids:
+        payload["folderIds"] = folder_ids
+
+    # Add image options if specified
+    if image_model or image_style:
+        image_options = {}
+        if image_model:
+            image_options["model"] = image_model
+        if image_style:
+            image_options["style"] = image_style
+        payload["imageOptions"] = image_options
 
     result = await make_gamma_request("POST", url, json=payload)
 
@@ -463,8 +484,12 @@ async def generate_and_wait_for_presentation(
 
 @mcp.tool()
 async def generate_and_wait_for_wrap_up_presentation(
-    variables: Dict[str, Any],
+    prompt: str,
+    theme_id: Optional[str] = None,
+    folder_ids: Optional[List[str]] = None,
     export_as: str = "pptx",
+    image_model: Optional[str] = None,
+    image_style: Optional[str] = None,
     polling_interval: int = POLLING_INTERVAL,
     max_attempts: int = MAX_POLLING_ATTEMPTS
 ) -> Dict[str, Any]:
@@ -477,9 +502,12 @@ async def generate_and_wait_for_wrap_up_presentation(
     poll every 30 seconds until the presentation is ready.
 
     Args:
-        variables: Dictionary of template variables to populate the presentation.
-                  The structure should match the template's expected variables.
-        export_as: Export format (default: pptx)
+        prompt: Text content, image URLs, and instructions for how to modify the template
+        theme_id: Optional theme ID to override the template's default theme
+        folder_ids: Optional list of folder IDs where the gamma should be stored
+        export_as: Export format - "pdf" or "pptx" (default: pptx)
+        image_model: Optional AI image model to use (e.g., "flux-1-pro", "imagen-4-pro")
+        image_style: Optional style description for AI-generated images
         polling_interval: Time in seconds between status checks (default: 30)
         max_attempts: Maximum number of polling attempts (default: 10)
 
@@ -490,8 +518,12 @@ async def generate_and_wait_for_wrap_up_presentation(
 
     # Start the generation
     generation_result = await generate_wrap_up_presentation(
-        variables=variables,
-        export_as=export_as
+        prompt=prompt,
+        theme_id=theme_id,
+        folder_ids=folder_ids,
+        export_as=export_as,
+        image_model=image_model,
+        image_style=image_style
     )
 
     # Check if generation started successfully
