@@ -255,32 +255,30 @@ async def generate_wrap_up_presentation(
     if campaign_year is None:
         campaign_year = datetime.now().year
 
-    # Construct the presentation title
+    # Construct the presentation title - put it as the very first line naturally
     presentation_title = f"{client_name} Wrap Up"
 
-    # Build a structured prompt that preserves template slides and populates others
-    structured_prompt = f"""Title: {presentation_title}
+    # Build a minimal prompt that only includes what needs to be changed/populated
+    # DO NOT mention slides that should stay unchanged - they'll be preserved automatically
+    structured_prompt = f"""{presentation_title}
 
-TITLE SLIDE INSTRUCTIONS:
-- Client name: {client_name}
-- Campaign year: {campaign_year}
-- Use the template's title slide layout exactly as designed"""
+# Title Slide
+{client_name}
+{campaign_year}"""
 
+    # Add client logo if provided
     if client_logo_url:
-        structured_prompt += f"\n- Client logo image: {client_logo_url}"
+        structured_prompt += f"\n{client_logo_url}"
 
+    # Only include the data for slides that need to be populated
+    # Do NOT mention "How We Did It", "Meet Victoria", or "Thank You" - they'll be preserved
     structured_prompt += f"""
-- Elcano logo should remain in its designated position per the template
 
-IMPORTANT: The following slides should be preserved exactly as they appear in the template:
-- "How We Did It" slide (keep all content and graphics unchanged)
-- "Meet Victoria" slide (keep all content and graphics unchanged)
-- "Thank You" slide (keep all content and graphics unchanged)
+# Campaign Data
 
-CAMPAIGN DATA TO POPULATE OTHER SLIDES:
 {campaign_data}
 
-Remember: Only update the data-driven slides. Keep the methodology, introduction, and closing slides from the template unchanged."""
+Note: Update only the data-driven slides (Executive Summary, Platform Performance, Campaign Lifecycle, Geographic Insights, Temporal Analysis, Key Learnings). Do not modify or regenerate the methodology, introduction, or closing slides that already exist in the template."""
 
     url = f"{GAMMA_API_V1_BASE}/generations/from-template"
     payload = {
