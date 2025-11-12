@@ -764,10 +764,11 @@ When generating a **Campaign Wrap-Up Protocol** presentation, use the dedicated 
 ```python
 # Generate a Campaign Wrap-Up presentation using the predefined template
 gamma.generate_wrap_up_presentation(
-    prompt="""
-    Create a campaign wrap-up presentation for Acme Corp's 2025 digital marketing campaign.
-
-    Key Metrics:
+    client_name="Acme Corp",
+    campaign_year=2025,  # Optional, defaults to current year
+    client_logo_url="https://example.com/acme-logo.png",  # Optional
+    campaign_data="""
+    EXECUTIVE SUMMARY:
     - Total Investment: $50,000
     - Total Conversions: 1,250
     - Conversion Rate: 2.5%
@@ -778,17 +779,33 @@ gamma.generate_wrap_up_presentation(
     - Reduced CPA by 15% through optimization
     - Top performing platform: Paid Search (45% of conversions)
 
-    Strategic Recommendations:
+    PLATFORM PERFORMANCE:
+    [Include platform metrics, donut chart data, key insights]
+
+    CAMPAIGN LIFECYCLE:
+    [CPA optimization timeline, key optimization actions]
+
+    GEOGRAPHIC INSIGHTS:
+    [Top DMAs with performance metrics]
+
+    TEMPORAL ANALYSIS:
+    [Day of week performance patterns]
+
+    KEY LEARNINGS & STRATEGIC RECOMMENDATIONS:
     1. Increase budget allocation to top-performing channels
     2. Expand geographic targeting to high-performing DMAs
     3. Test new creative variations in Q1 2026
-
-    Include the client logo: https://example.com/acme-logo.png
     """
 )
 ```
 
-This path uses Gamma's template API (v1.0) with a predefined structure (template ID: `g_vzunwtnstnq4oag`) that includes all the standard Campaign Wrap-Up Protocol slides. The template ensures consistent formatting and structure across all wrap-up presentations. You provide campaign data and instructions as a text prompt, and Gamma will intelligently populate the template slides.
+This path uses Gamma's template API (v1.0) with a predefined structure (template ID: `g_vzunwtnstnq4oag`) that includes all the standard Campaign Wrap-Up Protocol slides.
+
+**Key Features:**
+- Automatically sets presentation title to "{Client Name} Wrap Up"
+- Populates title slide with client name/logo, Elcano logo, and year
+- Preserves template's static slides unchanged: "How We Did It", "Meet Victoria", and "Thank You"
+- Only data-driven slides are populated with your campaign metrics
 
 **When to use:** For comprehensive campaign wrap-up analyses following the standard 10-slide protocol structure.
 
@@ -818,12 +835,14 @@ This path creates presentations with clean Elcano theme styling without the comp
 Both paths have convenience functions that automatically wait for completion:
 
 ```python
-# For wrap-up presentations
+# For wrap-up presentations (automatically waits for generation to complete)
 gamma.generate_and_wait_for_wrap_up_presentation(
-    prompt="Create a campaign wrap-up for Acme Corp with key metrics..."
+    client_name="Acme Corp",
+    campaign_data="[Your campaign metrics and insights]",
+    client_logo_url="https://example.com/logo.png"  # Optional
 )
 
-# For standard presentations
+# For standard presentations (automatically waits for generation to complete)
 gamma.generate_and_wait_for_standard_presentation(
     input_text="# Your Presentation\n---\n## Slide 1\nContent..."
 )
@@ -1065,39 +1084,78 @@ The final step is to bring the story to life with a visually stunning presentati
 
 ```python
 gamma.generate_wrap_up_presentation(
-    prompt="""
-    Create a comprehensive campaign wrap-up presentation for [Client Name]'s [Year] campaign.
-
-    Executive Summary Metrics:
+    client_name="[Client Name]",
+    campaign_year=2025,  # Optional, defaults to current year
+    client_logo_url="https://example.com/client-logo.png",  # Optional
+    campaign_data="""
+    EXECUTIVE SUMMARY:
     - Total Investment: $X,XXX
     - Total Conversions: X,XXX
     - Conversion Rate: X.X%
     - Cost per Acquisition: $XX
 
     Campaign Performance Highlights:
-    - [Highlight 1]
-    - [Highlight 2]
-    - [Highlight 3]
+    - [Highlight 1: e.g., Exceeded conversion goals by 25%]
+    - [Highlight 2: e.g., Reduced CPA by 15%]
+    - [Highlight 3: e.g., Top platform: Paid Search (45% conversions)]
 
-    Platform Performance Data:
-    [Include your platform analysis with metrics and insights]
+    PLATFORM PERFORMANCE:
+    Platform Analysis Table:
+    - [Platform 1]: X conversions, $X CPA, X% conversion rate
+    - [Platform 2]: X conversions, $X CPA, X% conversion rate
+    - [Platform 3]: X conversions, $X CPA, X% conversion rate
 
-    Campaign Lifecycle Journey:
-    [Describe optimization actions and their impact on CPA over time]
+    Key Platform Insights:
+    - [Insight 1]
+    - [Insight 2]
 
-    Geographic Insights:
-    [Top performing DMAs with metrics]
+    CAMPAIGN LIFECYCLE OPTIMIZATION:
+    CPA Timeline (show optimization journey):
+    - Week 1-2: $XX CPA (baseline)
+    - Week 3-4: $XX CPA (after first optimization)
+    - Week 5-6: $XX CPA (after second optimization)
 
-    Temporal Analysis:
-    [Day of week performance patterns]
+    Optimization Actions Taken:
+    - [Action 1: e.g., Removed underperforming sites]
+    - [Action 2: e.g., Increased bid on top performers]
+    - [Action 3: e.g., Adjusted dayparting strategy]
 
-    Key Learnings & Strategic Recommendations:
-    [Your top insights and actionable recommendations]
+    GEOGRAPHIC INSIGHTS:
+    Top Performing DMAs:
+    - [DMA 1]: X conversions, $X spend, X% CTR
+    - [DMA 2]: X conversions, $X spend, X% CTR
+    - [DMA 3]: X conversions, $X spend, X% CTR
+
+    TEMPORAL ANALYSIS:
+    Day of Week Performance:
+    - Monday: X conversions
+    - Tuesday: X conversions
+    - [Continue for all days]
+
+    Key Temporal Insights:
+    - [Insight 1: e.g., Weekend performance 30% higher]
+    - [Insight 2: e.g., Tuesday shows lowest CPA]
+
+    KEY LEARNINGS & STRATEGIC RECOMMENDATIONS:
+    Key Learnings:
+    - [Learning 1]
+    - [Learning 2]
+
+    Next Steps:
+    1. [Recommendation 1: e.g., Increase budget to top DMAs]
+    2. [Recommendation 2: e.g., Scale winning platforms]
+    3. [Recommendation 3: e.g., Test new creative variations]
     """
 )
 ```
 
-This function uses Gamma's template API (v1.0 endpoint with template ID: `g_vzunwtnstnq4oag`) which includes the predefined Campaign Wrap-Up Protocol structure. The template ensures all slides follow the exact layout and formatting standards below. Simply provide your campaign data and insights in the prompt, and Gamma will intelligently populate the template.
+This function uses Gamma's template API (v1.0 endpoint with template ID: `g_vzunwtnstnq4oag`) which includes the predefined Campaign Wrap-Up Protocol structure.
+
+**What gets automatically handled:**
+- Presentation title is set to "{Client Name} Wrap Up"
+- Title slide populated with client name/logo, Elcano logo, and year
+- Static template slides preserved: "How We Did It", "Meet Victoria", "Thank You"
+- Data-driven slides populated with your campaign metrics
 
 **Presentation Structure for Wrap-Up Protocol:**
 

@@ -207,7 +207,10 @@ async def generate_presentation(
 
 @mcp.tool()
 async def generate_wrap_up_presentation(
-    prompt: str,
+    client_name: str,
+    campaign_data: str,
+    client_logo_url: Optional[str] = None,
+    campaign_year: Optional[int] = None,
     theme_id: Optional[str] = None,
     folder_ids: Optional[List[str]] = None,
     export_as: str = "pptx",
@@ -221,13 +224,22 @@ async def generate_wrap_up_presentation(
     Campaign Wrap-Up Protocol structure. The template (g_vzunwtnstnq4oag) includes
     predefined pages and layouts optimized for campaign analysis reporting.
 
+    IMPORTANT: The template includes static slides that will be preserved as-is:
+    - "How We Did It" slide (methodology overview)
+    - "Meet Victoria" slide (platform introduction)
+    - "Thank You" slide (closing slide)
+
+    These slides do not need any data input and will be copied directly from the template.
+
     Args:
-        prompt: Text content, image URLs, and instructions for how to modify the template.
-               Can include specific data to populate the template slides.
-               Example: "Create a campaign wrap-up for Acme Corp's 2025 campaign.
-                        Total Investment: $50,000, Total Conversions: 1,250,
-                        Conversion Rate: 2.5%, Cost per Acquisition: $40.
-                        Include this image for the title: https://example.com/logo.png"
+        client_name: Name of the client for the wrap-up (e.g., "Acme Corp").
+                    Used for the presentation title and title slide.
+        campaign_data: Campaign metrics, insights, and analysis data to populate the slides.
+                      Should include: Executive Summary metrics, Platform Performance,
+                      Campaign Lifecycle, Geographic Insights, Temporal Analysis,
+                      Key Learnings, and Strategic Recommendations.
+        client_logo_url: Optional URL to the client's logo image for the title slide
+        campaign_year: Optional campaign year (defaults to current year if not provided)
         theme_id: Optional theme ID to override the template's default theme
         folder_ids: Optional list of folder IDs where the gamma should be stored
         export_as: Export format - "pdf" or "pptx" (default: pptx)
@@ -237,12 +249,43 @@ async def generate_wrap_up_presentation(
     Returns:
         Dictionary containing the generation ID or error information
     """
-    logger.info("Generating Campaign Wrap-Up presentation from template")
+    logger.info(f"Generating Campaign Wrap-Up presentation for {client_name}")
+
+    # Use current year if not specified
+    if campaign_year is None:
+        campaign_year = datetime.now().year
+
+    # Construct the presentation title
+    presentation_title = f"{client_name} Wrap Up"
+
+    # Build a structured prompt that preserves template slides and populates others
+    structured_prompt = f"""Title: {presentation_title}
+
+TITLE SLIDE INSTRUCTIONS:
+- Client name: {client_name}
+- Campaign year: {campaign_year}
+- Use the template's title slide layout exactly as designed"""
+
+    if client_logo_url:
+        structured_prompt += f"\n- Client logo image: {client_logo_url}"
+
+    structured_prompt += f"""
+- Elcano logo should remain in its designated position per the template
+
+IMPORTANT: The following slides should be preserved exactly as they appear in the template:
+- "How We Did It" slide (keep all content and graphics unchanged)
+- "Meet Victoria" slide (keep all content and graphics unchanged)
+- "Thank You" slide (keep all content and graphics unchanged)
+
+CAMPAIGN DATA TO POPULATE OTHER SLIDES:
+{campaign_data}
+
+Remember: Only update the data-driven slides. Keep the methodology, introduction, and closing slides from the template unchanged."""
 
     url = f"{GAMMA_API_V1_BASE}/generations/from-template"
     payload = {
         "gammaId": WRAP_UP_PROTOCOL_TEMPLATE_ID,
-        "prompt": prompt,
+        "prompt": structured_prompt,
         "exportAs": export_as,
     }
 
@@ -264,7 +307,7 @@ async def generate_wrap_up_presentation(
     result = await make_gamma_request("POST", url, json=payload)
 
     if "error" not in result:
-        logger.info("Wrap-Up presentation generation started successfully")
+        logger.info(f"Wrap-Up presentation '{presentation_title}' generation started successfully")
 
     return result
 
@@ -484,7 +527,10 @@ async def generate_and_wait_for_presentation(
 
 @mcp.tool()
 async def generate_and_wait_for_wrap_up_presentation(
-    prompt: str,
+    client_name: str,
+    campaign_data: str,
+    client_logo_url: Optional[str] = None,
+    campaign_year: Optional[int] = None,
     theme_id: Optional[str] = None,
     folder_ids: Optional[List[str]] = None,
     export_as: str = "pptx",
@@ -502,7 +548,10 @@ async def generate_and_wait_for_wrap_up_presentation(
     poll every 30 seconds until the presentation is ready.
 
     Args:
-        prompt: Text content, image URLs, and instructions for how to modify the template
+        client_name: Name of the client for the wrap-up (e.g., "Acme Corp")
+        campaign_data: Campaign metrics, insights, and analysis data to populate the slides
+        client_logo_url: Optional URL to the client's logo image for the title slide
+        campaign_year: Optional campaign year (defaults to current year if not provided)
         theme_id: Optional theme ID to override the template's default theme
         folder_ids: Optional list of folder IDs where the gamma should be stored
         export_as: Export format - "pdf" or "pptx" (default: pptx)
@@ -514,11 +563,14 @@ async def generate_and_wait_for_wrap_up_presentation(
     Returns:
         Dictionary containing the final generation result or error information
     """
-    logger.info("Starting Campaign Wrap-Up presentation generation with automatic completion waiting")
+    logger.info(f"Starting Campaign Wrap-Up presentation generation for {client_name} with automatic completion waiting")
 
     # Start the generation
     generation_result = await generate_wrap_up_presentation(
-        prompt=prompt,
+        client_name=client_name,
+        campaign_data=campaign_data,
+        client_logo_url=client_logo_url,
+        campaign_year=campaign_year,
         theme_id=theme_id,
         folder_ids=folder_ids,
         export_as=export_as,
