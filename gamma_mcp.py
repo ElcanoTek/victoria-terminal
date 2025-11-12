@@ -255,30 +255,32 @@ async def generate_wrap_up_presentation(
     if campaign_year is None:
         campaign_year = datetime.now().year
 
-    # Construct the presentation title - put it as the very first line naturally
+    # Construct the presentation title
     presentation_title = f"{client_name} Wrap Up"
 
-    # Build a minimal prompt that only includes what needs to be changed/populated
-    # DO NOT mention slides that should stay unchanged - they'll be preserved automatically
-    structured_prompt = f"""{presentation_title}
+    # Build an instructional prompt - Gamma needs explicit instructions on what to change
+    structured_prompt = f"""Rename this presentation to: {presentation_title}
 
-# Title Slide
-{client_name}
-{campaign_year}"""
+INSTRUCTIONS FOR MODIFYING THE TEMPLATE:
 
-    # Add client logo if provided
+1. TITLE SLIDE: Update the title slide with the following information:
+   - Client name: {client_name}
+   - Year: {campaign_year}"""
+
     if client_logo_url:
-        structured_prompt += f"\n{client_logo_url}"
+        structured_prompt += f"\n   - Client logo: {client_logo_url}"
 
-    # Only include the data for slides that need to be populated
-    # Do NOT mention "How We Did It", "Meet Victoria", or "Thank You" - they'll be preserved
     structured_prompt += f"""
+   - Keep the Elcano logo in its existing position on the template
 
-# Campaign Data
+2. PRESERVE THESE SLIDES UNCHANGED:
+   - Keep the "How We Did It" slide exactly as it appears in the template with all graphics and content
+   - Keep the "Meet Victoria" slide exactly as it appears in the template with all graphics and content
+   - Keep the "Thank You" slide exactly as it appears in the template with all graphics and content
 
-{campaign_data}
+3. UPDATE DATA SLIDES: Use the following campaign data to populate the remaining slides (Executive Summary, Platform Performance, Campaign Lifecycle, Geographic Insights, Temporal Analysis, and Key Learnings):
 
-Note: Update only the data-driven slides (Executive Summary, Platform Performance, Campaign Lifecycle, Geographic Insights, Temporal Analysis, Key Learnings). Do not modify or regenerate the methodology, introduction, or closing slides that already exist in the template."""
+{campaign_data}"""
 
     url = f"{GAMMA_API_V1_BASE}/generations/from-template"
     payload = {
