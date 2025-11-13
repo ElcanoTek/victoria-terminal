@@ -27,11 +27,7 @@ Victoria is Elcano's AI agent for navigating programmatic advertising datasets. 
 Victoria renders a richly styled terminal experience. Use a modern, standards-compliant emulator that supports OSC-52 and 24-bit color. To get the best results, pick a contemporary terminal such as:
 
 - [Ghostty](https://ghostty.org) (Linux and macOS) — **recommended** for its deep feature support.
-- [WezTerm](https://wezterm.org) (cross-platform).
-- [Alacritty](https://alacritty.org) (cross-platform).
-- [Kitty](https://sw.kovidgoyal.net/kitty/) (Linux and macOS).
-
-Windows users can continue to rely on [Windows Terminal](https://aka.ms/terminal), which offers solid OSC-52 and 24-bit color support out of the box.
+- [Windows Terminal](https://aka.ms/terminal) (Windows only) which offers solid OSC-52 and 24-bit color support out of the box.
 
 ### Podman
 
