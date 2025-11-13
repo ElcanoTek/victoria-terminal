@@ -255,30 +255,23 @@ async def generate_wrap_up_presentation(
     if campaign_year is None:
         campaign_year = datetime.now().year
 
-    # Construct the presentation title
+    # Construct the presentation title for logging
     presentation_title = f"{client_name} Wrap Up"
 
-    # Build an instructional prompt - Gamma needs explicit instructions on what to change
-    structured_prompt = f"""Rename this presentation to: {presentation_title}
+    # Build a simple prompt focused only on what needs to change
+    # Do NOT mention slides that should remain unchanged - they'll be preserved automatically
+    structured_prompt = f"""Update this campaign wrap-up presentation for {client_name}.
 
-INSTRUCTIONS FOR MODIFYING THE TEMPLATE:
-
-1. TITLE SLIDE: Update the title slide with the following information:
-   - Client name: {client_name}
-   - Year: {campaign_year}"""
+Title Slide:
+- Client: {client_name}
+- Year: {campaign_year}"""
 
     if client_logo_url:
-        structured_prompt += f"\n   - Client logo: {client_logo_url}"
+        structured_prompt += f"\n- Client logo: {client_logo_url}"
 
     structured_prompt += f"""
-   - Keep the Elcano logo in its existing position on the template
 
-2. PRESERVE THESE SLIDES UNCHANGED:
-   - Keep the "How We Did It" slide exactly as it appears in the template with all graphics and content
-   - Keep the "Meet Victoria" slide exactly as it appears in the template with all graphics and content
-   - Keep the "Thank You" slide exactly as it appears in the template with all graphics and content
-
-3. UPDATE DATA SLIDES: Use the following campaign data to populate the remaining slides (Executive Summary, Platform Performance, Campaign Lifecycle, Geographic Insights, Temporal Analysis, and Key Learnings):
+Campaign Data for Executive Summary, Platform Performance, Campaign Lifecycle, Geographic Insights, Temporal Analysis, and Key Learnings slides:
 
 {campaign_data}"""
 
