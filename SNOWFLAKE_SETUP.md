@@ -33,54 +33,60 @@ Before you begin, ensure you have:
 
 This script creates a new role with read-only permissions and a new user assigned to that role. Execute the following commands in a Snowflake worksheet.
 
-### Step 1: Set Up Variables
+### Complete Setup Script
 
-First, define the names you want to use. Customize these values according to your needs:
+Copy and paste this entire script into your Snowflake worksheet. Customize the variables at the top, then execute all commands:
 
 ```sql
+-- ============================================================================
+-- SNOWFLAKE READ-ONLY USER SETUP SCRIPT
+-- ============================================================================
+
 -- Use the ACCOUNTADMIN role
 USE ROLE ACCOUNTADMIN;
 
--- Define your variables (customize these)
+-- ============================================================================
+-- STEP 1: DEFINE YOUR VARIABLES (CUSTOMIZE THESE)
+-- ============================================================================
 SET user_name = 'READONLY_USER';           -- Name for the new user
 SET role_name = 'READONLY_ROLE';           -- Name for the new role
 SET warehouse_name = 'YOUR_WAREHOUSE';     -- Warehouse the user can access
 SET database_name = 'YOUR_DATABASE';       -- Database to grant read access to
 SET user_password = 'CHANGE_ME_123!';      -- Temporary password (will use PAT instead)
-```
 
-### Step 2: Create the Role
-
-```sql
--- Create a new role for read-only access
+-- ============================================================================
+-- STEP 2: CREATE THE ROLE
+-- ============================================================================
 CREATE OR REPLACE ROLE IDENTIFIER($role_name) 
   COMMENT = 'Read-only access role';
-```
 
-### Step 3: Grant Warehouse Access
-
-```sql
--- Grant USAGE privilege on the warehouse
+-- ============================================================================
+-- STEP 3: GRANT WAREHOUSE ACCESS
+-- ============================================================================
 -- This allows the role to use the warehouse for running queries
 GRANT USAGE ON WAREHOUSE IDENTIFIER($warehouse_name) TO ROLE IDENTIFIER($role_name);
-```
 
-### Step 4: Grant Database and Schema Access
-
-```sql
+-- ============================================================================
+-- STEP 4: GRANT DATABASE ACCESS
+-- ============================================================================
 -- Grant USAGE on the database
 GRANT USAGE ON DATABASE IDENTIFIER($database_name) TO ROLE IDENTIFIER($role_name);
 
+-- ============================================================================
+-- STEP 5: GRANT SCHEMA ACCESS (ALL SCHEMAS)
+-- ============================================================================
 -- Grant USAGE on all existing schemas in the database
 GRANT USAGE ON ALL SCHEMAS IN DATABASE IDENTIFIER($database_name) TO ROLE IDENTIFIER($role_name);
 
 -- Grant USAGE on all future schemas in the database
 GRANT USAGE ON FUTURE SCHEMAS IN DATABASE IDENTIFIER($database_name) TO ROLE IDENTIFIER($role_name);
-```
 
-### Step 5: Grant Read Access to Tables and Views
+-- ============================================================================
+-- STEP 6: GRANT READ ACCESS TO TABLES AND VIEWS (ALL TABLES)
+-- ============================================================================
+-- IMPORTANT: These grants apply to ALL tables, not individual tables
+-- This ensures the user can query any table in the database
 
-```sql
 -- Grant SELECT on all existing tables in the database
 GRANT SELECT ON ALL TABLES IN DATABASE IDENTIFIER($database_name) TO ROLE IDENTIFIER($role_name);
 
@@ -92,12 +98,10 @@ GRANT SELECT ON FUTURE TABLES IN DATABASE IDENTIFIER($database_name) TO ROLE IDE
 
 -- Grant SELECT on all future views in the database
 GRANT SELECT ON FUTURE VIEWS IN DATABASE IDENTIFIER($database_name) TO ROLE IDENTIFIER($role_name);
-```
 
-### Step 6: Create the User
-
-```sql
--- Create the new user
+-- ============================================================================
+-- STEP 7: CREATE THE USER
+-- ============================================================================
 CREATE OR REPLACE USER IDENTIFIER($user_name)
   PASSWORD = $user_password
   DEFAULT_ROLE = $role_name
@@ -108,6 +112,18 @@ GRANT ROLE IDENTIFIER($role_name) TO USER IDENTIFIER($user_name);
 
 -- Set the default role for the user
 ALTER USER IDENTIFIER($user_name) SET DEFAULT_ROLE = $role_name;
+
+-- ============================================================================
+-- STEP 8: VERIFY THE SETUP
+-- ============================================================================
+-- Check the grants to confirm everything is set up correctly
+SHOW GRANTS TO ROLE IDENTIFIER($role_name);
+SHOW GRANTS TO USER IDENTIFIER($user_name);
+
+-- ============================================================================
+-- SETUP COMPLETE
+-- ============================================================================
+-- Next step: Generate a Programmatic Access Token (see Part 2)
 ```
 
 ---
@@ -201,11 +217,128 @@ conn = snowflake.connector.connect(
 
 ---
 
+## Important: Handling Case-Sensitive Table Names
+
+Snowflake table and column names can be case-sensitive if they were created with quotes. This is a common issue that can prevent queries from working.
+
+### Understanding Case Sensitivity
+
+When you create a table in Snowflake:
+
+**Without quotes** (case-insensitive, converted to uppercase):
+```sql
+CREATE TABLE my_table (id INT);  -- Stored as MY_TABLE
+```
+
+**With quotes** (case-sensitive, preserves exact case):
+```sql
+CREATE TABLE "My_Table" (id INT);  -- Stored as My_Table
+```
+
+### Querying Case-Sensitive Tables
+
+If your tables were created with quotes (case-sensitive names), you **must** use quotes when querying them:
+
+```sql
+-- WRONG - Will fail if table name is case-sensitive
+SELECT * FROM My_Table;
+
+-- CORRECT - Use quotes to preserve case
+SELECT * FROM "My_Table";
+
+-- CORRECT - Fully qualified with quotes
+SELECT * FROM "DATABASE_NAME"."SCHEMA_NAME"."My_Table";
+```
+
+### For AI Agents and Applications
+
+When using AI agents or programmatic access, ensure your queries use proper quoting. You can discover the exact table names (with correct casing) using:
+
+```sql
+-- This returns the exact table names as they are stored
+SELECT table_name 
+FROM INFORMATION_SCHEMA.TABLES 
+WHERE table_schema = 'YOUR_SCHEMA'
+ORDER BY table_name;
+```
+
+Then use those exact names with quotes in your queries.
+
+---
+
+## Discovering Available Data
+
+Since `SHOW` commands may be restricted by some MCP configurations, use `INFORMATION_SCHEMA` queries instead. These are standard SQL SELECT queries that work with read-only permissions.
+
+### List All Accessible Tables
+
+```sql
+-- List all tables you have access to
+SELECT 
+    table_catalog AS database_name,
+    table_schema AS schema_name,
+    table_name,
+    table_type
+FROM INFORMATION_SCHEMA.TABLES
+WHERE table_schema != 'INFORMATION_SCHEMA'
+ORDER BY table_schema, table_name;
+```
+
+### List Tables in a Specific Schema
+
+```sql
+-- List tables in a specific schema
+SELECT table_name, table_type
+FROM INFORMATION_SCHEMA.TABLES
+WHERE table_schema = 'YOUR_SCHEMA'
+ORDER BY table_name;
+```
+
+### Get Table Details with Row Counts
+
+```sql
+-- Get table details including approximate row counts
+SELECT 
+    table_name,
+    table_type,
+    row_count,
+    bytes
+FROM INFORMATION_SCHEMA.TABLES
+WHERE table_schema = 'YOUR_SCHEMA'
+ORDER BY table_name;
+```
+
+### View Table Structure (Columns)
+
+```sql
+-- See all columns in all accessible tables
+SELECT 
+    table_schema,
+    table_name,
+    column_name,
+    data_type,
+    is_nullable
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE table_schema = 'YOUR_SCHEMA'
+ORDER BY table_schema, table_name, ordinal_position;
+```
+
+### List Available Schemas
+
+```sql
+-- List all schemas in the database
+SELECT schema_name
+FROM INFORMATION_SCHEMA.SCHEMATA
+ORDER BY schema_name;
+```
+
+---
+
 ## Advanced Configuration
 
 ### Granting Access to Multiple Databases
 
-If you need to grant read access to multiple databases, repeat Steps 4 and 5 for each database:
+If you need to grant read access to multiple databases, repeat the grant statements for each database:
 
 ```sql
 -- For each additional database
@@ -281,7 +414,7 @@ When implementing read-only access in Snowflake, consider the following security
 
 **Set appropriate token expiration.** Configure token expiration based on your security policies. The default is 15 days, with a maximum of 365 days. For production systems, consider using shorter expiration periods (30-90 days) and implementing a token rotation process.
 
-**Apply the principle of least privilege.** Only grant access to the specific databases and schemas that the user needs. Avoid granting access to all databases unless absolutely necessary.
+**Apply the principle of least privilege.** Only grant access to the specific databases and schemas that the user needs. Avoid granting access to all databases unless absolutely necessary. Use the `GRANT SELECT ON ALL TABLES IN DATABASE` syntax to ensure comprehensive access within the specified scope.
 
 **Monitor usage regularly.** Use Snowflake's query history and access logs to monitor the read-only user's activity. Set up alerts for unusual query patterns or excessive resource consumption.
 
@@ -291,17 +424,50 @@ When implementing read-only access in Snowflake, consider the following security
 
 **Use role restrictions.** When creating PAT tokens, always specify the `ROLE_RESTRICTION` parameter to limit the token to a specific role. This ensures that even if the token is compromised, it can only be used with the intended permissions.
 
+**Grant on ALL tables, not individual tables.** Always use `GRANT SELECT ON ALL TABLES IN DATABASE` rather than granting on individual tables. This ensures consistent access and prevents issues where some tables are accessible and others are not.
+
 ---
 
 ## Troubleshooting
 
 ### Common Issues and Solutions
 
+**Issue: "Object does not exist or not authorized"**
+
+This usually means one of the following:
+
+1. **Missing grants on ALL tables**: You granted SELECT on individual tables instead of ALL tables. Run:
+   ```sql
+   GRANT SELECT ON ALL TABLES IN DATABASE your_database TO ROLE your_role;
+   ```
+
+2. **Case-sensitive table names**: The table was created with quotes. Use quotes in your query:
+   ```sql
+   SELECT * FROM "Exact_Table_Name";
+   ```
+
+3. **Missing USAGE on database or schema**: Ensure you have:
+   ```sql
+   GRANT USAGE ON DATABASE your_database TO ROLE your_role;
+   GRANT USAGE ON ALL SCHEMAS IN DATABASE your_database TO ROLE your_role;
+   ```
+
+**Issue: "Statement type of Command is not allowed"**
+
+This is an MCP configuration issue, not a Snowflake permissions issue. The MCP server is blocking `SHOW` commands. Use `INFORMATION_SCHEMA` queries instead:
+
+```sql
+-- Instead of: SHOW TABLES;
+-- Use:
+SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = 'YOUR_SCHEMA';
+```
+
 **Issue: "SQL compilation error: syntax error"**
 
 - Ensure all variable names match exactly (case-sensitive)
 - Verify that warehouse, database, and schema names exist
 - Check that you're using `IDENTIFIER($variable_name)` for dynamic object names
+- Verify token names are NOT in quotes when creating PATs
 
 **Issue: "Network policy requirement not met"**
 
@@ -323,26 +489,37 @@ When implementing read-only access in Snowflake, consider the following security
 
 ---
 
-## Verification
+## Verification Checklist
 
-After completing the setup, verify that everything is configured correctly:
+After completing the setup, verify that everything is configured correctly by running these commands as ACCOUNTADMIN:
 
 ```sql
--- Verify the role was created
-SHOW ROLES LIKE '<your-role-name>';
+-- 1. Verify the role was created
+SHOW ROLES LIKE 'READONLY_ROLE';
 
--- Verify the user was created
-SHOW USERS LIKE '<your-user-name>';
+-- 2. Verify the user was created
+SHOW USERS LIKE 'READONLY_USER';
 
--- Verify grants to the role
+-- 3. Verify grants to the role (should include ALL TABLES grants)
 SHOW GRANTS TO ROLE IDENTIFIER($role_name);
 
--- Verify grants to the user
+-- 4. Verify grants to the user
 SHOW GRANTS TO USER IDENTIFIER($user_name);
 
--- Verify PAT tokens for the user
+-- 5. Verify PAT tokens for the user
 SHOW USER PROGRAMMATIC ACCESS TOKENS FOR IDENTIFIER($user_name);
 ```
+
+### What to Look For
+
+In the grants output, you should see:
+
+- ✅ `USAGE` on the warehouse
+- ✅ `USAGE` on the database
+- ✅ `USAGE` on ALL SCHEMAS in the database (or specific schemas)
+- ✅ `SELECT` on ALL TABLES in the database (not individual tables)
+- ✅ `SELECT` on ALL VIEWS in the database
+- ✅ Future grants for SCHEMAS, TABLES, and VIEWS
 
 ---
 
@@ -350,16 +527,28 @@ SHOW USER PROGRAMMATIC ACCESS TOKENS FOR IDENTIFIER($user_name);
 
 By following this guide, you have successfully created a secure, read-only user in Snowflake with the following capabilities:
 
-- **Query access** to specified databases and schemas
+- **Query access** to all tables and views in specified databases and schemas
 - **Warehouse usage** for executing queries
 - **PAT-based authentication** for enhanced security
 - **No data modification** capabilities
+- **Automatic access** to future tables and views created in the database
 
 This setup is ideal for analytics tools, reporting applications, AI agents, and any system that needs to read data from Snowflake without the ability to modify it.
 
+### Key Takeaways
+
+1. **Always grant on ALL TABLES**, not individual tables, to ensure comprehensive access
+2. **Use INFORMATION_SCHEMA** queries instead of SHOW commands for metadata discovery
+3. **Handle case-sensitive table names** properly by using quotes when needed
+4. **Use PAT tokens** for secure, password-less authentication
+5. **Include FUTURE grants** to automatically provide access to newly created objects
+
 ---
 
+**Author:** Manus AI  
+**Last Updated:** November 2025  
 **Snowflake Documentation References:**
 - [Using Programmatic Access Tokens](https://docs.snowflake.com/en/user-guide/programmatic-access-tokens)
 - [Configuring Access Control](https://docs.snowflake.com/en/user-guide/security-access-control-configure)
 - [GRANT Privileges](https://docs.snowflake.com/en/sql-reference/sql/grant-privilege)
+- [INFORMATION_SCHEMA Views](https://docs.snowflake.com/en/sql-reference/info-schema)
