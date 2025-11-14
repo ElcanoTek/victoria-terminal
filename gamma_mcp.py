@@ -30,12 +30,16 @@ mcp = FastMCP("gamma")
 
 # Constants
 GAMMA_API_BASE = "https://public-api.gamma.app/v0.2"
+GAMMA_API_V1_BASE = "https://public-api.gamma.app/v1.0"
 USER_AGENT = "victoria-terminal/1.0"
 DEFAULT_TIMEOUT = 60.0  # Increased timeout for presentation generation
 
 # Polling configuration
 POLLING_INTERVAL = 30  # seconds
 MAX_POLLING_ATTEMPTS = 10  # Maximum number of polling attempts (5 minutes total)
+
+# Template IDs
+WRAP_UP_PROTOCOL_TEMPLATE_ID = "g_vzunwtnstnq4oag"
 
 
 async def make_gamma_request(method: str, url: str, json: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -142,7 +146,15 @@ async def generate_presentation(
     export_as: str = "pptx",
 ) -> Dict[str, Any]:
     """
-    Generate a presentation using the Gamma API.
+    Generate a presentation using the Gamma API (legacy method with full control).
+
+    NOTE: For most use cases, consider using the more specific functions:
+    - generate_wrap_up_presentation(): For Campaign Wrap-Up Protocol presentations using templates
+    - generate_standard_presentation(): For basic presentations with Elcano theme only
+
+    This function provides full control over all generation parameters and is best used
+    when you need custom instructions or specific configurations not covered by the
+    specialized functions above.
 
     Args:
         input_text: The markdown content for the presentation
@@ -190,6 +202,160 @@ async def generate_presentation(
     if "error" not in result:
         logger.info(f"Presentation generation started successfully")
     
+    return result
+
+
+@mcp.tool()
+async def generate_wrap_up_presentation(
+    client_name: str,
+    campaign_data: str,
+    client_logo_url: Optional[str] = None,
+    campaign_year: Optional[int] = None,
+    theme_id: Optional[str] = None,
+    folder_ids: Optional[List[str]] = None,
+    export_as: str = "pptx",
+    image_model: Optional[str] = None,
+    image_style: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Generate a Campaign Wrap-Up presentation using the predefined Gamma template.
+
+    This function uses Gamma's template API (v1.0) to create presentations following the
+    Campaign Wrap-Up Protocol structure. The template (g_vzunwtnstnq4oag) includes
+    predefined pages and layouts optimized for campaign analysis reporting.
+
+    IMPORTANT: The template includes static slides that will be preserved as-is:
+    - "How We Did It" slide (methodology overview)
+    - "Meet Victoria" slide (platform introduction)
+    - "Thank You" slide (closing slide)
+
+    These slides do not need any data input and will be copied directly from the template.
+
+    Args:
+        client_name: Name of the client for the wrap-up (e.g., "Acme Corp").
+                    Used for the presentation title and title slide.
+        campaign_data: Campaign metrics, insights, and analysis data to populate the slides.
+                      Should include: Executive Summary metrics, Platform Performance,
+                      Campaign Lifecycle, Geographic Insights, Temporal Analysis,
+                      Key Learnings, and Strategic Recommendations.
+        client_logo_url: Optional URL to the client's logo image for the title slide
+        campaign_year: Optional campaign year (defaults to current year if not provided)
+        theme_id: Optional theme ID to override the template's default theme
+        folder_ids: Optional list of folder IDs where the gamma should be stored
+        export_as: Export format - "pdf" or "pptx" (default: pptx)
+        image_model: Optional AI image model to use (e.g., "flux-1-pro", "imagen-4-pro")
+        image_style: Optional style description for AI-generated images (e.g., "photorealistic")
+
+    Returns:
+        Dictionary containing the generation ID or error information
+    """
+    logger.info(f"Generating Campaign Wrap-Up presentation for {client_name}")
+
+    # Use current year if not specified
+    if campaign_year is None:
+        campaign_year = datetime.now().year
+
+    # Construct the presentation title for logging
+    presentation_title = f"{client_name} Wrap Up"
+
+    # Build a simple prompt focused only on what needs to change
+    # Do NOT mention slides that should remain unchanged - they'll be preserved automatically
+    structured_prompt = f"""Update this campaign wrap-up presentation for {client_name}.
+
+Title Slide:
+- Client: {client_name}
+- Year: {campaign_year}"""
+
+    if client_logo_url:
+        structured_prompt += f"\n- Client logo: {client_logo_url}"
+
+    structured_prompt += f"""
+
+Campaign Data for Executive Summary, Platform Performance, Campaign Lifecycle, Geographic Insights, Temporal Analysis, and Key Learnings slides:
+
+{campaign_data}"""
+
+    url = f"{GAMMA_API_V1_BASE}/generations/from-template"
+    payload = {
+        "gammaId": WRAP_UP_PROTOCOL_TEMPLATE_ID,
+        "prompt": structured_prompt,
+        "exportAs": export_as,
+    }
+
+    # Add optional parameters
+    if theme_id:
+        payload["themeId"] = theme_id
+    if folder_ids:
+        payload["folderIds"] = folder_ids
+
+    # Add image options if specified
+    if image_model or image_style:
+        image_options = {}
+        if image_model:
+            image_options["model"] = image_model
+        if image_style:
+            image_options["style"] = image_style
+        payload["imageOptions"] = image_options
+
+    result = await make_gamma_request("POST", url, json=payload)
+
+    if "error" not in result:
+        logger.info(f"Wrap-Up presentation '{presentation_title}' generation started successfully")
+
+    return result
+
+
+@mcp.tool()
+async def generate_standard_presentation(
+    input_text: str,
+    layout_format: str = "16x9",
+    export_as: str = "pptx",
+) -> Dict[str, Any]:
+    """
+    Generate a standard presentation with the Elcano theme.
+
+    This function creates basic presentations using only the Elcano theme,
+    without the complex structure of the Campaign Wrap-Up Protocol. Use this
+    for general presentation requests that don't require the wrap-up template.
+
+    Args:
+        input_text: The markdown content for the presentation
+        layout_format: Layout format for the presentation. Options: "16x9" (Traditional), "4x3" (Tall), "fluid" (Default/Fluid). Default: "16x9"
+        export_as: Export format (default: pptx)
+
+    Returns:
+        Dictionary containing the generation ID or error information
+    """
+    logger.info("Generating standard presentation with Elcano theme")
+
+    # Add standard Elcano title and thank you slides with dynamic year
+    current_year = datetime.now().year
+    title_slide = f"# Elcano\n## {current_year}"
+    thank_you_slide = "---\n# Thank you\n## Elcano"
+
+    # Combine title slide, user content, and thank you slide with proper slide separators
+    full_input_text = f"{title_slide}\n\n---\n\n{input_text}\n\n{thank_you_slide}"
+
+    url = f"{GAMMA_API_BASE}/generations"
+    payload = {
+        "inputText": full_input_text,
+        "format": "presentation",
+        "themeName": DEFAULT_THEME,
+        "cardOptions": {
+            "dimensions": layout_format
+        },
+        "additionalInstructions": "Use the Elcano theme with clean, professional styling. Keep formatting simple and readable.",
+        "imageOptions": {
+            "source": "noImages",
+        },
+        "exportAs": export_as,
+    }
+
+    result = await make_gamma_request("POST", url, json=payload)
+
+    if "error" not in result:
+        logger.info("Standard presentation generation started successfully")
+
     return result
 
 
@@ -349,6 +515,140 @@ async def generate_and_wait_for_presentation(
         max_attempts=max_attempts
     )
     
+    return completion_result
+
+
+@mcp.tool()
+async def generate_and_wait_for_wrap_up_presentation(
+    client_name: str,
+    campaign_data: str,
+    client_logo_url: Optional[str] = None,
+    campaign_year: Optional[int] = None,
+    theme_id: Optional[str] = None,
+    folder_ids: Optional[List[str]] = None,
+    export_as: str = "pptx",
+    image_model: Optional[str] = None,
+    image_style: Optional[str] = None,
+    polling_interval: int = POLLING_INTERVAL,
+    max_attempts: int = MAX_POLLING_ATTEMPTS
+) -> Dict[str, Any]:
+    """
+    Generate a Campaign Wrap-Up presentation from template and automatically wait for completion.
+
+    This is a convenience function that combines generate_wrap_up_presentation and
+    wait_for_presentation_completion into a single call. It will start the generation
+    using the predefined Campaign Wrap-Up Protocol template and then automatically
+    poll every 30 seconds until the presentation is ready.
+
+    Args:
+        client_name: Name of the client for the wrap-up (e.g., "Acme Corp")
+        campaign_data: Campaign metrics, insights, and analysis data to populate the slides
+        client_logo_url: Optional URL to the client's logo image for the title slide
+        campaign_year: Optional campaign year (defaults to current year if not provided)
+        theme_id: Optional theme ID to override the template's default theme
+        folder_ids: Optional list of folder IDs where the gamma should be stored
+        export_as: Export format - "pdf" or "pptx" (default: pptx)
+        image_model: Optional AI image model to use (e.g., "flux-1-pro", "imagen-4-pro")
+        image_style: Optional style description for AI-generated images
+        polling_interval: Time in seconds between status checks (default: 30)
+        max_attempts: Maximum number of polling attempts (default: 10)
+
+    Returns:
+        Dictionary containing the final generation result or error information
+    """
+    logger.info(f"Starting Campaign Wrap-Up presentation generation for {client_name} with automatic completion waiting")
+
+    # Start the generation
+    generation_result = await generate_wrap_up_presentation(
+        client_name=client_name,
+        campaign_data=campaign_data,
+        client_logo_url=client_logo_url,
+        campaign_year=campaign_year,
+        theme_id=theme_id,
+        folder_ids=folder_ids,
+        export_as=export_as,
+        image_model=image_model,
+        image_style=image_style
+    )
+
+    # Check if generation started successfully
+    if "error" in generation_result:
+        logger.error("Failed to start wrap-up presentation generation")
+        return generation_result
+
+    generation_id = generation_result.get("generationId")
+    if not generation_id:
+        logger.error("No generation ID returned from generation request")
+        return {"error": "No generation ID returned from generation request"}
+
+    logger.info(f"Wrap-Up generation started successfully with ID: {generation_id}")
+    logger.info("Now waiting for completion...")
+
+    # Wait for completion
+    completion_result = await wait_for_presentation_completion(
+        generation_id=generation_id,
+        polling_interval=polling_interval,
+        max_attempts=max_attempts
+    )
+
+    return completion_result
+
+
+@mcp.tool()
+async def generate_and_wait_for_standard_presentation(
+    input_text: str,
+    layout_format: str = "16x9",
+    export_as: str = "pptx",
+    polling_interval: int = POLLING_INTERVAL,
+    max_attempts: int = MAX_POLLING_ATTEMPTS
+) -> Dict[str, Any]:
+    """
+    Generate a standard presentation with Elcano theme and automatically wait for completion.
+
+    This is a convenience function that combines generate_standard_presentation and
+    wait_for_presentation_completion into a single call. It will start the generation
+    with simple Elcano theme styling and then automatically poll every 30 seconds
+    until the presentation is ready.
+
+    Args:
+        input_text: The markdown content for the presentation
+        layout_format: Layout format for the presentation. Options: "16x9" (Traditional), "4x3" (Tall), "fluid" (Default/Fluid). Default: "16x9"
+        export_as: Export format (default: pptx)
+        polling_interval: Time in seconds between status checks (default: 30)
+        max_attempts: Maximum number of polling attempts (default: 10)
+
+    Returns:
+        Dictionary containing the final generation result or error information
+    """
+    logger.info("Starting standard presentation generation with automatic completion waiting")
+
+    # Start the generation
+    generation_result = await generate_standard_presentation(
+        input_text=input_text,
+        layout_format=layout_format,
+        export_as=export_as
+    )
+
+    # Check if generation started successfully
+    if "error" in generation_result:
+        logger.error("Failed to start standard presentation generation")
+        return generation_result
+
+    generation_id = generation_result.get("generationId")
+    if not generation_id:
+        logger.error("No generation ID returned from generation request")
+        return {"error": "No generation ID returned from generation request"}
+
+    logger.info(f"Standard generation started successfully with ID: {generation_id}")
+    logger.info("Now waiting for completion...")
+
+    # Wait for completion
+    completion_result = await wait_for_presentation_completion(
+        generation_id=generation_id,
+        polling_interval=polling_interval,
+        max_attempts=max_attempts
+    )
+
     return completion_result
 
 
