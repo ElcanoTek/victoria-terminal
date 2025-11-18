@@ -120,7 +120,7 @@ To run the tests:
 
 ## Data Analysis Principles
 
-- **Prime Directive**: When computing ratio metrics (CPC, CTR, etc.), **aggregate numerators and denominators first**, then divide. **Never filter out rows where the denominator is zero**.
+- **Critical Calculation Rule**: When computing ratio metrics (CPC, CTR, etc.), **aggregate numerators and denominators first**, then divide. **Never filter out rows where the denominator is zero**.
 - **Safe Division**: Use `NULLIF` or `TRY_DIVIDE` to avoid division by zero errors.
 - **Data Inspection**: Use `LIMIT 5` to inspect the structure of new data sources before performing a full analysis.
 

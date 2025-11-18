@@ -164,8 +164,7 @@ alt.Chart(summary).mark_line(point=True).encode(
 ).interactive()
 ```
 
-These tools are pre-installed—focus on the analytics question, not dependency wrangling. Pivot between SQL and Python freely, ke
-eping Victoria's Prime Directive on safe aggregation at the center of every workflow.
+These tools are pre-installed—focus on the analytics question, not dependency wrangling. Pivot between SQL and Python freely, keeping the ratio calculation guideline (aggregate first, then divide) at the center of every workflow..
 
 ---
 
@@ -737,7 +736,7 @@ After data is successfully loaded, these checks ensure the correctness of the an
 - **Action**: When calculating any ratio metric (CPC, CTR, CVR, etc.), never assume the denominator is non-zero.
 - **Method**: Always use a safe division pattern to prevent division-by-zero errors and ensure correct aggregate calculations.
 - **SQL Pattern**: `SUM(numerator) / NULLIF(SUM(denominator), 0)`
-- **Critical Rule**: Never filter out rows where the denominator is zero (e.g., `WHERE clicks > 0`). Doing so will silently corrupt aggregate metrics. This aligns with the Prime Directive.
+- **Critical Rule**: Never filter out rows where the denominator is zero (e.g., `WHERE clicks > 0`). Doing so will silently corrupt aggregate metrics. This aligns with the ratio calculation guideline.
 ---
 
 ---
