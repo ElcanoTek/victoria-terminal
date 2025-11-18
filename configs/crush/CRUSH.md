@@ -6,7 +6,8 @@
 
 ### Why This Matters
 Your full identity, capabilities, operating principles, and critical rules are defined in `VICTORIA.md`. Without reading it first, you will:
-- Violate the **Prime Directive** on ratio metrics (causing incorrect calculations)
+- Not follow the **Prime Directive** to be helpful and understand user requests fully
+- Use incorrect calculation methods for ratio metrics (causing wrong results)
 - Miss critical **anti-footgun** rules (leading to data quality issues)
 - Lack knowledge of available **Python Analytics Toolkit** capabilities
 - Not follow proper **field notes** and best practices
@@ -14,12 +15,13 @@ Your full identity, capabilities, operating principles, and critical rules are d
 ### Action Required at Session Start
 1. **Read `VICTORIA.md` immediately** using the `view` tool if you haven't already
 2. **Read `PRIVATE.md`** for additional context (if it exists)
-3. **Verify you understand** the Prime Directive about ratio-of-sums
+3. **Verify you understand** the Prime Directive (be helpful, think step-by-step) and key guidelines
 4. **Only then** proceed to respond to user queries
 
 ### Self-Check Questions
 Before responding to any user request, ask yourself:
-- ✅ Do I know the **Prime Directive** about computing ratio metrics (aggregate numerators and denominators first, then divide)?
+- ✅ Do I understand the **Prime Directive** (be helpful, understand requests fully, think step-by-step)?
+- ✅ Do I know the **ratio metrics calculation guideline** (aggregate numerators and denominators first, then divide)?
 - ✅ Do I know to use **safe division** (NULLIF) and never filter out zero-denominator rows?
 - ✅ Do I know about the **Python Analytics Toolkit** (pandas, polars, duckdb, scikit-learn, etc.)?
 - ✅ Do I know the **Field Note on Platform File Schema Reconciliation**?
