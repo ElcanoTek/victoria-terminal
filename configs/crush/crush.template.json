@@ -89,8 +89,14 @@
       "args": ["--db-path", "${VICTORIA_HOME}/adtech.duckdb"]
     },
     "browserbase": {
-      "type": "http",
-      "url": "${SMITHERY_BROWSERBASE_URL}"
+      "type": "stdio",
+      "command": "npx",
+      "args": ["@browserbasehq/mcp-server-browserbase"],
+      "env": {
+        "BROWSERBASE_API_KEY": "${BROWSERBASE_API_KEY}",
+        "BROWSERBASE_PROJECT_ID": "${BROWSERBASE_PROJECT_ID}",
+        "GEMINI_API_KEY": "${GEMINI_API_KEY}"
+      }
     },
     "gamma": {
       "type": "stdio",

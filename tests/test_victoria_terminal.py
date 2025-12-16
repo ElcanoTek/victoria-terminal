@@ -231,7 +231,9 @@ def test_generate_crush_config_includes_browserbase_when_configured(tmp_path: Pa
     env_values = {
         "OPENROUTER_API_KEY": "test-key",
         "VICTORIA_HOME": str(tmp_path),
-        "SMITHERY_BROWSERBASE_URL": "https://server.smithery.ai/@agent/browserbase",
+        "BROWSERBASE_API_KEY": "bb-test-key",
+        "BROWSERBASE_PROJECT_ID": "test-project-id",
+        "GEMINI_API_KEY": "gemini-test-key",
     }
 
     template = entrypoint.resource_path(entrypoint.CRUSH_TEMPLATE)
@@ -240,14 +242,20 @@ def test_generate_crush_config_includes_browserbase_when_configured(tmp_path: Pa
     data = json.loads(output.read_text(encoding="utf-8"))
     browserbase_cfg = data["mcp"].get("browserbase")
     assert browserbase_cfg is not None
-    assert browserbase_cfg["url"] == env_values["SMITHERY_BROWSERBASE_URL"]
+    assert browserbase_cfg["command"] == "npx"
+    assert browserbase_cfg["args"] == ["@browserbasehq/mcp-server-browserbase"]
+    assert browserbase_cfg["env"]["BROWSERBASE_API_KEY"] == "bb-test-key"
+    assert browserbase_cfg["env"]["BROWSERBASE_PROJECT_ID"] == "test-project-id"
+    assert browserbase_cfg["env"]["GEMINI_API_KEY"] == "gemini-test-key"
 
 
-def test_generate_crush_config_ignores_placeholder_browserbase_url(tmp_path: Path) -> None:
+def test_generate_crush_config_ignores_placeholder_browserbase_key(tmp_path: Path) -> None:
     env_values = {
         "OPENROUTER_API_KEY": "test-key",
         "VICTORIA_HOME": str(tmp_path),
-        "SMITHERY_BROWSERBASE_URL": "https://<your-personal-smithery-url-here>",
+        "BROWSERBASE_API_KEY": "<YOUR_BROWSERBASE_API_KEY>",
+        "BROWSERBASE_PROJECT_ID": "test-project-id",
+        "GEMINI_API_KEY": "gemini-test-key",
     }
 
     template = entrypoint.resource_path(entrypoint.CRUSH_TEMPLATE)
@@ -257,11 +265,28 @@ def test_generate_crush_config_ignores_placeholder_browserbase_url(tmp_path: Pat
     assert "browserbase" not in data["mcp"]
 
 
-def test_generate_crush_config_ignores_blank_browserbase_url(tmp_path: Path) -> None:
+def test_generate_crush_config_ignores_missing_browserbase_keys(tmp_path: Path) -> None:
     env_values = {
         "OPENROUTER_API_KEY": "test-key",
         "VICTORIA_HOME": str(tmp_path),
-        "SMITHERY_BROWSERBASE_URL": "   ",
+        "BROWSERBASE_API_KEY": "bb-test-key",
+        # Missing BROWSERBASE_PROJECT_ID and GEMINI_API_KEY
+    }
+
+    template = entrypoint.resource_path(entrypoint.CRUSH_TEMPLATE)
+    output = entrypoint.generate_crush_config(app_home=tmp_path, env=env_values, template_path=template)
+
+    data = json.loads(output.read_text(encoding="utf-8"))
+    assert "browserbase" not in data["mcp"]
+
+
+def test_generate_crush_config_ignores_blank_browserbase_key(tmp_path: Path) -> None:
+    env_values = {
+        "OPENROUTER_API_KEY": "test-key",
+        "VICTORIA_HOME": str(tmp_path),
+        "BROWSERBASE_API_KEY": "   ",
+        "BROWSERBASE_PROJECT_ID": "test-project-id",
+        "GEMINI_API_KEY": "gemini-test-key",
     }
 
     template = entrypoint.resource_path(entrypoint.CRUSH_TEMPLATE)

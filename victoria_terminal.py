@@ -582,7 +582,7 @@ def parse_env_file(path: Path) -> dict[str, str]:
 
 
 REQUIRED_ENV_KEYS = ("OPENROUTER_API_KEY",)
-BROWSERBASE_ENV_KEY = "SMITHERY_BROWSERBASE_URL"
+BROWSERBASE_ENV_KEYS = ("BROWSERBASE_API_KEY", "BROWSERBASE_PROJECT_ID", "GEMINI_API_KEY")
 GAMMA_ENV_KEY = "GAMMA_API_KEY"
 SENDGRID_ENV_KEY = "SENDGRID_API_KEY"
 EMAIL_ENV_KEYS = ("AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "EMAIL_S3_BUCKET")
@@ -696,7 +696,7 @@ def _has_valid_env_value(env_map: Mapping[str, str], key: str) -> bool:
 
 
 def _is_browserbase_enabled(env_map: Mapping[str, str]) -> bool:
-    return _has_valid_env_value(env_map, BROWSERBASE_ENV_KEY)
+    return all(_has_valid_env_value(env_map, key) for key in BROWSERBASE_ENV_KEYS)
 
 
 def _is_gamma_enabled(env_map: Mapping[str, str]) -> bool:
