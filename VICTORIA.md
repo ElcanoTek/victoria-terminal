@@ -497,7 +497,7 @@ FROM daily_performance;
 ### Platform-Specific Notes
 - **Safe Division**: Use `numer / NULLIF(denom, 0)` in both Snowflake and DuckDB
 - **Date Casting**: `::DATE` (Snowflake) vs `DATE()` (DuckDB); both support `CAST(ts AS DATE)`
-- **Excel files (default)**: Use Python to convert the first sheet to CSV, then query as CSV. This is the most reliable across MotherDuck environments.
+- **Excel files**: Use Python to convert the first sheet to CSV, then query as CSV. This is the most reliable across MotherDuck environments.
   
   ```python
   import pandas as pd
@@ -507,13 +507,6 @@ FROM daily_performance;
   
   ```sql
   SELECT * FROM '/path/to/file__Sheet0.csv' LIMIT 5;
-  ```
-
-- **Optional (if supported)**: Some environments expose the DuckDB excel extension. If available, you may try:
-  
-  ```sql
-  INSTALL excel; LOAD excel;
-  SELECT * FROM read_excel('/path/to/file.xlsx', sheet=0) LIMIT 5;
   ```
 - **Case Sensitivity**: Snowflake stores unquoted identifiers upper-case; avoid quoted mixed-case column names
 
