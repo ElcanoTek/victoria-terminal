@@ -14,44 +14,7 @@
       "type": "openai",
       "base_url": "https://openrouter.ai/api/v1",
       "api_key": "${OPENROUTER_API_KEY}",
-      "name": "OpenRouter",
-      "models": [
-        {
-          "id": "openai/gpt-5",
-          "name": "ChatGPT 5",
-          "context_window": 256000,
-          "default_max_tokens": 4096,
-          "supports_tools": true
-        },
-        {
-          "id": "openai/gpt-5-mini",
-          "name": "ChatGPT 5 Mini",
-          "context_window": 128000,
-          "default_max_tokens": 2048,
-          "supports_tools": true
-        },
-        {
-          "id": "xai/grok-code-fast-1",
-          "name": "xAI Grok Code Fast 1",
-          "context_window": 131072,
-          "default_max_tokens": 4096,
-          "supports_tools": true
-        },
-        {
-          "id": "google/gemini-2.5-pro",
-          "name": "Google Gemini 2.5 Pro",
-          "context_window": 1000000,
-          "default_max_tokens": 4096,
-          "supports_tools": true
-        },
-        {
-          "id": "google/gemini-2.5-flash",
-          "name": "Google Gemini 2.5 Flash",
-          "context_window": 128000,
-          "default_max_tokens": 4096,
-          "supports_tools": true
-        }
-      ]
+      "name": "OpenRouter"
     },
     "lmstudio": {
       "type": "openai",
