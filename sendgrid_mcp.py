@@ -160,6 +160,7 @@ async def send_email(
         return {"error": str(exc)}
 
     mail = Mail(from_email=sender, subject=subject)
+    mail.reply_to = Email("followup@victoria.elcanotek.com")
 
     personalization = Personalization()
     personalization.add_to(Email(to_email))
@@ -202,6 +203,7 @@ async def send_template_email(
         return {"error": str(exc)}
 
     mail = Mail(from_email=sender, to_emails=[to_email])
+    mail.reply_to = Email("followup@victoria.elcanotek.com")
     mail.template_id = template_id
     mail.dynamic_template_data = dict(dynamic_template_data)
 
