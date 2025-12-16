@@ -824,6 +824,19 @@ def remove_local_duckdb(app_home: Path = APP_HOME) -> None:
         warn(f"Could not remove {db_path}: {exc}")
 
 
+def remove_cache_folders(app_home: Path = APP_HOME) -> None:
+    """Remove .crush and .local cache folders so each run starts fresh."""
+    cache_dirs = [".crush", ".local"]
+    for dir_name in cache_dirs:
+        dir_path = app_home / dir_name
+        try:
+            if dir_path.exists():
+                shutil.rmtree(dir_path)
+                info(f"Removed cache folder: {dir_path}")
+        except Exception as exc:  # pragma: no cover - best effort cleanup
+            warn(f"Could not remove {dir_path}: {exc}")
+
+
 def preflight_crush() -> None:
     """Validate that Crush can be launched."""
     section("System preflight check")
@@ -934,6 +947,7 @@ def main(argv: Sequence[str] | None = None) -> None:
     if not task_mode:
         banner_sequence()
 
+    remove_cache_folders(app_home)
     ensure_app_home(app_home)
     if args.accept_license:
         _persist_license_acceptance(app_home=app_home)
