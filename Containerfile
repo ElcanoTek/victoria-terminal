@@ -23,7 +23,9 @@ RUN dnf -y upgrade && \
         cmake \
         libffi-devel \
         openssl-devel \
-        redhat-rpm-config && \
+        redhat-rpm-config \
+        nodejs \
+        npm && \
     # Change @latest to a pinned version if we ever need to lock Crush.
     GOBIN=/usr/local/bin go install github.com/charmbracelet/crush@latest && \
     dnf clean all && rm -rf /var/cache/dnf && rm -rf /root/go/pkg/mod
