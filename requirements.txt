@@ -1,5 +1,6 @@
 altair
 black
+boto3
 duckdb
 email-validator
 flake8

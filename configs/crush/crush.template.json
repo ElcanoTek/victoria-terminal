@@ -124,6 +124,22 @@
         "SNOWFLAKE_USER": "${SNOWFLAKE_USER}",
         "SNOWFLAKE_PASSWORD": "${SNOWFLAKE_PASSWORD}"
       }
+    },
+    "email": {
+      "type": "stdio",
+      "command": "python3",
+      "args": ["${EMAIL_MCP_SCRIPT}"],
+      "cwd": "${EMAIL_MCP_DIR}",
+      "env": {
+        "AWS_ACCESS_KEY_ID": "${AWS_ACCESS_KEY_ID}",
+        "AWS_SECRET_ACCESS_KEY": "${AWS_SECRET_ACCESS_KEY}",
+        "AWS_REGION": "${AWS_REGION}",
+        "EMAIL_S3_BUCKET": "${EMAIL_S3_BUCKET}",
+        "EMAIL_S3_PREFIX": "${EMAIL_S3_PREFIX}",
+        "EMAIL_ATTACHMENT_DIR": "${EMAIL_ATTACHMENT_DIR}",
+        "EMAIL_LAST_CHECK_FILE": "${EMAIL_LAST_CHECK_FILE}",
+        "PYTHONPATH": "${EMAIL_MCP_DIR}"
+      }
     }
   }
 }
