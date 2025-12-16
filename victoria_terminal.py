@@ -585,6 +585,7 @@ REQUIRED_ENV_KEYS = ("OPENROUTER_API_KEY",)
 BROWSERBASE_ENV_KEY = "SMITHERY_BROWSERBASE_URL"
 GAMMA_ENV_KEY = "GAMMA_API_KEY"
 SENDGRID_ENV_KEY = "SENDGRID_API_KEY"
+EMAIL_ENV_KEYS = ("AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "EMAIL_S3_BUCKET")
 SNOWFLAKE_ENV_KEYS = ("SNOWFLAKE_ACCOUNT", "SNOWFLAKE_USER", "SNOWFLAKE_PASSWORD")
 
 
@@ -706,6 +707,10 @@ def _is_sendgrid_enabled(env_map: Mapping[str, str]) -> bool:
     return _has_valid_env_value(env_map, SENDGRID_ENV_KEY)
 
 
+def _is_email_enabled(env_map: Mapping[str, str]) -> bool:
+    return all(_has_valid_env_value(env_map, key) for key in EMAIL_ENV_KEYS)
+
+
 def _is_snowflake_enabled(env_map: Mapping[str, str]) -> bool:
     return all(_has_valid_env_value(env_map, key) for key in SNOWFLAKE_ENV_KEYS)
 
@@ -782,6 +787,21 @@ def generate_crush_config(
 
                 resolved_env["SENDGRID_MCP_SCRIPT"] = str(sendgrid_script)
                 resolved_env["SENDGRID_MCP_DIR"] = str(sendgrid_script.parent)
+
+        email_config = mcp_config.get("email")
+        if isinstance(email_config, dict):
+            if not _is_email_enabled(env_map):
+                mcp_config.pop("email", None)
+            else:
+                email_script = resource_path(Path("ses_s3_email_mcp.py"))
+                if not email_script.exists():
+                    raise FileNotFoundError(
+                        "Email MCP server script is missing from the Victoria installation "
+                        f"(expected at {email_script})."
+                    )
+
+                resolved_env["EMAIL_MCP_SCRIPT"] = str(email_script)
+                resolved_env["EMAIL_MCP_DIR"] = str(email_script.parent)
 
         snowflake_config = mcp_config.get("snowflake")
         if isinstance(snowflake_config, dict) and not _is_snowflake_enabled(env_map):
