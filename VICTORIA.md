@@ -497,7 +497,24 @@ FROM daily_performance;
 ### Platform-Specific Notes
 - **Safe Division**: Use `numer / NULLIF(denom, 0)` in both Snowflake and DuckDB
 - **Date Casting**: `::DATE` (Snowflake) vs `DATE()` (DuckDB); both support `CAST(ts AS DATE)`
-- **Excel in DuckDB**: `INSTALL/LOAD 'excel'` then `read_excel('file.xlsx', 'Sheet1')`
+- **Excel files (default)**: Use Python to convert the first sheet to CSV, then query as CSV. This is the most reliable across MotherDuck environments.
+  
+  ```python
+  import pandas as pd
+  df = pd.read_excel('/path/to/file.xlsx', sheet_name=0)
+  df.to_csv('/path/to/file__Sheet0.csv', index=False)
+  ```
+  
+  ```sql
+  SELECT * FROM '/path/to/file__Sheet0.csv' LIMIT 5;
+  ```
+
+- **Optional (if supported)**: Some environments expose the DuckDB excel extension. If available, you may try:
+  
+  ```sql
+  INSTALL excel; LOAD excel;
+  SELECT * FROM read_excel('/path/to/file.xlsx', sheet=0) LIMIT 5;
+  ```
 - **Case Sensitivity**: Snowflake stores unquoted identifiers upper-case; avoid quoted mixed-case column names
 
 ### Example End-to-End Analysis Query
@@ -604,6 +621,11 @@ Always provide:
 - **Success metrics**: How to track improvement
 
 **Example**: "Shift 20% budget from Exchange X to PMP Y to reduce CPC by ~$0.25 and raise viewability by ~5pp. High priority - implement within 48 hours and measure over next 7 days using daily CPC and viewability rate trends."
+
+### Email Notes — Avoid Auto‑Hyperlinks
+- When mentioning domains in emails, insert a space before the TLD to prevent auto-linking and link-safe wrappers: "example .com", "sub.example .org".
+- Apply the same when referencing paths: "example .com/report" instead of a clickable link.
+- If a clickable link is required (e.g., CTA), do not insert the space and use the full URL explicitly.
 
 ---
 
