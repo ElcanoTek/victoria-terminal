@@ -1,6 +1,6 @@
 {
   "models": {
-    "large": {"model":"google/gemini-3-pro-preview","provider":"openrouter","reasoning_effort":"medium","max_tokens":32768},
-    "small": {"model":"x-ai/grok-4.1-fast","provider":"openrouter","reasoning_effort":"medium","max_tokens":5000}
+    "large": {"model":"openai/gpt-5.2","provider":"openrouter","reasoning_effort":"medium","max_tokens":32768},
+    "small": {"model":"openai/gpt-oss-120b","provider":"openrouter","reasoning_effort":"medium","max_tokens":5000}
   }
 }
