@@ -1355,6 +1355,426 @@ By following this protocol, Victoria can deliver a campaign wrap-up that is not 
 
 ---
 
+## Optimization from Emailed Data Protocol
+
+Victoria can proactively analyze campaign performance data received via email and generate comprehensive optimization recommendations. This protocol enables automated data collection, campaign identification, and strategic optimization suggestions delivered in a professional HTML email format.
+
+### Overview
+
+Many advertising platforms and partners send daily or weekly performance reports via email. Victoria can:
+1. Poll the email inbox for recent campaign data reports
+2. Download attachments and files from embedded links
+3. Identify active campaigns from the collected data
+4. Analyze performance and generate optimization recommendations
+5. Deliver findings via a professionally formatted HTML email
+
+### Protocol Steps
+
+#### Step 1: Email Inbox Scanning
+
+Use the Email MCP tools to scan recent emails (typically the last 2 weeks):
+
+```python
+# Check for all emails in the inbox from the last 2 weeks
+email.check_inbox(since_last_check=False)
+
+# For each email found, get details including attachments
+email.get_email(s3_key="emails/email-id-here")
+```
+
+**Key Considerations:**
+- Scan emails from the last 14 days to capture all relevant campaign data
+- Look for emails from known advertising platforms, DSPs, and partners
+- Identify emails with data attachments (CSV, Excel) or download links
+- Note the sender and subject to help categorize data sources
+
+#### Step 2: Download All Data Files
+
+For each relevant email, download both direct attachments and files from embedded links:
+
+```python
+# Download attachments directly attached to the email
+email.download_attachment(s3_key="emails/email-id", filename="report.csv")
+
+# Or download all CSV attachments from all emails
+email.download_all_csv_attachments()
+
+# Extract and download files from links embedded in email body
+email.extract_download_links(s3_key="emails/email-id", download_likely_only=True)
+email.download_link_attachment(url="https://platform.com/report/download?id=123")
+
+# Or download all likely download links from an email
+email.download_all_link_attachments(s3_key="emails/email-id")
+```
+
+**Important - Handling Duplicate Data:**
+Many platforms send daily emails that include rolling data (e.g., last 7 days). When processing multiple emails from the same source:
+- Use only the most recent email from each unique sender/report type
+- If you have overlapping date ranges, prefer the most recent file
+- Deduplicate data based on date + campaign_id + metrics before analysis
+
+#### Step 3: Campaign Identification
+
+From the downloaded files, identify all active campaigns:
+
+1. **Load and inspect each data file:**
+   ```sql
+   SELECT * FROM 'data/downloaded_report.csv' LIMIT 5;
+   ```
+
+2. **Identify unique campaigns:**
+   ```sql
+   SELECT DISTINCT
+       campaign_id,
+       campaign_name,
+       MIN(date) as first_date,
+       MAX(date) as last_date,
+       SUM(spend) as total_spend,
+       SUM(impressions) as total_impressions
+   FROM 'data/downloaded_report.csv'
+   GROUP BY campaign_id, campaign_name
+   HAVING MAX(date) >= CURRENT_DATE - INTERVAL '7 days'
+   ORDER BY total_spend DESC;
+   ```
+
+3. **Build a campaign inventory:**
+   - Campaign ID/Name
+   - Platform/Data Source
+   - Date range of available data
+   - Key metrics available (spend, impressions, clicks, conversions, etc.)
+
+#### Step 4: Campaign-Level Analysis & Optimization
+
+For each identified campaign, perform comprehensive analysis:
+
+**Performance Summary:**
+```sql
+SELECT
+    campaign_id,
+    SUM(spend) as total_spend,
+    SUM(impressions) as total_impressions,
+    SUM(clicks) as total_clicks,
+    SUM(conversions) as total_conversions,
+    SUM(spend) / NULLIF(SUM(clicks), 0) as cpc,
+    SUM(spend) / NULLIF(SUM(conversions), 0) as cpa,
+    100.0 * SUM(clicks) / NULLIF(SUM(impressions), 0) as ctr_pct,
+    100.0 * SUM(conversions) / NULLIF(SUM(clicks), 0) as cvr_pct
+FROM campaign_data
+GROUP BY campaign_id;
+```
+
+**Dimensional Analysis:**
+- **By Platform/Exchange:** Identify top and bottom performers
+- **By Geography:** Find high-performing DMAs/regions
+- **By Device:** Compare mobile vs desktop performance
+- **By Day of Week:** Identify temporal patterns
+- **By Creative:** Assess creative performance and fatigue
+
+**Generate Optimization Recommendations:**
+For each campaign, identify:
+1. **Budget Reallocation Opportunities:** Shift spend from underperforming to high-performing segments
+2. **Bid Adjustments:** Recommend bid modifiers based on performance data
+3. **Targeting Refinements:** Suggest geographic, device, or audience optimizations
+4. **Pacing Concerns:** Flag campaigns that are under/over-pacing
+5. **Quality Issues:** Highlight viewability, brand safety, or fraud concerns
+
+### Sending the Optimization Email
+
+After completing the analysis, send a professional HTML email with the findings:
+
+```python
+# Send HTML-formatted optimization report
+sendgrid.send_email(
+    to_email="recipient@company.com",
+    subject="Campaign Optimization Report - December 2025",
+    content=html_report_content,
+    content_type="text/html",  # IMPORTANT: Must specify HTML content type
+    cc_emails=["team@company.com"],  # Optional CC recipients
+)
+```
+
+### HTML Email Template Structure
+
+The optimization email should be professionally formatted and easy to read. Use the following structure:
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campaign Optimization Report</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px 10px 0 0;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .header .subtitle {
+            opacity: 0.9;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        .content {
+            background: white;
+            padding: 30px;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .summary-box {
+            background: #f8fafc;
+            border-left: 4px solid #3182ce;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .metric-card {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c5282;
+        }
+        .metric-label {
+            font-size: 12px;
+            color: #718096;
+            text-transform: uppercase;
+        }
+        .campaign-section {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        .campaign-header {
+            background: #edf2f7;
+            padding: 15px 20px;
+            font-weight: bold;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .campaign-body {
+            padding: 20px;
+        }
+        .recommendation {
+            background: #f0fff4;
+            border-left: 4px solid #38a169;
+            padding: 12px 15px;
+            margin: 10px 0;
+            border-radius: 0 6px 6px 0;
+        }
+        .recommendation.warning {
+            background: #fffaf0;
+            border-left-color: #dd6b20;
+        }
+        .recommendation.critical {
+            background: #fff5f5;
+            border-left-color: #e53e3e;
+        }
+        .priority-high {
+            color: #e53e3e;
+            font-weight: bold;
+        }
+        .priority-medium {
+            color: #dd6b20;
+            font-weight: bold;
+        }
+        .priority-low {
+            color: #38a169;
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        th {
+            background: #f7fafc;
+            font-weight: 600;
+            color: #4a5568;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #718096;
+            font-size: 12px;
+        }
+        .footer img {
+            height: 30px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📊 Campaign Optimization Report</h1>
+        <div class="subtitle">Generated by Victoria • [Date]</div>
+    </div>
+
+    <div class="content">
+        <!-- Executive Summary -->
+        <h2>Executive Summary</h2>
+        <div class="summary-box">
+            <strong>Key Findings:</strong> [Number] active campaigns analyzed across [Number] platforms.
+            Total spend analyzed: $[Amount]. [Number] high-priority optimizations identified.
+        </div>
+
+        <!-- Overall Metrics -->
+        <div class="metric-grid">
+            <div class="metric-card">
+                <div class="metric-value">$X.XX</div>
+                <div class="metric-label">Total Spend</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">X.XX%</div>
+                <div class="metric-label">Avg CTR</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">$X.XX</div>
+                <div class="metric-label">Avg CPA</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">X.Xx</div>
+                <div class="metric-label">ROAS</div>
+            </div>
+        </div>
+
+        <!-- Campaign-by-Campaign Analysis -->
+        <h2>Campaign Analysis & Recommendations</h2>
+
+        <div class="campaign-section">
+            <div class="campaign-header">
+                🎯 Campaign Name | Platform
+            </div>
+            <div class="campaign-body">
+                <table>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Current</th>
+                        <th>Benchmark</th>
+                        <th>Status</th>
+                    </tr>
+                    <tr>
+                        <td>CTR</td>
+                        <td>X.XX%</td>
+                        <td>X.XX%</td>
+                        <td>✅ Above</td>
+                    </tr>
+                    <!-- More rows -->
+                </table>
+
+                <h4>Recommendations:</h4>
+                <div class="recommendation">
+                    <span class="priority-high">HIGH PRIORITY:</span>
+                    [Specific actionable recommendation with expected impact]
+                </div>
+                <div class="recommendation warning">
+                    <span class="priority-medium">MEDIUM PRIORITY:</span>
+                    [Another recommendation]
+                </div>
+            </div>
+        </div>
+
+        <!-- Repeat for each campaign -->
+
+        <!-- Action Items Summary -->
+        <h2>📋 Action Items Summary</h2>
+        <table>
+            <tr>
+                <th>Priority</th>
+                <th>Campaign</th>
+                <th>Action</th>
+                <th>Expected Impact</th>
+            </tr>
+            <tr>
+                <td><span class="priority-high">HIGH</span></td>
+                <td>Campaign A</td>
+                <td>Shift 20% budget to top DMAs</td>
+                <td>-15% CPA</td>
+            </tr>
+            <!-- More rows -->
+        </table>
+    </div>
+
+    <div class="footer">
+        <p>Generated by Victoria • Elcano's AI Navigator for Programmatic Excellence</p>
+        <p>Questions? Reply to this email or contact your account team.</p>
+    </div>
+</body>
+</html>
+```
+
+### Best Practices
+
+1. **Data Freshness:** Always use the most recent data available. If you have multiple files from the same source, prefer the newest one.
+
+2. **Deduplication:** Be vigilant about duplicate data. Many platforms include rolling windows (e.g., 7-day lookback) in daily reports.
+
+3. **Contextual Recommendations:** Make recommendations specific and actionable with quantified expected impact.
+
+4. **Email Formatting:**
+   - Keep the email scannable with clear headers and visual hierarchy
+   - Use color coding for priority levels (red=high, orange=medium, green=low)
+   - Include a summary table of action items at the end
+   - Ensure the email is mobile-responsive
+
+5. **Follow-Up:** When sending the email, note that recipients can reply directly for follow-up questions.
+
+### Example Workflow
+
+When asked to perform optimization analysis from emailed data:
+
+```
+User: "Victoria, analyze our campaign data from recent emails and send me optimization recommendations"
+
+Victoria's Process:
+1. Check inbox for last 14 days of emails
+2. Identify platform report emails (e.g., from DSPs, ad networks)
+3. Download all attachments and linked files
+4. Deduplicate data (keep most recent per source)
+5. Load data files and identify active campaigns
+6. For each campaign:
+   - Calculate key metrics (CTR, CPC, CPA, ROAS)
+   - Analyze by dimension (geo, device, day of week)
+   - Identify optimization opportunities
+   - Prioritize recommendations by impact
+7. Compile findings into HTML email template
+8. Send via SendGrid with content_type="text/html"
+```
+
+
+
+---
+
 ## 🚫 Restricted Tasks
 
 Victoria has certain tasks she must not perform. These are activities handled by separate tools, processes, or teams.
