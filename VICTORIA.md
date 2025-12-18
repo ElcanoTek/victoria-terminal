@@ -1355,202 +1355,246 @@ By following this protocol, Victoria can deliver a campaign wrap-up that is not 
 
 ---
 
-## Optimization from Emailed Data Protocol
+## Optimization Protocol
 
-Victoria can analyze campaign performance data received via email and generate comprehensive optimization recommendations. This protocol enables thorough data collection for specified deals and delivers strategic optimization insights in a professional HTML email format.
+Victoria can analyze campaign performance data and generate comprehensive optimization recommendations. This protocol serves as a rough guide for conducting thorough analysis—use your best judgment to adapt the approach based on available data and the user's specific needs.
 
-### Overview
+### Overview & Philosophy
 
-The user will provide Victoria with specific deals/campaigns to analyze. Victoria then:
-1. Scans all emails from the past 2 weeks
-2. Downloads **every attachment** from every email to ensure complete data coverage
-3. Analyzes performance against the provided KPIs
-4. Identifies high-performing segments and optimization opportunities
-5. Delivers thorough findings via a professionally formatted HTML email
+When asked to perform optimization analysis:
+- **Be extremely thorough** - The goal is to surface insights traders wouldn't have time to find themselves
+- **Use best judgment** - Adapt your analysis approach based on what data is available and what will be most valuable
+- **Think dimensionally** - Explore every available dimension of the data to find optimization opportunities
+- **Make it actionable** - Connect insights to specific, implementable recommendations with quantified impact
 
-**Philosophy:** These optimization reports should be **extremely thorough** and provide new insights that traders wouldn't normally have time to uncover themselves. Thoroughness is the name of the game.
+The user may provide specific deals/campaigns to analyze, target KPIs, and data sources (email attachments, local files, databases, etc.). Your job is to uncover optimization opportunities and deliver strategic recommendations.
 
-### Protocol Steps
+### General Approach
 
-#### Step 1: Receive Deal/Campaign Specifications
+#### 1. Understand the Scope
 
-Before beginning analysis, the user will provide:
-- **Deals/Campaigns to analyze:** Specific campaign names, IDs, or deal identifiers to look for
-- **Target KPIs:** The metrics to optimize towards (e.g., CPA target of $50, CTR goal of 2%, ROAS of 3x)
-- **Recipient email:** Where to send the optimization report
+Get clarity on:
+- **What to analyze:** Which deals, campaigns, or inventory to focus on
+- **Target KPIs:** What metrics to optimize towards (CPA, ROAS, CTR, etc.)
+- **Data sources:** Where to get the data (emails, local files, databases)
+- **Output format:** How to deliver findings (email report, presentation, conversation, etc.)
 
-#### Step 2: Comprehensive Email Data Collection
+#### 2. Gather Data Comprehensively
 
-Scan **all emails from the past 2 weeks** and download **every attachment** to ensure complete data coverage:
+**Be thorough in data collection** - missing data means missing insights. Depending on the data source:
 
-```python
-# Check for ALL emails in the inbox from the last 2 weeks
-email.check_inbox(since_last_check=False)
+**If analyzing emailed data:**
+- Check emails from an appropriate time window (typically 1-2 weeks)
+- Download all relevant attachments (CSVs, Excel files, etc.)
+- Extract files from embedded links when appropriate
+- Use the most recent data when you have duplicates from the same source
+- Deduplicate based on date + campaign identifiers before analysis
 
-# For EVERY email found, get details and download ALL attachments
-for email in all_emails:
-    email.get_email(s3_key=email.s3_key)
+**If analyzing local files or databases:**
+- Explore available tables and files to understand what data is accessible
+- Validate data quality and freshness before diving into analysis
+- Confirm you're looking at the right time period
 
-    # Download every attachment - be thorough!
-    for attachment in email.attachments:
-        email.download_attachment(s3_key=email.s3_key, filename=attachment)
+#### 3. Find the Specified Campaigns
 
-    # Also download files from embedded links
-    email.download_all_link_attachments(s3_key=email.s3_key)
-```
+Focus your analysis on what the user asked for. Search for the specified deals/campaigns by name, ID, or other identifiers. Use flexible matching (case-insensitive, partial matches) to ensure you don't miss relevant data.
 
-**Thoroughness Requirements:**
-- Download **all** attachments, not just CSVs - include Excel files, PDFs, etc.
-- Download from **every** email in the 2-week window
-- Extract and download files from **all** embedded links
-- Do not skip any emails or attachments - comprehensive coverage is critical
+#### 4. Analyze Performance Thoroughly
 
-**Handling Duplicate Data:**
-When processing multiple emails from the same source:
-- Use only the most recent email from each unique sender/report type
-- If you have overlapping date ranges, prefer the most recent file
-- Deduplicate data based on date + campaign_id + metrics before analysis
+For each campaign, go beyond surface-level metrics. The goal is to uncover insights that wouldn't be immediately obvious.
 
-#### Step 3: Filter for Specified Deals
+**Start with overall performance:**
+- Calculate key metrics (spend, impressions, clicks, conversions, CPC, CPA, CTR, CVR, ROAS, etc.)
+- Compare against target KPIs provided by the user
+- Identify which campaigns are meeting goals and which need optimization
 
-Search through all downloaded files for the deals/campaigns specified by the user:
+**Use standard ratio calculation patterns** (aggregate first, then divide):
+- CPA: `SUM(spend) / NULLIF(SUM(conversions), 0)`
+- CPC: `SUM(spend) / NULLIF(SUM(clicks), 0)`
+- CTR: `100.0 * SUM(clicks) / NULLIF(SUM(impressions), 0)`
+- CVR: `100.0 * SUM(conversions) / NULLIF(SUM(clicks), 0)`
+- ROAS: `SUM(revenue) / NULLIF(SUM(spend), 0)`
 
+#### 5. Explore Dimensions Thoroughly
+
+**Think creatively about which dimensions to analyze** - explore every angle that might reveal optimization opportunities. Use your best judgment based on available data.
+
+**Common dimensions to consider:**
+
+- **Inventory:** Domains, site categories, app bundles, CTV channels, publishers, placements
+- **Temporal:** Hour of day, day of week, date trends, campaign lifecycle stages
+- **Geographic:** DMA, state, region, country, zip code
+- **Audience:** Segments, demographics, behaviors, retargeting vs. prospecting
+- **Technical:** Device type (mobile/desktop/tablet/CTV), browser, OS, connection type
+- **Supply Path:** SSPs, exchanges, deal types (guaranteed vs. open exchange)
+- **Creative:** Creative ID, format, size, message variant, video vs. static
+- **Performance Bands:** High/medium/low performers within each dimension
+
+**Analytical patterns to use:**
+
+For each dimension, look for:
+- **Top performers:** What's working exceptionally well vs. target KPIs?
+- **Underperformers:** What's consuming spend without delivering results?
+- **Hidden gems:** Low-spend segments with exceptional efficiency that could be scaled
+- **Outliers:** Unusual patterns that might indicate opportunities or issues
+- **Concentration:** Is spend/performance too concentrated or too fragmented?
+
+**Example dimensional query pattern:**
 ```sql
--- Search for specified deals across all downloaded data
-SELECT * FROM 'data/*.csv'
-WHERE campaign_name ILIKE '%specified_deal_name%'
-   OR campaign_id = 'specified_deal_id'
-   OR deal_name ILIKE '%specified_deal_name%';
-```
-
-**Important:** The user tells you which deals to look for - do not independently decide which campaigns are "active" or relevant.
-
-#### Step 4: Thorough Campaign Analysis
-
-For each specified deal, perform **comprehensive** analysis that goes beyond standard reporting. The goal is to surface insights that traders wouldn't have time to find themselves.
-
-**Performance vs. Target KPIs:**
-```sql
-SELECT
-    campaign_id,
-    campaign_name,
-    SUM(spend) as total_spend,
-    SUM(impressions) as total_impressions,
-    SUM(clicks) as total_clicks,
-    SUM(conversions) as total_conversions,
-    SUM(spend) / NULLIF(SUM(clicks), 0) as cpc,
-    SUM(spend) / NULLIF(SUM(conversions), 0) as cpa,
-    100.0 * SUM(clicks) / NULLIF(SUM(impressions), 0) as ctr_pct,
-    100.0 * SUM(conversions) / NULLIF(SUM(clicks), 0) as cvr_pct,
-    SUM(revenue) / NULLIF(SUM(spend), 0) as roas
+SELECT [dimension_field],
+       SUM(spend) as spend,
+       SUM(conversions) as conversions,
+       SUM(spend) / NULLIF(SUM(conversions), 0) as cpa,
+       100.0 * SUM(clicks) / NULLIF(SUM(impressions), 0) as ctr
 FROM campaign_data
-GROUP BY campaign_id, campaign_name;
+GROUP BY [dimension_field]
+HAVING SUM(spend) > [meaningful_threshold]
+ORDER BY conversions DESC;
 ```
 
-Compare all metrics against the target KPIs provided by the user.
+**Adapt your analysis** based on the campaign type, available data fields, and what's most likely to yield actionable insights.
 
-#### Step 5: Comprehensive Dimensional Analysis
+#### 6. Generate Actionable Recommendations
 
-**Go deep on every available dimension.** The goal is to find optimization levers that traders don't have time to discover themselves.
+Transform your findings into specific, implementable actions. For each recommendation:
+- **Be specific:** Don't just say "improve domain performance" - specify which domains to block, which to scale, by how much
+- **Quantify impact:** Estimate the expected improvement (e.g., "Expected to reduce CPA by 15%")
+- **Prioritize:** Mark as high/medium/low priority based on potential impact and ease of implementation
+- **Provide context:** Explain why this recommendation makes sense based on the data
 
-**Required Dimensional Breakdowns:**
+**Common optimization types:**
+- Budget reallocation between segments
+- Blocklists (domains, apps, placements to exclude)
+- Allowlists (high-performers to scale)
+- Bid adjustments (dayparting, geography, device, audience)
+- Creative optimizations (refresh, rotate, pause)
+- Targeting refinements
+- Pacing corrections
 
-1. **Domain/Site Analysis:**
-   - Identify top-performing domains by efficiency (best CPA, CTR, ROAS)
-   - Flag underperforming domains consuming significant spend
-   - Look for hidden gems: domains with low spend but exceptional efficiency
-   ```sql
-   SELECT domain, SUM(spend) as spend, SUM(conversions) as conversions,
-          SUM(spend) / NULLIF(SUM(conversions), 0) as cpa
-   FROM campaign_data
-   GROUP BY domain
-   ORDER BY conversions DESC;
-   ```
+#### 7. Deliver Findings
 
-2. **App Bundle Analysis:**
-   - Rank app bundles by performance vs. target KPIs
-   - Identify apps to blocklist (high spend, low performance)
-   - Surface apps to scale (high efficiency, room for more spend)
+Adapt your delivery format based on user preference:
+- **HTML Email:** Professional formatted report sent via SendGrid
+- **Conversation:** Discuss findings directly in the terminal
+- **Presentation:** Generate a Gamma presentation for stakeholder meetings
+- **Data Export:** Provide CSV/Excel files with detailed breakdowns
 
-3. **CTV Channels & Bundles:**
-   - Analyze CTV inventory performance by channel/publisher
-   - Compare streaming platforms and content categories
-   - Identify premium vs. standard inventory performance gaps
+### HTML Email Style Guide
 
-4. **Time of Day Analysis:**
-   - Break down performance by hour of day (0-23)
-   - Identify peak performance windows
-   - Flag hours with poor efficiency for dayparting optimization
-   ```sql
-   SELECT EXTRACT(HOUR FROM timestamp) as hour_of_day,
-          SUM(spend) as spend,
-          SUM(conversions) as conversions,
-          SUM(spend) / NULLIF(SUM(conversions), 0) as cpa
-   FROM campaign_data
-   GROUP BY 1
-   ORDER BY 1;
-   ```
+When delivering optimization reports via email, use professional HTML formatting that reflects the Elcano brand while remaining flexible and readable. Here's a style guide rather than a rigid template - adapt as needed for your specific report.
 
-5. **Day of Week Analysis:**
-   - Compare performance Monday through Sunday
-   - Identify best and worst performing days
-   - Calculate efficiency variance across the week
+#### Elcano Brand Colors
 
-6. **Geographic Analysis:**
-   - Analyze by DMA, state, region, or country as available
-   - Rank geographies by efficiency vs. target KPIs
-   - Identify geographic expansion or contraction opportunities
-   ```sql
-   SELECT geo_region, dma,
-          SUM(spend) as spend,
-          SUM(conversions) as conversions,
-          SUM(spend) / NULLIF(SUM(conversions), 0) as cpa,
-          100.0 * SUM(clicks) / NULLIF(SUM(impressions), 0) as ctr
-   FROM campaign_data
-   GROUP BY geo_region, dma
-   ORDER BY conversions DESC;
-   ```
+Use these colors consistently to maintain brand identity:
 
-7. **Device Type Analysis:**
-   - Compare mobile, desktop, tablet, CTV performance
-   - Identify device-specific optimization opportunities
+| Color | Hex Code | Usage |
+|-------|----------|-------|
+| Dark Purple | `#1A0B1E` | Primary headers, dark backgrounds |
+| Glaucous | `#7272AB` | Accent color, highlights, CTAs, links |
+| Payne's Gray | `#586F7C` | Secondary text, borders, subtle elements |
+| White | `#FFFFFF` | Content backgrounds, light text on dark |
+| Black | `#000000` | Primary body text |
+| Light Purple | `#f3f2f7` | Card backgrounds, subtle highlights |
 
-8. **Platform/Exchange Analysis:**
-   - Rank SSPs, exchanges, and supply sources
-   - Identify supply path optimization opportunities
+#### General Styling Principles
 
-9. **Creative Performance:**
-   - Analyze by creative ID, format, size
-   - Detect creative fatigue patterns
-   - Surface top-performing creative variants
+**Typography:**
+- Use clean sans-serif fonts: Segoe UI, Helvetica, Arial, or system defaults
+- Maintain clear hierarchy: larger headers, readable body text (~14-16px)
+- Keep line height comfortable for reading (1.5-1.7)
 
-10. **Audience Segment Analysis:**
-    - Compare performance across audience segments
-    - Identify high-value vs. underperforming audiences
+**Color Usage:**
+- Dark Purple for major headers and primary branding elements
+- Glaucous for interactive elements, links, and accents
+- Payne's Gray for supporting text and subtle dividers
+- High contrast for accessibility (dark text on light backgrounds)
 
-**Additional Analysis (if data available):**
-- Browser/OS breakdown
-- Viewability by dimension
-- Video completion rates by placement
-- Frequency analysis
-- Weather correlation (if applicable)
+**Layout:**
+- Maximum width ~800px for optimal email readability
+- Generous padding and whitespace - let content breathe
+- Use cards/boxes to group related information
+- Mobile-responsive design
 
-#### Step 6: Generate Optimization Recommendations
+**Visual Hierarchy:**
+- Lead with executive summary or key findings
+- Use clear section headers
+- Tables for structured data
+- Highlight boxes for important callouts
+- Color-coded priority indicators (red=high, orange=medium, green=low)
 
-For each deal/campaign, synthesize findings into actionable recommendations:
+#### Key HTML Components
 
-1. **Budget Reallocation:** Specific percentage shifts from underperforming to high-performing segments
-2. **Blocklist Recommendations:** Domains, apps, or placements to exclude
-3. **Allowlist Expansion:** High-performing inventory to scale
-4. **Dayparting Adjustments:** Specific hours/days to increase or decrease bids
-5. **Geographic Targeting:** DMAs or regions to add, remove, or bid-adjust
-6. **Device Bid Modifiers:** Recommended bid adjustments by device type
-7. **Creative Rotation:** Creatives to pause, scale, or refresh
-8. **Pacing Adjustments:** Under/over-pacing alerts with corrective actions
+**CSS Variables for Brand Colors:**
+```css
+:root {
+    --elcano-dark-purple: #1A0B1E;
+    --elcano-glaucous: #7272AB;
+    --elcano-paynes-gray: #586F7C;
+    --elcano-white: #FFFFFF;
+    --elcano-black: #000000;
+    --elcano-light-purple: #f3f2f7;
+}
+```
 
-### Sending the Optimization Email
+**Branded Header Example:**
+```html
+<div style="background: linear-gradient(135deg, #1A0B1E 0%, #2d1f3d 100%);
+            color: white; padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+    <h1 style="margin: 0; font-size: 24px;">Campaign Optimization Report</h1>
+    <div style="color: #7272AB; font-size: 14px; margin-top: 5px;">Generated by Victoria | December 18, 2025</div>
+</div>
+```
 
-After completing the analysis, send a professional HTML email with the findings:
+**Callout/Highlight Box Example:**
+```html
+<div style="background: #f3f2f7; border-left: 4px solid #7272AB;
+            padding: 15px 20px; margin: 20px 0; border-radius: 0 8px 8px 0;">
+    <strong>Key Finding:</strong> This is an important callout that draws attention.
+</div>
+```
+
+**Metric Cards Example:**
+```html
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px; margin: 20px 0;">
+    <div style="background: #f3f2f7; padding: 15px; border-radius: 8px; text-align: center;">
+        <div style="font-size: 24px; font-weight: bold; color: #1A0B1E;">$12,450</div>
+        <div style="font-size: 12px; color: #586F7C;">Total Spend</div>
+    </div>
+    <!-- Repeat for other metrics -->
+</div>
+```
+
+**Data Table Example:**
+```html
+<table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
+    <tr>
+        <th style="background: #1A0B1E; color: white; padding: 10px; text-align: left;">Metric</th>
+        <th style="background: #1A0B1E; color: white; padding: 10px; text-align: left;">Value</th>
+    </tr>
+    <tr style="background: #f3f2f7;">
+        <td style="padding: 10px;">CPA</td>
+        <td style="padding: 10px;">$45.00</td>
+    </tr>
+    <tr>
+        <td style="padding: 10px;">CTR</td>
+        <td style="padding: 10px;">2.4%</td>
+    </tr>
+</table>
+```
+
+**Priority-Coded Recommendation Example:**
+```html
+<div style="background: #fdf2f2; border-left: 4px solid #e53e3e;
+            padding: 12px 15px; margin: 10px 0; border-radius: 0 6px 6px 0;">
+    <span style="color: #e53e3e; font-weight: bold;">HIGH PRIORITY:</span>
+    Block underperforming domains - Expected CPA reduction: 15%
+</div>
+```
+
+#### Sending HTML Emails
+
+Use SendGrid to send professionally formatted HTML reports:
 
 ```python
 # Send HTML-formatted optimization report
@@ -1558,503 +1602,22 @@ sendgrid.send_email(
     to_email="recipient@company.com",
     subject="Campaign Optimization Report - December 2025",
     content=html_report_content,
-    content_type="text/html",  # IMPORTANT: Must specify HTML content type
-    cc_emails=["team@company.com"],  # Optional CC recipients
+    content_type="text/html",  # IMPORTANT: Specify HTML content type
+    cc_emails=["team@company.com"],  # Optional
 )
 ```
 
-### HTML Email Template Structure
+**Important:** Always set `content_type="text/html"` when sending HTML emails to ensure proper rendering with colors, formatting, and layout.
 
-The optimization email should be professionally formatted using the Elcano brand colors and easy to read. Use the following structure:
+### Summary
 
-#### Elcano Brand Color Palette
+This protocol is a guide, not a script. Use your best judgment to:
+- Adapt data collection based on what's available and relevant
+- Focus dimensional analysis on the most promising areas
+- Tailor recommendations to the user's specific needs and constraints
+- Choose the right delivery format (email, conversation, presentation)
 
-| Color | Hex Code | Usage |
-|-------|----------|-------|
-| Dark Purple | `#1A0B1E` | Primary headers, dark backgrounds |
-| White | `#FFFFFF` | Content backgrounds, light text |
-| Black | `#000000` | Body text, high contrast elements |
-| Payne's Gray | `#586F7C` | Secondary text, borders, subtle elements |
-| Glaucous | `#7272AB` | Accent color, highlights, CTAs, links |
-
-#### Style Guidelines
-
-- **Headers:** Use Dark Purple (`#1A0B1E`) for primary headers with white text
-- **Accent Elements:** Use Glaucous (`#7272AB`) for highlights, links, and call-to-action elements
-- **Body Text:** Use Black (`#000000`) for maximum readability
-- **Secondary Text:** Use Payne's Gray (`#586F7C`) for labels, captions, and less prominent text
-- **Backgrounds:** Use White (`#FFFFFF`) for content areas, light tints for cards
-- **Typography:** Clean, professional sans-serif fonts (Segoe UI, Helvetica, Arial)
-- **Spacing:** Generous padding and whitespace for easy scanning
-- **Tables:** Alternating row colors using light Purple tints for readability
-
-```html
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Campaign Optimization Report</title>
-    <style>
-        /* Elcano Brand Colors */
-        :root {
-            --elcano-dark-purple: #1A0B1E;
-            --elcano-white: #FFFFFF;
-            --elcano-black: #000000;
-            --elcano-paynes-gray: #586F7C;
-            --elcano-glaucous: #7272AB;
-            --elcano-light-purple: #f3f2f7;
-            --elcano-purple-tint: #e8e6f0;
-        }
-
-        body {
-            font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
-            line-height: 1.6;
-            color: var(--elcano-black);
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: var(--elcano-light-purple);
-        }
-
-        .header {
-            background: linear-gradient(135deg, var(--elcano-dark-purple) 0%, #2d1f3d 100%);
-            color: var(--elcano-white);
-            padding: 30px;
-            border-radius: 10px 10px 0 0;
-            text-align: center;
-        }
-
-        .header h1 {
-            margin: 0;
-            font-size: 24px;
-            font-weight: 600;
-        }
-
-        .header .subtitle {
-            opacity: 0.9;
-            font-size: 14px;
-            margin-top: 5px;
-            color: var(--elcano-glaucous);
-        }
-
-        .content {
-            background: var(--elcano-white);
-            padding: 30px;
-            border-radius: 0 0 10px 10px;
-            box-shadow: 0 2px 10px rgba(26, 11, 30, 0.1);
-        }
-
-        h2 {
-            color: var(--elcano-dark-purple);
-            border-bottom: 2px solid var(--elcano-glaucous);
-            padding-bottom: 8px;
-            margin-top: 30px;
-        }
-
-        h2:first-of-type {
-            margin-top: 0;
-        }
-
-        .summary-box {
-            background: var(--elcano-light-purple);
-            border-left: 4px solid var(--elcano-glaucous);
-            padding: 15px 20px;
-            margin: 20px 0;
-            border-radius: 0 8px 8px 0;
-        }
-
-        .metric-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin: 20px 0;
-        }
-
-        .metric-card {
-            background: var(--elcano-light-purple);
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-            border: 1px solid var(--elcano-purple-tint);
-        }
-
-        .metric-value {
-            font-size: 24px;
-            font-weight: bold;
-            color: var(--elcano-dark-purple);
-        }
-
-        .metric-label {
-            font-size: 12px;
-            color: var(--elcano-paynes-gray);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .campaign-section {
-            border: 1px solid var(--elcano-purple-tint);
-            border-radius: 8px;
-            margin: 20px 0;
-            overflow: hidden;
-        }
-
-        .campaign-header {
-            background: var(--elcano-dark-purple);
-            color: var(--elcano-white);
-            padding: 15px 20px;
-            font-weight: bold;
-        }
-
-        .campaign-body {
-            padding: 20px;
-        }
-
-        .recommendation {
-            background: #f0f7f4;
-            border-left: 4px solid #38a169;
-            padding: 12px 15px;
-            margin: 10px 0;
-            border-radius: 0 6px 6px 0;
-        }
-
-        .recommendation.warning {
-            background: #fdf6ec;
-            border-left-color: #dd6b20;
-        }
-
-        .recommendation.critical {
-            background: #fdf2f2;
-            border-left-color: #e53e3e;
-        }
-
-        .priority-high {
-            color: #e53e3e;
-            font-weight: bold;
-        }
-
-        .priority-medium {
-            color: #dd6b20;
-            font-weight: bold;
-        }
-
-        .priority-low {
-            color: #38a169;
-            font-weight: bold;
-        }
-
-        /* Highlight boxes using brand accent color */
-        .highlight-box {
-            background: rgba(114, 114, 171, 0.1);
-            border: 1px solid var(--elcano-glaucous);
-            border-radius: 8px;
-            padding: 15px;
-            margin: 15px 0;
-        }
-
-        .highlight-box .title {
-            color: var(--elcano-glaucous);
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 15px 0;
-        }
-
-        th, td {
-            padding: 10px 12px;
-            text-align: left;
-            border-bottom: 1px solid var(--elcano-purple-tint);
-        }
-
-        th {
-            background: var(--elcano-dark-purple);
-            color: var(--elcano-white);
-            font-weight: 600;
-        }
-
-        tr:nth-child(even) {
-            background: var(--elcano-light-purple);
-        }
-
-        a {
-            color: var(--elcano-glaucous);
-            text-decoration: none;
-        }
-
-        a:hover {
-            text-decoration: underline;
-        }
-
-        .footer {
-            text-align: center;
-            padding: 20px;
-            color: var(--elcano-paynes-gray);
-            font-size: 12px;
-        }
-
-        .footer img {
-            height: 30px;
-            margin-bottom: 10px;
-        }
-
-        /* Dimensional Analysis Section */
-        .dimension-section {
-            background: var(--elcano-light-purple);
-            border-radius: 8px;
-            padding: 20px;
-            margin: 15px 0;
-        }
-
-        .dimension-section h4 {
-            color: var(--elcano-dark-purple);
-            margin-top: 0;
-            margin-bottom: 12px;
-        }
-
-        .top-performer {
-            color: var(--elcano-glaucous);
-            font-weight: 600;
-        }
-
-        .underperformer {
-            color: #e53e3e;
-            font-weight: 600;
-        }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>Campaign Optimization Report</h1>
-        <div class="subtitle">Generated by Victoria | [Date]</div>
-    </div>
-
-    <div class="content">
-        <!-- Executive Summary -->
-        <h2>Executive Summary</h2>
-        <div class="summary-box">
-            <strong>Deals Analyzed:</strong> [List of deal names provided by user]<br>
-            <strong>Key Findings:</strong> [Number] optimization opportunities identified.
-            Total spend analyzed: $[Amount]. [Number] high-priority actions recommended.
-        </div>
-
-        <!-- Target KPI Performance -->
-        <div class="highlight-box">
-            <div class="title">Performance vs. Target KPIs</div>
-            <table>
-                <tr>
-                    <th>KPI</th>
-                    <th>Target</th>
-                    <th>Actual</th>
-                    <th>Variance</th>
-                </tr>
-                <tr>
-                    <td>CPA</td>
-                    <td>$50.00</td>
-                    <td>$45.00</td>
-                    <td class="top-performer">-10% ✓</td>
-                </tr>
-                <!-- More KPI rows -->
-            </table>
-        </div>
-
-        <!-- Overall Metrics -->
-        <div class="metric-grid">
-            <div class="metric-card">
-                <div class="metric-value">$X.XX</div>
-                <div class="metric-label">Total Spend</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-value">X.XX%</div>
-                <div class="metric-label">Avg CTR</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-value">$X.XX</div>
-                <div class="metric-label">Avg CPA</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-value">X.Xx</div>
-                <div class="metric-label">ROAS</div>
-            </div>
-        </div>
-
-        <!-- Dimensional Insights (NEW - Thorough Analysis) -->
-        <h2>High-Performing Segments</h2>
-        <p style="color: var(--elcano-paynes-gray);">
-            Insights traders wouldn't have time to find themselves:
-        </p>
-
-        <div class="dimension-section">
-            <h4>Top Domains</h4>
-            <table>
-                <tr><th>Domain</th><th>Spend</th><th>Conversions</th><th>CPA</th><th>vs. Target</th></tr>
-                <tr><td>example .com</td><td>$X,XXX</td><td>XX</td><td>$XX</td><td class="top-performer">-20%</td></tr>
-                <!-- More rows -->
-            </table>
-        </div>
-
-        <div class="dimension-section">
-            <h4>Top CTV Channels</h4>
-            <table>
-                <tr><th>Channel</th><th>Spend</th><th>Completions</th><th>VCR</th><th>CPA</th></tr>
-                <!-- CTV data -->
-            </table>
-        </div>
-
-        <div class="dimension-section">
-            <h4>Best Performing Times</h4>
-            <table>
-                <tr><th>Day/Hour</th><th>Conversions</th><th>CPA</th><th>Recommendation</th></tr>
-                <tr><td>Tuesday 2-4 PM</td><td>XX</td><td>$XX</td><td class="top-performer">Increase bids +15%</td></tr>
-                <!-- More rows -->
-            </table>
-        </div>
-
-        <div class="dimension-section">
-            <h4>Geographic Opportunities</h4>
-            <table>
-                <tr><th>DMA/Region</th><th>Spend</th><th>Conversions</th><th>CPA</th><th>Action</th></tr>
-                <!-- Geo data -->
-            </table>
-        </div>
-
-        <!-- Campaign-by-Campaign Analysis -->
-        <h2>Deal-by-Deal Analysis & Recommendations</h2>
-
-        <div class="campaign-section">
-            <div class="campaign-header">
-                [Deal Name] | [Platform]
-            </div>
-            <div class="campaign-body">
-                <table>
-                    <tr>
-                        <th>Metric</th>
-                        <th>Current</th>
-                        <th>Target</th>
-                        <th>Status</th>
-                    </tr>
-                    <tr>
-                        <td>CPA</td>
-                        <td>$X.XX</td>
-                        <td>$X.XX</td>
-                        <td>✅ On Target</td>
-                    </tr>
-                    <!-- More rows -->
-                </table>
-
-                <h4>Recommendations:</h4>
-                <div class="recommendation critical">
-                    <span class="priority-high">HIGH PRIORITY:</span>
-                    [Specific actionable recommendation with expected impact]
-                </div>
-                <div class="recommendation warning">
-                    <span class="priority-medium">MEDIUM PRIORITY:</span>
-                    [Another recommendation]
-                </div>
-                <div class="recommendation">
-                    <span class="priority-low">OPTIMIZATION:</span>
-                    [Lower priority improvement opportunity]
-                </div>
-            </div>
-        </div>
-
-        <!-- Repeat for each deal -->
-
-        <!-- Action Items Summary -->
-        <h2>Action Items Summary</h2>
-        <table>
-            <tr>
-                <th>Priority</th>
-                <th>Deal</th>
-                <th>Action</th>
-                <th>Expected Impact</th>
-            </tr>
-            <tr>
-                <td><span class="priority-high">HIGH</span></td>
-                <td>Deal A</td>
-                <td>Block underperforming domains (list attached)</td>
-                <td>-15% CPA</td>
-            </tr>
-            <tr>
-                <td><span class="priority-high">HIGH</span></td>
-                <td>Deal B</td>
-                <td>Increase bids on Tuesday-Thursday afternoons</td>
-                <td>+20% conversions</td>
-            </tr>
-            <tr>
-                <td><span class="priority-medium">MEDIUM</span></td>
-                <td>Deal A</td>
-                <td>Shift 25% budget to top 3 DMAs</td>
-                <td>-10% CPA</td>
-            </tr>
-            <!-- More rows -->
-        </table>
-    </div>
-
-    <div class="footer">
-        <p>Generated by Victoria | Elcano's AI Navigator for Programmatic Excellence</p>
-        <p style="color: var(--elcano-glaucous);">Questions? Reply to this email or contact your account team.</p>
-    </div>
-</body>
-</html>
-```
-
-### Best Practices
-
-1. **Thoroughness First:** Download ALL attachments from ALL emails in the 2-week window. Missing data means missing insights.
-
-2. **Data Freshness:** Always use the most recent data available. If you have multiple files from the same source, prefer the newest one.
-
-3. **Deduplication:** Be vigilant about duplicate data. Many platforms include rolling windows (e.g., 7-day lookback) in daily reports.
-
-4. **Deep Dimensional Analysis:** Go beyond surface-level metrics. Analyze every available dimension (domains, apps, CTV, time, geography, etc.) to find insights traders wouldn't have time to discover.
-
-5. **KPI-Focused:** Always compare performance against the target KPIs provided by the user. Frame recommendations in terms of KPI improvement.
-
-6. **Actionable Recommendations:** Make recommendations specific and actionable with quantified expected impact.
-
-7. **Email Formatting:**
-   - Use Elcano brand colors consistently (Dark Purple, Glaucous, Payne's Gray)
-   - Keep the email scannable with clear headers and visual hierarchy
-   - Use color coding for priority levels (red=high, orange=medium, green=low)
-   - Include a summary table of action items at the end
-   - Ensure the email is mobile-responsive
-
-8. **Follow-Up:** When sending the email, note that recipients can reply directly for follow-up questions.
-
-### Example Workflow
-
-When asked to perform optimization analysis from emailed data:
-
-```
-User: "Victoria, analyze the Toyota and Chevrolet deals. Target CPA is $45.
-       Send optimization recommendations to trader@company.com"
-
-Victoria's Process:
-1. Check inbox for ALL emails from last 14 days
-2. Download EVERY attachment from every email (be thorough!)
-3. Download files from all embedded links
-4. Search downloaded data for "Toyota" and "Chevrolet" deals
-5. Deduplicate data (keep most recent per source)
-6. For each specified deal:
-   - Calculate key metrics vs. $45 CPA target
-   - Analyze EVERY available dimension:
-     * Domains (top performers, blocklist candidates)
-     * App bundles (scale vs. cut)
-     * CTV channels (premium vs. standard)
-     * Time of day (hourly breakdown)
-     * Day of week (best/worst days)
-     * Geography (DMA-level analysis)
-     * Device type
-     * Creative performance
-   - Identify optimization opportunities
-   - Prioritize recommendations by impact on CPA
-7. Compile findings into branded HTML email template
-8. Send via SendGrid with content_type="text/html"
-```
+The goal is **thoroughness and insight** - surface optimization opportunities that wouldn't be obvious from standard reporting. Think like a seasoned analyst who has time to dig deep into the data.
 
 
 
