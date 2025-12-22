@@ -242,8 +242,8 @@ def test_generate_crush_config_includes_browserbase_when_configured(tmp_path: Pa
     data = json.loads(output.read_text(encoding="utf-8"))
     browserbase_cfg = data["mcp"].get("browserbase")
     assert browserbase_cfg is not None
-    assert browserbase_cfg["command"] == "npx"
-    assert browserbase_cfg["args"] == ["@browserbasehq/mcp-server-browserbase"]
+    assert browserbase_cfg["command"] == "mcp-server-browserbase"
+    assert browserbase_cfg["args"] == []
     assert browserbase_cfg["env"]["BROWSERBASE_API_KEY"] == "bb-test-key"
     assert browserbase_cfg["env"]["BROWSERBASE_PROJECT_ID"] == "test-project-id"
     assert browserbase_cfg["env"]["GEMINI_API_KEY"] == "gemini-test-key"
