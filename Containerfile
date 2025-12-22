@@ -35,6 +35,9 @@ WORKDIR /workspace
 COPY requirements.txt ./
 RUN pip3 install --no-cache-dir -r requirements.txt
 
+# Install Node.js-based MCP servers globally
+RUN npm install -g @browserbasehq/mcp-server-browserbase
+
 COPY . .
 
 RUN install -Dm755 container_entrypoint.sh /usr/local/bin/container-entrypoint.sh
