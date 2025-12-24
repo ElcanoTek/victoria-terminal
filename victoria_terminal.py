@@ -641,13 +641,15 @@ def ensure_app_home(app_home: Path = APP_HOME) -> Path:
         if should_overwrite or not dest.exists():
             shutil.copy2(src, dest)
 
-    # Copy protocols directory (always overwrite to ensure latest protocols)
+    # Copy protocols directory (overwrite built-in protocols, preserve user-added ones)
     protocols_src = resource_path(Path(PROTOCOLS_DIR))
     protocols_dest = app_home / PROTOCOLS_DIR
     if protocols_src.exists() and protocols_src.is_dir():
-        if protocols_dest.exists():
-            shutil.rmtree(protocols_dest)
-        shutil.copytree(protocols_src, protocols_dest)
+        protocols_dest.mkdir(parents=True, exist_ok=True)
+        for src_file in protocols_src.iterdir():
+            if src_file.is_file():
+                dest_file = protocols_dest / src_file.name
+                shutil.copy2(src_file, dest_file)
 
     return app_home
 
