@@ -72,6 +72,67 @@ Use clear, production-ready instructions in the quoted task string—automation 
 > **Need manual commands, pre-built image instructions, or the full development workflow?**
 > Head over to [CONTRIBUTING.md](CONTRIBUTING.md) for step-by-step guidance on running published container images and building Victoria from source.
 
+## 📋 Custom Protocols
+
+Victoria uses **protocols**—modular markdown files that guide the AI through specialized workflows. Two built-in protocols ship with Victoria:
+
+| Protocol | Description |
+|----------|-------------|
+| **Campaign Wrap-Up** | Comprehensive campaign analysis with quirky insight discovery and Gamma presentation generation |
+| **Optimization** | Thorough performance analysis with dimensional exploration and actionable recommendations |
+
+### Adding Your Own Protocols
+
+You can extend Victoria with custom protocols tailored to your team's workflows. Place markdown files in the `protocols/` folder within your `~/Victoria` workspace:
+
+```bash
+~/Victoria/
+├── protocols/
+│   ├── campaign-wrap-up.md    # Built-in
+│   ├── optimization.md        # Built-in
+│   └── my-custom-workflow.md  # Your custom protocol
+├── data/
+└── .env
+```
+
+### Protocol File Structure
+
+Each protocol file should include:
+
+1. **Clear title and purpose** — What task does this protocol address?
+2. **Step-by-step workflow** — The systematic approach to follow
+3. **Output format** — How to deliver the results (email, presentation, conversation)
+4. **Examples** — Sample queries, code snippets, or templates
+
+**Example protocol structure:**
+
+```markdown
+# My Custom Protocol
+
+Brief description of when to use this protocol.
+
+## Overview
+
+What this protocol accomplishes and why it's useful.
+
+## Workflow
+
+### Step 1: Data Collection
+Instructions for gathering data...
+
+### Step 2: Analysis
+How to analyze the data...
+
+### Step 3: Delivery
+How to present findings...
+
+## Examples
+
+Sample queries, code snippets, or templates...
+```
+
+Victoria automatically loads all `.md` files from the `protocols/` directory. When a user requests a task matching your protocol (e.g., "run my custom workflow"), Victoria reads the protocol file and follows its guidance.
+
 ## 🤝 Contributing
 
 We welcome contributions to Victoria! Review our [Contributing Guidelines](CONTRIBUTING.md) for the full development workflow, workspace anatomy, and pull-request expectations.

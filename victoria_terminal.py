@@ -40,7 +40,7 @@ console = Console()
 
 __version__ = "2025.9.9"
 VICTORIA_FILE = "VICTORIA.md"
-PRIVATE_FILE = "PRIVATE.md"
+PROTOCOLS_DIR = "protocols"
 CONFIGS_DIR = "configs"
 CRUSH_TEMPLATE = Path(CONFIGS_DIR) / "crush" / "crush.template.json"
 CRUSH_LOCAL = Path(CONFIGS_DIR) / "crush" / "crush.local.json"
@@ -50,7 +50,6 @@ CRUSH_COMMAND = "crush"
 SUPPORT_FILES: tuple[Path, ...] = (
     Path(CONFIGS_DIR) / "crush" / "CRUSH.md",
     Path(VICTORIA_FILE),
-    Path(PRIVATE_FILE),
 )
 
 # Telemetry configuration
@@ -634,18 +633,24 @@ def ensure_app_home(app_home: Path = APP_HOME) -> Path:
     app_home.mkdir(parents=True, exist_ok=True)
     for relative in SUPPORT_FILES:
         src = resource_path(relative)
-        # Preserve directory structure for files in subdirectories
-        if relative.name == PRIVATE_FILE:
-            dest = app_home / relative
-            dest.parent.mkdir(parents=True, exist_ok=True)
-        else:
-            dest = app_home / relative.name
+        dest = app_home / relative.name
         if not src.exists():
             continue
 
         should_overwrite = relative.name == VICTORIA_FILE
         if should_overwrite or not dest.exists():
             shutil.copy2(src, dest)
+
+    # Copy protocols directory (overwrite built-in protocols, preserve user-added ones)
+    protocols_src = resource_path(Path(PROTOCOLS_DIR))
+    protocols_dest = app_home / PROTOCOLS_DIR
+    if protocols_src.exists() and protocols_src.is_dir():
+        protocols_dest.mkdir(parents=True, exist_ok=True)
+        for src_file in protocols_src.iterdir():
+            if src_file.is_file():
+                dest_file = protocols_dest / src_file.name
+                shutil.copy2(src_file, dest_file)
+
     return app_home
 
 
