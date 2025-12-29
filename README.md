@@ -72,28 +72,23 @@ Use clear, production-ready instructions in the quoted task string—automation 
 > **Need manual commands, pre-built image instructions, or the full development workflow?**
 > Head over to [CONTRIBUTING.md](CONTRIBUTING.md) for step-by-step guidance on running published container images and building Victoria from source.
 
-## 📋 Custom Protocols
+## 📋 Protocols
 
-Victoria uses **protocols**—modular markdown files that guide the AI through specialized workflows. Two built-in protocols ship with Victoria:
-
-| Protocol | Description |
-|----------|-------------|
-| **Campaign Wrap-Up** | Comprehensive campaign analysis with quirky insight discovery and Gamma presentation generation |
-| **Optimization** | Thorough performance analysis with dimensional exploration and actionable recommendations |
+Victoria uses **protocols**—modular markdown files that guide the AI through specialized workflows. Several built-in protocols ship with Victoria, and you can add your own.
 
 ### Adding Your Own Protocols
 
-You can extend Victoria with custom protocols tailored to your team's workflows. Place markdown files in the `protocols/` folder within your `~/Victoria` workspace:
+Extend Victoria with custom protocols tailored to your team's workflows. Place markdown files in the `protocols/` folder within your `~/Victoria` workspace:
 
 ```bash
 ~/Victoria/
 ├── protocols/
-│   ├── campaign-wrap-up.md    # Built-in
-│   ├── optimization.md        # Built-in
 │   └── my-custom-workflow.md  # Your custom protocol
 ├── data/
 └── .env
 ```
+
+Victoria automatically loads all `.md` files from the `protocols/` directory, merging your custom protocols with the built-in ones.
 
 ### Protocol File Structure
 
@@ -131,7 +126,7 @@ How to present findings...
 Sample queries, code snippets, or templates...
 ```
 
-Victoria automatically loads all `.md` files from the `protocols/` directory. When a user requests a task matching your protocol (e.g., "run my custom workflow"), Victoria reads the protocol file and follows its guidance.
+When a user requests a task matching your protocol (e.g., "run my custom workflow"), Victoria reads the protocol file and follows its guidance.
 
 ## 🤝 Contributing
 

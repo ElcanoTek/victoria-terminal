@@ -12,7 +12,7 @@ You may obtain a copy of the license at
 Change Date: 2027-09-20
 Change License: GNU General Public License v3.0 or later
 
-License Notes: 2025-12-24
+License Notes: 2025-12-29
 -->
 
 # Optimization Protocol
@@ -54,6 +54,18 @@ Get clarity on:
 - Explore available tables and files to understand what data is accessible
 - Validate data quality and freshness before diving into analysis
 - Confirm you're looking at the right time period
+
+### Dataset Acquisition Must Be Exhaustive (Discovery-First)
+
+When a task depends on "the latest dataset" (reports/exports/attachments) and filenames are unknown, you must treat acquisition as a discovery problem and be deliberately over-thorough:
+
+1. **Search broadly before filtering:** scan the full relevant inbox history (not just "since last check") and the local attachment directory; identify candidate emails by sender/subject keywords/time window, then confirm via attachment content signatures (expected columns/sheet names), not filenames.
+
+2. **Download defensively:** for every matching candidate email, download **all CSV/XLSX attachments** and download all "likely download links" in the email body; do not assume only one attachment is relevant.
+
+3. **Normalize + verify:** convert XLSX → CSV (first sheet), build a simple manifest (file path, received date, report type guess, min/max date, key columns present), and prove coverage meets the requested window; explicitly flag any missing days/report-types.
+
+**Acceptance gate (don't proceed until passed):** you can list the files used and show min/max date coverage for each required report type (e.g., Domain/App, Time-of-Day, OS/Device, DSP rollup).
 
 ### 3. Find the Specified Campaigns
 
