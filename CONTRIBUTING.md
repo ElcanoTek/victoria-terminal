@@ -129,12 +129,6 @@ Podman passes the `-e` variables to the entry point so Victoria can generate the
 
 > **Note:** Dropping all capabilities prevents the container from writing to shared volumes. If you need to persist outputs back to `~/Victoria`, omit `--cap-drop all` or mount the directory in a separate, trusted run.
 
-#### Using local LLM providers
-
-Victoria is configured to work with local LLM providers like LM Studio. To connect to LM Studio from within the Victoria container, you must enable network access.
-
-In LM Studio, navigate to the server settings and ensure that **"Serve on local network"** is turned on. This allows the container to reach the server at `http://host.containers.internal:1234`.
-
 ## Build from source
 
 Follow this path if you plan to modify Victoria, integrate it into a custom workflow, or contribute changes upstream.
