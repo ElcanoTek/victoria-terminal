@@ -16,7 +16,7 @@ By submitting a contribution you agree to the [ElcanoTek Contributor License Agr
 
 ## File naming conventions
 
-- Prefer `snake_case` filenames for Python modules (for example `gamma_mcp.py`).
+- Prefer `snake_case` filenames for Python modules (for example `your_service_mcp.py`).
 - Keep MCP server modules in the repository root for straightforward packaging and resource discovery.
 - Use descriptive prefixes (such as the service name) so configuration references remain obvious.
 
@@ -72,10 +72,10 @@ The same command on Windows stays on a single line and uses `$env:USERPROFILE/Vi
 
 > **Important:** Non-interactive runs triggered with `--task` must also pass `--accept-license`. Using this flag automatically accepts the Victoria Terminal Business Source License described in [LICENSE](LICENSE).
 
-Automated tasks run the same agent that powers the interactive terminal, so craft prompts that describe the real-world workflow you want to verify. Our default integration run asks Victoria to produce a Gamma presentation and email it to `brad@elcanotek.com`:
+Automated tasks run the same agent that powers the interactive terminal, so craft prompts that describe the real-world workflow you want to verify:
 
 ```bash
-victoria --accept-license --task "create a Gamma presentation on this week's optimizations and email it to brad@elcanotek.com"
+victoria --accept-license --task "analyze this week's campaign performance and export a summary report"
 ```
 
 Update the quoted instruction to match your integration test or CI scenario. When you need artifacts written to disk, tell Victoria exactly which filenames to create inside `/workspace/Victoria` so your automation can pick them up after the container exits.
@@ -102,7 +102,8 @@ Victoria reads every environment variable defined in `~/Victoria/.env` and expos
 ```dotenv
 # victoria/.env (sample deployment bundle)
 OPENROUTER_API_KEY="sk-or-v1-live-example-1234567890abcd"
-GAMMA_API_KEY="sk-gamma-prod-example-9876543210"
+# Add API keys for any MCP servers you configure
+# YOUR_SERVICE_API_KEY="your-api-key-here"
 ```
 
 - Keep comments in the template to describe why a key is needed or where to request it.
@@ -119,13 +120,13 @@ Advanced users who prefer not to distribute a shared `.env` file can provide cre
 podman run --rm \
   --cap-drop all \
   -e OPENROUTER_API_KEY="sk-or-v1-live-example-1234567890abcd" \
-  -e GAMMA_API_KEY="sk-gamma-prod-example-9876543210" \
+  -e YOUR_SERVICE_API_KEY="your-api-key-here" \
   ghcr.io/elcanotek/victoria-terminal:latest \
   --accept-license \
-  --task "Create a Gamma briefing for this week's campaign optimizations"
+  --task "Analyze this week's campaign performance and summarize key metrics"
 ```
 
-Podman passes the `-e` variables to the entry point so Victoria can generate the `crush.json` configuration without touching the host filesystem. Provide any other keys that your workflow requires, and remember to include `--accept-license` when using `--task` for non-interactive runs.
+Podman passes the `-e` variables to the entry point so Victoria can generate the `crush.json` configuration without touching the host filesystem. Provide API keys for each MCP server your workflow requires, and remember to include `--accept-license` when using `--task` for non-interactive runs.
 
 > **Note:** Dropping all capabilities prevents the container from writing to shared volumes. If you need to persist outputs back to `~/Victoria`, omit `--cap-drop all` or mount the directory in a separate, trusted run.
 
@@ -217,36 +218,35 @@ Victoria relies on MCP servers to expose structured tools to Crush and the termi
 - Document every server in this guide and ensure the required environment variables appear in `example.env`.
 - Store secrets in the shared `.env` file mounted at `~/Victoria/.env`.
 
-### Gamma server (`gamma_mcp.py`)
+### Example MCP server
 
-The Gamma MCP server bridges Victoria to Gamma's presentation generation API.
+Each MCP server bridges Victoria to an external service or API. Below is a template showing the typical structure for a new server.
 
-**Capabilities**
+**Capabilities to document**
 
-- Generate Gamma presentations from markdown input.
-- Check on the status of presentation generation requests.
-- Securely read the `GAMMA_API_KEY` environment variable at runtime.
+When adding a server, document:
+- The core actions the server exposes (e.g., create resources, query status, fetch data).
+- Required environment variables and where to obtain credentials.
+- Any rate limits or usage constraints.
 
 **Crush configuration snippet**
 
 ```json
 {
-  "gamma": {
+  "your_service": {
     "type": "stdio",
     "command": "python3",
-    "args": ["${GAMMA_MCP_SCRIPT}"],
-    "cwd": "${GAMMA_MCP_DIR}",
+    "args": ["${YOUR_SERVICE_MCP_SCRIPT}"],
+    "cwd": "${YOUR_SERVICE_MCP_DIR}",
     "env": {
-      "GAMMA_API_KEY": "${GAMMA_API_KEY}",
-      "PYTHONPATH": "${GAMMA_MCP_DIR}"
+      "YOUR_SERVICE_API_KEY": "${YOUR_SERVICE_API_KEY}",
+      "PYTHONPATH": "${YOUR_SERVICE_MCP_DIR}"
     }
   }
 }
 ```
 
-`victoria_terminal.generate_crush_config` fills in `GAMMA_MCP_SCRIPT` and `GAMMA_MCP_DIR`
-with the bundled `gamma_mcp.py` path, so you only need to provide the `GAMMA_API_KEY`
-in your environment.
+`victoria_terminal.generate_crush_config` resolves path variables like `${YOUR_SERVICE_MCP_SCRIPT}` and `${YOUR_SERVICE_MCP_DIR}` at runtime. You only need to provide the API key in your environment.
 
 ### Adding or iterating on servers
 
