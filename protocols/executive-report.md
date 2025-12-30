@@ -22,13 +22,16 @@ Victoria can generate comprehensive executive reports that synthesize all campai
 ## Overview & Philosophy
 
 When asked to generate an executive report:
-- **Be comprehensive in data gathering** - Download and analyze every relevant email, attachment, and data source from the period
+- **Be exhaustively comprehensive in data gathering** - Download ALL emails and analyze EVERY active campaign from the period. Do not sample, scan, or filter—download everything. When it comes to data collection, you cannot be too thorough.
+- **Leave no campaign unexamined** - Query data sources directly to enumerate all active campaigns; do not rely solely on email content to discover campaigns
 - **Prioritize ruthlessly** - Executives have limited time; surface only the most impactful insights
 - **Lead with what matters** - Structure information by priority and business impact, not by data source
 - **Be action-oriented** - Every insight should connect to a decision or action the executive can take
 - **Flag risks early** - Proactively identify issues that require attention before they become problems
 
 The executive report differs from optimization reports in its audience and purpose: optimization reports are for traders and campaign managers who will implement tactical changes, while executive reports are for leadership who need strategic oversight and decision-making support.
+
+**Critical Principle:** The credibility of an executive report depends entirely on its completeness. A report that misses a failing campaign or overlooks a critical email destroys trust. Always err on the side of downloading too much data rather than too little.
 
 ## General Approach
 
@@ -43,22 +46,43 @@ Understand the executive's needs:
 
 ### 2. Exhaustive Data Collection
 
-**This is critical for executive reports.** The report must be comprehensive—missing data undermines credibility and may cause executives to miss important issues.
+**This is the most critical step for executive reports.** The report must be absolutely comprehensive—missing data undermines credibility and may cause executives to miss important issues. When it comes to data collection, you cannot be too thorough.
 
-**Email and Attachment Discovery:**
-1. **Scan the full inbox** for the specified time period
-2. **Download every relevant attachment** (CSVs, Excel files, PDFs, reports)
-3. **Follow download links** in email bodies to retrieve hosted reports
-4. **Catalog all data sources** to ensure complete coverage
-5. **Verify date ranges** match the requested period
+**Complete Email Download (Mandatory):**
+
+Download **every single email** from the specified time period—not just a sample or scan. This ensures no critical information is missed.
+
+1. **Download ALL emails** in the date range to local storage before analysis begins
+2. **Download ALL attachments** from every email (CSVs, Excel files, PDFs, reports, images)
+3. **Follow EVERY download link** in email bodies to retrieve hosted reports, dashboards, and external data
+4. **Parse email threads completely** - include forwarded content, inline replies, and quoted text
+5. **Capture email metadata** - sender, recipients, timestamps, subject lines for context
+6. **Process ALL email accounts** if multiple inboxes contain relevant campaign data
+
+**Do not skip emails based on subject line or sender.** Important campaign information often arrives from unexpected sources (finance alerts, partner notifications, automated system emails).
+
+**Active Campaign Audit (Mandatory):**
+
+Analyze **every active campaign** during the reporting period, regardless of whether it appeared in downloaded emails:
+
+1. **Query all data sources directly** (DSPs, ad servers, analytics platforms) for the full campaign list
+2. **Enumerate ALL campaigns** that had any activity (spend, impressions, or conversions) during the period
+3. **Include campaigns with zero activity** if they were expected to be active—this may indicate delivery issues
+4. **Cross-reference campaign lists** across platforms to ensure complete coverage
+5. **Flag orphan campaigns** that appear in one system but not others
+6. **Verify campaign naming conventions** to ensure no campaigns are missed due to naming variations
 
 **Data Source Inventory:**
-Before analysis, create an inventory confirming:
+
+Before analysis, create a comprehensive inventory confirming:
 - All expected report types are present (DSP reports, platform data, partner reports)
+- **Every active campaign** is represented in the collected data
 - Date coverage is complete (no missing days or gaps)
 - Data freshness is acceptable (most recent available data)
+- **Email count verification** - confirm total emails downloaded matches inbox count for the period
+- **Attachment manifest** - list all downloaded files with sizes and types
 
-**If gaps exist:** Flag them explicitly in the report rather than proceeding with incomplete data.
+**If gaps exist:** Flag them explicitly in the report rather than proceeding with incomplete data. Missing emails or campaigns should be treated as high-priority alerts.
 
 ### 3. Multi-Dimensional Analysis
 
@@ -70,11 +94,18 @@ Analyze the data across all relevant dimensions to build a complete picture:
 - Comparison to targets and previous periods
 - Pacing against budgets and goals
 
-**Campaign-Level Insights:**
+**Campaign-Level Insights (ALL Active Campaigns):**
+
+Every campaign that was active during the period must be analyzed—do not focus only on top performers or problem campaigns:
+
+- **Complete campaign enumeration** - list and analyze every campaign with activity
 - Which campaigns are exceeding expectations?
 - Which campaigns are underperforming and why?
-- Budget utilization and pacing status
+- Budget utilization and pacing status for each campaign
 - Any campaigns requiring immediate attention
+- **Campaigns with no email coverage** - flag any active campaigns not mentioned in downloaded emails
+- **New campaigns launched** during the period
+- **Campaigns paused or ended** during the period
 
 **Platform & Partner Analysis:**
 - Performance by DSP, SSP, exchange, or partner
@@ -413,14 +444,38 @@ RECOMMENDED ACTIONS
 4. [Q1 PLANNING] Include Southeast expansion in Q1 media plan
 ```
 
+## Pre-Delivery Completeness Checklist
+
+Before finalizing any executive report, verify:
+
+**Email Completeness:**
+- [ ] Downloaded 100% of emails from the specified date range
+- [ ] Total email count verified against inbox/server count
+- [ ] All attachments downloaded and cataloged
+- [ ] All download links in email bodies followed and content retrieved
+- [ ] Email threads parsed for forwarded/quoted content
+
+**Campaign Completeness:**
+- [ ] Queried ALL data sources for active campaign lists
+- [ ] Every campaign with spend/impressions/conversions during the period is included
+- [ ] Cross-referenced campaign lists across all platforms
+- [ ] Verified no campaigns missed due to naming variations
+- [ ] Flagged any expected campaigns with zero activity
+
+**Data Integrity:**
+- [ ] No date gaps in the data
+- [ ] All expected report types present
+- [ ] Data freshness verified
+- [ ] Any gaps or missing data explicitly flagged in report
+
 ## Summary
 
 The executive report protocol prioritizes clarity, actionability, and strategic value:
 
-1. **Gather everything** - Comprehensive data collection ensures no blind spots
+1. **Gather EVERYTHING** - Download every email, analyze every campaign. Comprehensive data collection ensures no blind spots. You cannot be too thorough in this phase.
 2. **Prioritize ruthlessly** - Surface only what matters for executive decision-making
 3. **Lead with actions** - Structure around decisions, not data sources
 4. **Flag risks proactively** - Identify issues before they require crisis management
 5. **Keep it scannable** - Executives should grasp key points in under 2 minutes
 
-The goal is to be the executive's trusted intelligence briefing—comprehensive yet concise, strategic yet actionable.
+The goal is to be the executive's trusted intelligence briefing—comprehensive yet concise, strategic yet actionable. Thoroughness in data collection enables confidence in the conclusions.
