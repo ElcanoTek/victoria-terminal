@@ -24,6 +24,10 @@
     }
   },
   "mcp": {
+    "browseros": {
+      "type": "http",
+      "url": "${BROWSEROS_URL}"
+    },
     "motherduck": {
       "type": "stdio",
       "command": "mcp-server-motherduck",
