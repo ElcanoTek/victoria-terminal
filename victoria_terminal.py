@@ -586,6 +586,7 @@ GAMMA_ENV_KEY = "GAMMA_API_KEY"
 SENDGRID_ENV_KEY = "SENDGRID_API_KEY"
 EMAIL_ENV_KEYS = ("AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "EMAIL_S3_BUCKET")
 SNOWFLAKE_ENV_KEYS = ("SNOWFLAKE_ACCOUNT", "SNOWFLAKE_USER", "SNOWFLAKE_PASSWORD")
+BROWSEROS_ENV_KEY = "BROWSEROS_URL"
 
 
 def load_environment(
@@ -720,6 +721,10 @@ def _is_snowflake_enabled(env_map: Mapping[str, str]) -> bool:
     return all(_has_valid_env_value(env_map, key) for key in SNOWFLAKE_ENV_KEYS)
 
 
+def _is_browseros_enabled(env_map: Mapping[str, str]) -> bool:
+    return _has_valid_env_value(env_map, BROWSEROS_ENV_KEY)
+
+
 def copy_crush_local_config(
     *,
     app_home: Path = APP_HOME,
@@ -762,6 +767,9 @@ def generate_crush_config(
     if isinstance(mcp_config, dict):
         if not _is_browserbase_enabled(env_map):
             mcp_config.pop("browserbase", None)
+
+        if not _is_browseros_enabled(env_map):
+            mcp_config.pop("browseros", None)
 
         gamma_config = mcp_config.get("gamma")
         if isinstance(gamma_config, dict):
