@@ -28,7 +28,7 @@ AGENT_PORT="${BROWSEROS_AGENT_PORT:-9200}"
 EXTENSION_PORT="${BROWSEROS_EXTENSION_PORT:-9300}"
 
 # Default URL to navigate to after launch
-DEFAULT_URL="${BROWSEROS_DEFAULT_URL:-https://www.elcanotek.com/}"
+DEFAULT_URL="${BROWSEROS_DEFAULT_URL:-https://www.elcanotek.com/meet-victoria}"
 
 # macOS paths
 BROWSEROS_APP="/Applications/BrowserOS.app"
