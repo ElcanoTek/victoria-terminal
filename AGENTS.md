@@ -23,33 +23,7 @@ Victoria follows a "tires, not the car" philosophy. We build the specialized com
 
 To get started with Victoria development, you'll need to set up a Python environment and install the necessary dependencies.
 
-### Local Development Setup (Recommended)
-
-For local development, we strongly recommend using a virtual environment to isolate project dependencies. This prevents conflicts with other Python projects on your system and keeps Victoria's tooling self-contained.
-
-#### Using `pip` and `venv`
-
-1.  **Prerequisites**:
-    - Python 3.8+
-
-2.  **Setup**:
-    ```bash
-    # Clone the repository
-    git clone https://github.com/ElcanoTek/victoria-terminal.git
-    # Or use SSH
-    git clone git@github.com:ElcanoTek/victoria-terminal.git
-    cd victoria-terminal
-
-    # Create and activate a virtual environment
-    python -m venv .venv
-    source .venv/bin/activate  # On Fedora Linux
-    # .venv\Scripts\activate  # On Windows
-
-    # Install development dependencies
-    pip install -r requirements.txt
-    ```
-
-### Podman Containers
+### Podman Containers (Recommended)
 
 Victoria Terminal ships as a Podman container image that includes Python and the `crush` CLI. Developers can build it locally with `podman build -t victoria-terminal .` or run the published image from `ghcr.io/elcanotek/victoria-terminal:latest`. Mount `~/Victoria` into the container to reuse configuration created by the entry point.
 
@@ -71,10 +45,6 @@ The container setup for Victoria is intentionally designed to balance reliabilit
 -   **Root-Based Image**: The container image runs as root by default to guarantee mounted volumes remain writable regardless of host UID/GID mappings. Avoid adding a `USER` directive or runtime UID switching logic to the `Containerfile` or entrypoint.
 -   **Single-Stage Build Layout**: The `Containerfile` installs Go, Python, Helix, and all required build tooling in one stage. This keeps the image straightforward while still compiling the `crush` binary during the build. Avoid reintroducing a separate builder stage unless a future regression or dependency constraint makes it absolutely necessary.
 -   **"Always on Latest" Update Strategy**: The base image is intentionally set to `fedora:latest`. This ensures the container always benefits from the latest security patches. Builds are versioned and stored in the GitHub Container Registry, allowing for easy rollbacks if an update causes issues. Do not pin the base image to a specific version, as this would prevent automatic security updates.
-
-### Dependencies Explained
-
-- `requirements.txt`: Contains the dependencies required to run and develop the Victoria applications, including testing and formatting tools.
 
 ## Configuration & Secrets
 
@@ -98,15 +68,13 @@ The test suite is located in the `tests/` directory and uses `pytest`.
 
 To run the tests:
 
-1.  **Set up your environment**: Ensure you have installed the development dependencies from `requirements.txt` as described in the "Development Environment" section. If you are using a virtual environment, make sure it is activated.
-
-2.  **Run `pytest`**: From the root of the repository, run the following command:
+1.  **Run `pytest`**: From the root of the repository (inside the container), run:
     ```bash
     pytest
     ```
     This command will automatically discover and execute all tests in the `tests/` directory.
 
-3.  **CI Parity**: GitHub Actions runs the same `pytest` suite through the `ci.yml` workflow. You can mimic the automated lint-and-test pipeline locally with `nox -s lint tests` if you prefer matching the CI environment.
+2.  **CI Parity**: GitHub Actions runs the same `pytest` suite through the `ci.yml` workflow. You can mimic the automated lint-and-test pipeline locally with `nox -s lint tests` if you prefer matching the CI environment.
 
 ## Code Style & Conventions
 
