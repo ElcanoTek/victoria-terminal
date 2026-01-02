@@ -35,8 +35,8 @@ WORKDIR /workspace
 COPY requirements.txt ./
 RUN pip3 install --no-cache-dir -r requirements.txt
 
-# Install Node.js-based MCP servers globally
-RUN npm install -g @browserbasehq/mcp-server-browserbase
+COPY package.json ./
+RUN npm install -g $(node -e "console.log(Object.entries(require('./package.json').dependencies).map(([k,v]) => v === '*' ? k : k+'@'+v).join(' '))")
 
 COPY . .
 

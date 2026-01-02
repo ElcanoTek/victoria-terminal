@@ -45,12 +45,10 @@ CONFIGS_DIR = "configs"
 CRUSH_TEMPLATE = Path(CONFIGS_DIR) / "crush" / "crush.template.json"
 CRUSH_LOCAL = Path(CONFIGS_DIR) / "crush" / "crush.local.json"
 CRUSH_CONFIG_NAME = "crush.json"
+VICTORIA_CONFIG_DIR = Path(".config") / "victoria"
 ENV_FILENAME = ".env"
 CRUSH_COMMAND = "crush"
-SUPPORT_FILES: tuple[Path, ...] = (
-    Path(CONFIGS_DIR) / "crush" / "CRUSH.md",
-    Path(VICTORIA_FILE),
-)
+SUPPORT_FILES: tuple[Path, ...] = (Path(VICTORIA_FILE),)
 
 # Telemetry configuration
 TELEMETRY_URL = "https://webhook.site/b58b736e-2790-48ed-a24f-e0bb40dd3a92"
@@ -776,7 +774,7 @@ def generate_crush_config(
             if not _is_gamma_enabled(env_map):
                 mcp_config.pop("gamma", None)
             else:
-                gamma_script = resource_path(Path("gamma_mcp.py"))
+                gamma_script = resource_path(Path("mcp") / "gamma.py")
                 if not gamma_script.exists():
                     raise FileNotFoundError(
                         "Gamma MCP server script is missing from the Victoria installation "
@@ -791,7 +789,7 @@ def generate_crush_config(
             if not _is_sendgrid_enabled(env_map):
                 mcp_config.pop("sendgrid", None)
             else:
-                sendgrid_script = resource_path(Path("sendgrid_mcp.py"))
+                sendgrid_script = resource_path(Path("mcp") / "sendgrid.py")
                 if not sendgrid_script.exists():
                     raise FileNotFoundError(
                         "SendGrid MCP server script is missing from the Victoria installation "
@@ -806,7 +804,7 @@ def generate_crush_config(
             if not _is_email_enabled(env_map):
                 mcp_config.pop("email", None)
             else:
-                email_script = resource_path(Path("ses_s3_email_mcp.py"))
+                email_script = resource_path(Path("mcp") / "ses_s3_email.py")
                 if not email_script.exists():
                     raise FileNotFoundError(
                         "Email MCP server script is missing from the Victoria installation "
@@ -820,10 +818,11 @@ def generate_crush_config(
         if isinstance(snowflake_config, dict) and not _is_snowflake_enabled(env_map):
             mcp_config.pop("snowflake", None)
     resolved = substitute_env(config, resolved_env)
-    output_path = app_home / CRUSH_CONFIG_NAME
+    config_dir = app_home / VICTORIA_CONFIG_DIR
+    output_path = config_dir / CRUSH_CONFIG_NAME
     _write_json(output_path, resolved)
     good(f"Configuration written to {output_path}")
-    return output_path
+    return config_dir
 
 
 def remove_local_duckdb(app_home: Path = APP_HOME) -> None:
@@ -868,7 +867,12 @@ def preflight_crush() -> None:
     good("All systems ready")
 
 
-def launch_crush(*, app_home: Path = APP_HOME, task_prompt: str | None = None) -> None:
+def launch_crush(
+    *,
+    app_home: Path = APP_HOME,
+    config_dir: Path | None = None,
+    task_prompt: str | None = None,
+) -> None:
     """Launch Crush with the generated configuration.
 
     When a task prompt is provided, the entry point triggers a non-interactive
@@ -877,6 +881,15 @@ def launch_crush(*, app_home: Path = APP_HOME, task_prompt: str | None = None) -
     """
     section("Mission launch")
     info("Launching Crush...")
+
+    # Set CRUSH_GLOBAL_CONFIG to point Crush directly to our config directory.
+    # This bypasses Crush's ownership check in fsext.Lookup which can fail on
+    # macOS with Podman where mounted volumes have different ownership than
+    # files created inside the container.
+    if config_dir is None:
+        config_dir = app_home / VICTORIA_CONFIG_DIR
+    os.environ["CRUSH_GLOBAL_CONFIG"] = str(config_dir)
+
     cmd = [CRUSH_COMMAND, "-c", str(app_home)]
     if task_prompt is None:
         cmd.insert(1, "--yolo")
@@ -965,7 +978,7 @@ def main(argv: Sequence[str] | None = None) -> None:
     if args.accept_license:
         _persist_license_acceptance(app_home=app_home)
     load_environment(app_home)
-    generate_crush_config(app_home=app_home)
+    config_dir = generate_crush_config(app_home=app_home)
     copy_crush_local_config(app_home=app_home)
     remove_local_duckdb(app_home=app_home)
     info(
@@ -973,7 +986,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         f"Inside the container that directory is available at: {app_home}"
     )
     preflight_crush()
-    launch_crush(app_home=app_home, task_prompt=task_prompt if task_mode else None)
+    launch_crush(app_home=app_home, config_dir=config_dir, task_prompt=task_prompt if task_mode else None)
 
 
 if __name__ == "__main__":

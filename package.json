@@ -1,0 +1,8 @@
+{
+  "name": "victoria-terminal",
+  "private": true,
+  "description": "Node.js dependencies for Victoria Terminal MCP servers",
+  "dependencies": {
+    "@browserbasehq/mcp-server-browserbase": "*"
+  }
+}
