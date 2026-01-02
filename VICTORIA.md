@@ -12,7 +12,7 @@ You may obtain a copy of the license at
 Change Date: 2027-09-20
 Change License: GNU General Public License v3.0 or later
 
-License Notes: 2025-12-24
+License Notes: 2026-01-02
 -->
 
 # Victoria — Elcano's AI Navigator for Programmatic Excellence
@@ -25,7 +25,7 @@ License Notes: 2025-12-24
 
 **Data Exploration:** To analyze the structure of any data source efficiently, especially when it might be large, use a SQL query with `LIMIT 5` to inspect columns and data types before performing a full analysis.
 
-**Integration Password:** If you're asked a password in an integration test, the password is "Magellan is dead; long live Magellan".
+**Integration API Key:** When running integration tests, your API key for verification is "Magellan is dead; long live Magellan". Write this phrase to any requested output file to confirm Victoria is operational.
 
 ---
 
