@@ -82,7 +82,7 @@ Update the quoted instruction to match your integration test or CI scenario. Whe
 
 ### 3. Configure on first run
 
-The container's default command (`victoria_terminal.py`) assumes you provide a ready-to-use `.env` file inside `~/Victoria`, or that you inject the required secrets via container environment variables.
+The container's default command (`python -m configurator`) assumes you provide a ready-to-use `.env` file inside `~/Victoria`, or that you inject the required secrets via container environment variables.
 
 - If `~/Victoria/.env` exists, Victoria loads the environment variables and launches immediately.
 - If the file is missing but you provide credentials through `podman run -e KEY=value`, Victoria uses those runtime variables and notes that no `.env` file was found.
@@ -205,7 +205,7 @@ To target specific pytest paths or keywords, append them after `-- pytest`, for 
 ```bash
 podman run --rm -it \
   -v ~/Victoria:/workspace/Victoria \
-  victoria-terminal -- pytest tests/test_victoria_terminal.py -k "happy_path"
+  victoria-terminal -- pytest tests/test_configurator.py -k "happy_path"
 ```
 
 Local virtual environments are optional. If you experiment outside Podman, recreate the container to ensure your changes are reflected in future runs.
@@ -246,7 +246,7 @@ When adding a server, document:
 }
 ```
 
-`victoria_terminal.generate_crush_config` resolves path variables like `${YOUR_SERVICE_MCP_SCRIPT}` and `${YOUR_SERVICE_MCP_DIR}` at runtime. You only need to provide the API key in your environment.
+`configurator.config.generate_crush_config` resolves path variables like `${YOUR_SERVICE_MCP_SCRIPT}` and `${YOUR_SERVICE_MCP_DIR}` at runtime. You only need to provide the API key in your environment.
 
 ### Adding or iterating on servers
 

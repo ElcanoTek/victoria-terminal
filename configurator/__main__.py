@@ -12,7 +12,7 @@
 # Change License: GNU General Public License v3.0 or later
 # License Notes: 2026-01-02
 
-"""Entry point for python -m victoria_terminal."""
+"""Entry point for python -m configurator."""
 
 from .cli import cli_main
 

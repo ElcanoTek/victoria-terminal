@@ -12,7 +12,7 @@
 # Change License: GNU General Public License v3.0 or later
 # License Notes: 2026-01-02
 
-"""Tests for the victoria_terminal module."""
+"""Tests for the configurator module."""
 
 from __future__ import annotations
 

@@ -43,4 +43,4 @@ COPY . .
 RUN install -Dm755 container_entrypoint.sh /usr/local/bin/container-entrypoint.sh
 
 ENTRYPOINT ["/usr/local/bin/container-entrypoint.sh"]
-CMD ["python3", "/workspace/victoria_terminal.py"]
+CMD ["python3", "-m", "configurator"]

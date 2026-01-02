@@ -19,7 +19,7 @@ from pathlib import Path
 import nox
 
 PROJECT_ROOT = Path(__file__).parent
-PYTHON_FILES = ["victoria_terminal.py", "tests", "noxfile.py"]
+PYTHON_FILES = ["configurator", "tests", "noxfile.py"]
 
 nox.options.sessions = ("lint", "tests")
 nox.options.reuse_existing_virtualenvs = True

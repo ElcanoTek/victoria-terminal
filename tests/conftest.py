@@ -36,16 +36,16 @@ TEST_APP_HOME.mkdir(parents=True, exist_ok=True)
 # Import from submodules  # noqa: E402
 from email_validator import EmailNotValidError
 
-import victoria_terminal.license as license_module
-from victoria_terminal.cli import launch_crush, parse_args
-from victoria_terminal.config import (
+import configurator.license as license_module
+from configurator.cli import launch_crush, parse_args
+from configurator.config import (
     generate_crush_config,
     load_environment,
     parse_env_file,
     resource_path,
     substitute_env,
 )
-from victoria_terminal.constants import CRUSH_CONFIG_NAME, CRUSH_TEMPLATE, ENV_FILENAME
+from configurator.constants import CRUSH_CONFIG_NAME, CRUSH_TEMPLATE, ENV_FILENAME
 
 if TYPE_CHECKING:
     from typing import Any, Callable
