@@ -19,11 +19,11 @@ jobs:
     env:
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       TASK_PROMPT: |
-        Retrieve Victoria's integration API key exactly as it is documented in your VICTORIA.md briefing.
+        Retrieve Victoria's integration verification phrase exactly as documented in your VICTORIA.md briefing.
 
-        Write your reply to /workspace/Victoria/api-key-verification.txt. The response must:
-        - include the API key verbatim as recorded in VICTORIA.md
-        - state that this phrase is the API key used for integration test verification
+        Write your reply to /workspace/Victoria/verification.txt. The response must:
+        - include the verification phrase verbatim as recorded in VICTORIA.md
+        - confirm you can read the VICTORIA.md file
         - confirm Victoria is ready for further tasks
     steps:
       - name: Checkout
@@ -69,7 +69,7 @@ jobs:
       - name: Prepare Victoria home directory
         run: mkdir -p victoria-home
 
-      - name: Run API key integration check
+      - name: Run integration verification check
         env:
           IMAGE: localhost/${{ env.IMAGE_NAME }}:latest
         run: |
@@ -91,7 +91,7 @@ jobs:
             exit "${status}"
           fi
 
-          output_file="victoria-home/api-key-verification.txt"
+          output_file="victoria-home/verification.txt"
           if [ ! -f "${output_file}" ]; then
             echo "::error::Expected response file ${output_file} was not created" >&2
             exit 1
@@ -102,7 +102,7 @@ jobs:
           echo "--- end ---"
 
           if ! grep -Fq "Magellan is dead; long live Magellan" "${output_file}"; then
-            echo "::error::API key response was not found in ${output_file}" >&2
+            echo "::error::Verification phrase was not found in ${output_file}" >&2
             exit 1
           fi
 
@@ -121,11 +121,11 @@ jobs:
     env:
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       TASK_PROMPT: |
-        Retrieve Victoria's integration API key exactly as it is documented in your VICTORIA.md briefing.
+        Retrieve Victoria's integration verification phrase exactly as documented in your VICTORIA.md briefing.
 
-        Write your reply to /workspace/Victoria/api-key-verification.txt. The response must:
-        - include the API key verbatim as recorded in VICTORIA.md
-        - state that this phrase is the API key used for integration test verification
+        Write your reply to /workspace/Victoria/verification.txt. The response must:
+        - include the verification phrase verbatim as recorded in VICTORIA.md
+        - confirm you can read the VICTORIA.md file
         - confirm Victoria is ready for further tasks
     steps:
       - name: Checkout
@@ -171,7 +171,7 @@ jobs:
       - name: Prepare Victoria home directory
         run: mkdir -p victoria-home
 
-      - name: Run API key integration check (arm64)
+      - name: Run integration verification check (arm64)
         env:
           IMAGE: localhost/${{ env.IMAGE_NAME }}:latest-arm64
         run: |
@@ -193,7 +193,7 @@ jobs:
             exit "${status}"
           fi
 
-          output_file="victoria-home/api-key-verification.txt"
+          output_file="victoria-home/verification.txt"
           if [ ! -f "${output_file}" ]; then
             echo "::error::Expected response file ${output_file} was not created" >&2
             exit 1
@@ -204,7 +204,7 @@ jobs:
           echo "--- end ---"
 
           if ! grep -Fq "Magellan is dead; long live Magellan" "${output_file}"; then
-            echo "::error::API key response was not found in ${output_file}" >&2
+            echo "::error::Verification phrase was not found in ${output_file}" >&2
             exit 1
           fi
 
