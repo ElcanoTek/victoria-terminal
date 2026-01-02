@@ -90,7 +90,7 @@ The container setup for Victoria is intentionally designed to balance reliabilit
 
 ## Key Components
 
-- **Victoria Entry Point (`victoria_terminal.py`)**: Container-aware bootstrapper that synchronizes configuration from `~/Victoria`, guides first-run setup when needed, and launches the terminal experience end-to-end.
+- **Configurator Package (`configurator/`)**: Container-aware bootstrapper that synchronizes configuration from `~/Victoria`, guides first-run setup when needed, and launches the terminal experience end-to-end.
 
 ## Testing Instructions
 

@@ -13,7 +13,7 @@ target-version = ["py38"]
 [tool.isort]
 profile = "black"
 line_length = 120
-known_first_party = ["victoria_terminal"]
+known_first_party = ["configurator"]
 
 
 [tool.flake8]
@@ -22,7 +22,7 @@ extend-ignore = ["E203", "W503"]
 
 
 [tool.pytest.ini_options]
-addopts = "--timeout=60 --timeout-method=thread --strict-config --strict-markers -v --tb=short --cov=victoria_terminal --cov-report=term-missing"
+addopts = "--timeout=60 --timeout-method=thread --strict-config --strict-markers -v --tb=short --cov=configurator --cov-report=term-missing"
 timeout = 60
 minversion = "6.0"
 testpaths = ["tests"]

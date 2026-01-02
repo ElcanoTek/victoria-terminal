@@ -29,6 +29,7 @@ from .config import (
     copy_crush_local_config,
     ensure_app_home,
     generate_crush_config,
+    initialize_crush_init,
     load_environment,
     remove_cache_folders,
     remove_local_duckdb,
@@ -216,6 +217,7 @@ def main(argv: Sequence[str] | None = None) -> None:
 
     # Setup configuration
     remove_cache_folders(app_home, ui=ui)
+    initialize_crush_init(app_home, ui=ui)
     ensure_app_home(app_home, ui=ui)
 
     if args.accept_license:
