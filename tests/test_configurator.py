@@ -325,3 +325,307 @@ class TestLaunchCrush:
         assert "-q" in cmd
         prompt_index = cmd.index("-q") + 1
         assert cmd[prompt_index] == "Chart conversions"
+
+
+# =============================================================================
+# ENV VALUE VALIDATION
+# =============================================================================
+
+
+class TestHasValidEnvValue:
+    """Tests for _has_valid_env_value function."""
+
+    def test_returns_true_for_valid_value(self, module: Any) -> None:
+        env = {"API_KEY": "sk-1234567890"}
+        assert module._has_valid_env_value(env, "API_KEY") is True
+
+    def test_returns_false_for_missing_key(self, module: Any) -> None:
+        env: dict[str, str] = {}
+        assert module._has_valid_env_value(env, "API_KEY") is False
+
+    def test_returns_false_for_empty_value(self, module: Any) -> None:
+        env = {"API_KEY": ""}
+        assert module._has_valid_env_value(env, "API_KEY") is False
+
+    def test_returns_false_for_whitespace_only(self, module: Any) -> None:
+        env = {"API_KEY": "   "}
+        assert module._has_valid_env_value(env, "API_KEY") is False
+
+    def test_returns_false_for_unresolved_template(self, module: Any) -> None:
+        env = {"API_KEY": "${API_KEY}"}
+        assert module._has_valid_env_value(env, "API_KEY") is False
+
+    def test_returns_false_for_placeholder_with_brackets(self, module: Any) -> None:
+        env = {"API_KEY": "<YOUR_API_KEY>"}
+        assert module._has_valid_env_value(env, "API_KEY") is False
+
+
+# =============================================================================
+# FEATURE DETECTION
+# =============================================================================
+
+
+class TestFeatureDetection:
+    """Tests for feature detection functions."""
+
+    def test_browserbase_enabled_with_all_keys(self, module: Any) -> None:
+        env = {
+            "BROWSERBASE_API_KEY": "bb-key",
+            "BROWSERBASE_PROJECT_ID": "project-123",
+            "GEMINI_API_KEY": "gemini-key",
+        }
+        assert module._is_browserbase_enabled(env) is True
+
+    def test_browserbase_disabled_missing_keys(self, module: Any) -> None:
+        env = {"BROWSERBASE_API_KEY": "bb-key"}
+        assert module._is_browserbase_enabled(env) is False
+
+    def test_gamma_enabled_with_key(self, module: Any) -> None:
+        env = {"GAMMA_API_KEY": "gamma-key"}
+        assert module._is_gamma_enabled(env) is True
+
+    def test_gamma_disabled_without_key(self, module: Any) -> None:
+        env: dict[str, str] = {}
+        assert module._is_gamma_enabled(env) is False
+
+    def test_sendgrid_enabled_with_key(self, module: Any) -> None:
+        env = {"SENDGRID_API_KEY": "sg-key"}
+        assert module._is_sendgrid_enabled(env) is True
+
+    def test_sendgrid_disabled_without_key(self, module: Any) -> None:
+        env: dict[str, str] = {}
+        assert module._is_sendgrid_enabled(env) is False
+
+    def test_email_enabled_with_all_keys(self, module: Any) -> None:
+        env = {
+            "AWS_ACCESS_KEY_ID": "aws-key",
+            "AWS_SECRET_ACCESS_KEY": "aws-secret",
+            "EMAIL_S3_BUCKET": "my-bucket",
+        }
+        assert module._is_email_enabled(env) is True
+
+    def test_email_disabled_missing_keys(self, module: Any) -> None:
+        env = {"AWS_ACCESS_KEY_ID": "aws-key"}
+        assert module._is_email_enabled(env) is False
+
+    def test_snowflake_enabled_with_all_keys(self, module: Any) -> None:
+        env = {
+            "SNOWFLAKE_ACCOUNT": "account",
+            "SNOWFLAKE_USER": "user",
+            "SNOWFLAKE_PASSWORD": "password",
+        }
+        assert module._is_snowflake_enabled(env) is True
+
+    def test_snowflake_disabled_missing_keys(self, module: Any) -> None:
+        env = {"SNOWFLAKE_ACCOUNT": "account"}
+        assert module._is_snowflake_enabled(env) is False
+
+    def test_browseros_enabled_with_key(self, module: Any) -> None:
+        env = {"BROWSEROS_URL": "http://localhost:8000"}
+        assert module._is_browseros_enabled(env) is True
+
+    def test_browseros_disabled_without_key(self, module: Any) -> None:
+        env: dict[str, str] = {}
+        assert module._is_browseros_enabled(env) is False
+
+
+# =============================================================================
+# JSON UTILITIES
+# =============================================================================
+
+
+class TestJsonUtilities:
+    """Tests for JSON read/write utilities."""
+
+    def test_write_and_read_json(self, victoria_home: Path, module: Any) -> None:
+        data = {"key": "value", "nested": {"list": [1, 2, 3]}}
+        json_path = victoria_home / "test.json"
+
+        module._write_json(json_path, data)
+        result = module._read_json(json_path)
+
+        assert result == data
+
+    def test_write_json_creates_parent_dirs(self, victoria_home: Path, module: Any) -> None:
+        data = {"test": True}
+        json_path = victoria_home / "nested" / "dir" / "test.json"
+
+        module._write_json(json_path, data)
+
+        assert json_path.exists()
+        assert module._read_json(json_path) == data
+
+    def test_read_json_handles_bom(self, victoria_home: Path, module: Any) -> None:
+        # Write a JSON file with BOM prefix
+        json_path = victoria_home / "bom.json"
+        content = b'\xef\xbb\xbf{"key": "value"}'
+        json_path.write_bytes(content)
+
+        result = module._read_json(json_path)
+
+        assert result == {"key": "value"}
+
+
+# =============================================================================
+# FILE OPERATIONS
+# =============================================================================
+
+
+class TestFileOperations:
+    """Tests for file system operations."""
+
+    def test_resource_path_resolves_path(self, module: Any) -> None:
+        result = module.resource_path(Path("configs") / "crush" / "crush.template.json")
+        assert result.name == "crush.template.json"
+
+    def test_resource_path_accepts_string(self, module: Any) -> None:
+        result = module.resource_path("LICENSE")
+        assert result.name == "LICENSE"
+
+    def test_ensure_app_home_creates_directory(self, victoria_home: Path, module: Any) -> None:
+        new_home = victoria_home / "new_home"
+        assert not new_home.exists()
+
+        module.ensure_app_home(new_home)
+
+        assert new_home.exists()
+        assert new_home.is_dir()
+
+    def test_initialize_crush_init_creates_marker(self, victoria_home: Path, module: Any) -> None:
+        init_file = module.initialize_crush_init(victoria_home)
+
+        assert init_file.exists()
+        assert init_file.parent.name == ".crush"
+        assert init_file.name == "init"
+
+    def test_remove_local_duckdb_removes_file(self, victoria_home: Path, module: Any) -> None:
+        db_path = victoria_home / "adtech.duckdb"
+        db_path.touch()
+        assert db_path.exists()
+
+        module.remove_local_duckdb(victoria_home)
+
+        assert not db_path.exists()
+
+    def test_remove_local_duckdb_handles_missing_file(self, victoria_home: Path, module: Any) -> None:
+        # Should not raise when file doesn't exist
+        module.remove_local_duckdb(victoria_home)
+
+    def test_remove_cache_folders_removes_dirs(self, victoria_home: Path, module: Any) -> None:
+        crush_dir = victoria_home / ".crush"
+        local_dir = victoria_home / ".local"
+        crush_dir.mkdir()
+        local_dir.mkdir()
+        (crush_dir / "file.txt").touch()
+        (local_dir / "file.txt").touch()
+
+        module.remove_cache_folders(victoria_home)
+
+        assert not crush_dir.exists()
+        assert not local_dir.exists()
+
+    def test_remove_cache_folders_handles_missing_dirs(self, victoria_home: Path, module: Any) -> None:
+        # Should not raise when directories don't exist
+        module.remove_cache_folders(victoria_home)
+
+
+# =============================================================================
+# LICENSE FUNCTIONS
+# =============================================================================
+
+
+class TestLicenseAcceptance:
+    """Tests for license acceptance functions."""
+
+    def test_is_license_accepted_from_env(
+        self, monkeypatch: pytest.MonkeyPatch, victoria_home: Path, module: Any
+    ) -> None:
+        monkeypatch.setenv(module.LICENSE_ACCEPTANCE_KEY, "yes")
+
+        assert module.is_license_accepted(victoria_home) is True
+
+    def test_is_license_accepted_with_true_value(
+        self, monkeypatch: pytest.MonkeyPatch, victoria_home: Path, module: Any
+    ) -> None:
+        monkeypatch.setenv(module.LICENSE_ACCEPTANCE_KEY, "true")
+
+        assert module.is_license_accepted(victoria_home) is True
+
+    def test_is_license_accepted_with_1_value(
+        self, monkeypatch: pytest.MonkeyPatch, victoria_home: Path, module: Any
+    ) -> None:
+        monkeypatch.setenv(module.LICENSE_ACCEPTANCE_KEY, "1")
+
+        assert module.is_license_accepted(victoria_home) is True
+
+    def test_is_license_not_accepted_when_empty(
+        self, monkeypatch: pytest.MonkeyPatch, victoria_home: Path, module: Any
+    ) -> None:
+        monkeypatch.delenv(module.LICENSE_ACCEPTANCE_KEY, raising=False)
+
+        assert module.is_license_accepted(victoria_home) is False
+
+    def test_is_license_accepted_from_env_file(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        victoria_home: Path,
+        env_file: "Callable[[str], Path]",
+        module: Any,
+    ) -> None:
+        monkeypatch.delenv(module.LICENSE_ACCEPTANCE_KEY, raising=False)
+        env_file(f"{module.LICENSE_ACCEPTANCE_KEY}=yes\n")
+
+        assert module.is_license_accepted(victoria_home) is True
+
+    def test_persist_license_acceptance_creates_env_file(
+        self, monkeypatch: pytest.MonkeyPatch, victoria_home: Path, module: Any
+    ) -> None:
+        monkeypatch.delenv(module.LICENSE_ACCEPTANCE_KEY, raising=False)
+        env_path = victoria_home / module.ENV_FILENAME
+        assert not env_path.exists()
+
+        module.persist_license_acceptance(victoria_home)
+
+        assert env_path.exists()
+        content = env_path.read_text()
+        assert module.LICENSE_ACCEPTANCE_KEY in content
+        assert "yes" in content
+
+    def test_persist_license_acceptance_updates_env_var(
+        self, monkeypatch: pytest.MonkeyPatch, victoria_home: Path, module: Any
+    ) -> None:
+        monkeypatch.delenv(module.LICENSE_ACCEPTANCE_KEY, raising=False)
+
+        module.persist_license_acceptance(victoria_home)
+
+        assert module.os.environ[module.LICENSE_ACCEPTANCE_KEY] == "yes"
+
+
+# =============================================================================
+# CLI ERROR HANDLING
+# =============================================================================
+
+
+class TestGetAppHome:
+    """Tests for get_app_home function."""
+
+    def test_returns_path_when_set(self, monkeypatch: pytest.MonkeyPatch, victoria_home: Path, module: Any) -> None:
+        monkeypatch.setenv("VICTORIA_HOME", str(victoria_home))
+
+        result = module.get_app_home()
+
+        assert result == victoria_home
+
+    def test_raises_when_not_set(self, monkeypatch: pytest.MonkeyPatch, module: Any) -> None:
+        monkeypatch.delenv("VICTORIA_HOME", raising=False)
+
+        with pytest.raises(RuntimeError, match="VICTORIA_HOME must be set"):
+            module.get_app_home()
+
+    def test_expands_user_home(self, monkeypatch: pytest.MonkeyPatch, module: Any) -> None:
+        monkeypatch.setenv("VICTORIA_HOME", "~/Victoria")
+
+        result = module.get_app_home()
+
+        assert "~" not in str(result)
+        assert result.is_absolute()
