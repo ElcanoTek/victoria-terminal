@@ -34,18 +34,18 @@ os.environ.setdefault("VICTORIA_HOME", str(TEST_APP_HOME))
 TEST_APP_HOME.mkdir(parents=True, exist_ok=True)
 
 # Import from submodules  # noqa: E402
-from email_validator import EmailNotValidError
+from email_validator import EmailNotValidError  # noqa: E402
 
-import configurator.license as license_module
-from configurator.cli import launch_crush, parse_args
-from configurator.config import (
+import configurator.license as license_module  # noqa: E402
+from configurator.cli import launch_crush, parse_args  # noqa: E402
+from configurator.config import (  # noqa: E402
     generate_crush_config,
     load_environment,
     parse_env_file,
     resource_path,
     substitute_env,
 )
-from configurator.constants import CRUSH_CONFIG_NAME, CRUSH_TEMPLATE, ENV_FILENAME
+from configurator.constants import CRUSH_CONFIG_NAME, CRUSH_TEMPLATE, ENV_FILENAME  # noqa: E402
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -104,9 +104,7 @@ def crush_template() -> Path:
 
 
 @pytest.fixture
-def generated_config(
-    victoria_home: Path, crush_template: Path
-) -> Callable[[dict[str, str]], dict[str, Any]]:
+def generated_config(victoria_home: Path, crush_template: Path) -> Callable[[dict[str, str]], dict[str, Any]]:
     """Factory fixture to generate crush config and return parsed JSON."""
 
     def _generate(env_values: dict[str, str]) -> dict[str, Any]:

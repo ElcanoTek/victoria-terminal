@@ -37,9 +37,7 @@ LICENSE_ACCEPTANCE_KEY = "VICTORIA_LICENSE_ACCEPTED"
 LICENSE_ACCEPTED_VALUES = {"yes", "true", "1", "accepted"}
 LICENSE_NOTICE_TITLE = "Victoria Terminal License Agreement"
 LICENSE_FILE_NAME = "LICENSE"
-LICENSE_NOTICE_REMINDER = (
-    "You must accept these terms to continue. Type 'accept' to agree or 'decline' to exit."
-)
+LICENSE_NOTICE_REMINDER = "You must accept these terms to continue. Type 'accept' to agree or 'decline' to exit."
 LICENSE_ACCEPT_PROMPT = "Type 'accept' to agree or 'decline' to exit: "
 
 # Telemetry configuration
