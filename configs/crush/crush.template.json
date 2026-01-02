@@ -31,7 +31,7 @@
     "motherduck": {
       "type": "stdio",
       "command": "mcp-server-motherduck",
-      "args": ["--db-path", "${VICTORIA_HOME}/adtech.duckdb"]
+      "args": ["--db-path", "${VICTORIA_HOME}/.adtech.duckdb"]
     },
     "browserbase": {
       "type": "stdio",

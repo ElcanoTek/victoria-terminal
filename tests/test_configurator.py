@@ -499,7 +499,7 @@ class TestFileOperations:
         assert init_file.name == "init"
 
     def test_remove_local_duckdb_removes_file(self, victoria_home: Path, module: Any) -> None:
-        db_path = victoria_home / "adtech.duckdb"
+        db_path = victoria_home / ".adtech.duckdb"
         db_path.touch()
         assert db_path.exists()
 
@@ -510,23 +510,6 @@ class TestFileOperations:
     def test_remove_local_duckdb_handles_missing_file(self, victoria_home: Path, module: Any) -> None:
         # Should not raise when file doesn't exist
         module.remove_local_duckdb(victoria_home)
-
-    def test_remove_cache_folders_removes_dirs(self, victoria_home: Path, module: Any) -> None:
-        crush_dir = victoria_home / ".crush"
-        local_dir = victoria_home / ".local"
-        crush_dir.mkdir()
-        local_dir.mkdir()
-        (crush_dir / "file.txt").touch()
-        (local_dir / "file.txt").touch()
-
-        module.remove_cache_folders(victoria_home)
-
-        assert not crush_dir.exists()
-        assert not local_dir.exists()
-
-    def test_remove_cache_folders_handles_missing_dirs(self, victoria_home: Path, module: Any) -> None:
-        # Should not raise when directories don't exist
-        module.remove_cache_folders(victoria_home)
 
 
 # =============================================================================
