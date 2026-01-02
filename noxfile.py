@@ -39,5 +39,13 @@ def lint(session: nox.Session) -> None:
 def tests(session: nox.Session) -> None:
     """Execute the pytest suite."""
 
-    session.install("pytest", "rich", "python-dotenv", "email-validator", "requests")
+    session.install(
+        "pytest",
+        "pytest-timeout",
+        "pytest-cov",
+        "rich",
+        "python-dotenv",
+        "email-validator",
+        "requests",
+    )
     session.run("pytest", *session.posargs)
