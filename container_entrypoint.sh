@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-DEFAULT_CMD=("python3" "/workspace/victoria_terminal.py")
+DEFAULT_CMD=("python3" "-m" "victoria_terminal")
 
 configure_runtime_environment() {
     if [[ -z "${VICTORIA_HOME:-}" ]]; then

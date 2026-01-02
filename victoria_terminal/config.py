@@ -348,3 +348,22 @@ def remove_cache_folders(app_home: Path, *, ui: Any = None) -> None:
         except Exception as exc:  # pragma: no cover
             if ui:
                 ui.warn(f"Could not remove {dir_path}: {exc}")
+
+
+def initialize_crush_init(app_home: Path, *, ui: Any = None) -> Path:
+    """Create the .crush/init marker so crush skips project initialization prompts.
+
+    Args:
+        app_home: The Victoria home directory.
+        ui: Optional UI instance for displaying messages.
+
+    Returns:
+        Path to the created init file.
+    """
+    crush_dir = app_home / ".crush"
+    crush_dir.mkdir(parents=True, exist_ok=True)
+    init_file = crush_dir / "init"
+    init_file.touch(exist_ok=True)
+    if ui:
+        ui.info(f"Initialized crush project marker at {init_file}")
+    return init_file
