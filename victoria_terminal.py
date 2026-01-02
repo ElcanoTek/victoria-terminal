@@ -777,7 +777,7 @@ def generate_crush_config(
             if not _is_gamma_enabled(env_map):
                 mcp_config.pop("gamma", None)
             else:
-                gamma_script = resource_path(Path("gamma_mcp.py"))
+                gamma_script = resource_path(Path("mcp") / "gamma.py")
                 if not gamma_script.exists():
                     raise FileNotFoundError(
                         "Gamma MCP server script is missing from the Victoria installation "
@@ -792,7 +792,7 @@ def generate_crush_config(
             if not _is_sendgrid_enabled(env_map):
                 mcp_config.pop("sendgrid", None)
             else:
-                sendgrid_script = resource_path(Path("sendgrid_mcp.py"))
+                sendgrid_script = resource_path(Path("mcp") / "sendgrid.py")
                 if not sendgrid_script.exists():
                     raise FileNotFoundError(
                         "SendGrid MCP server script is missing from the Victoria installation "
@@ -807,7 +807,7 @@ def generate_crush_config(
             if not _is_email_enabled(env_map):
                 mcp_config.pop("email", None)
             else:
-                email_script = resource_path(Path("ses_s3_email_mcp.py"))
+                email_script = resource_path(Path("mcp") / "ses_s3_email.py")
                 if not email_script.exists():
                     raise FileNotFoundError(
                         "Email MCP server script is missing from the Victoria installation "

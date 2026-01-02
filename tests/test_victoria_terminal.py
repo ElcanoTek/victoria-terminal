@@ -216,7 +216,7 @@ def test_generate_crush_config_includes_gamma_when_configured(tmp_path: Path) ->
     data = json.loads(output.read_text(encoding="utf-8"))
 
     gamma_config = data["mcp"]["gamma"]
-    gamma_script = entrypoint.resource_path(Path("gamma_mcp.py"))
+    gamma_script = entrypoint.resource_path(Path("mcp") / "gamma.py")
 
     assert gamma_config["command"] == "python3"
     assert gamma_config["args"] == [str(gamma_script)]
