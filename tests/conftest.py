@@ -27,12 +27,12 @@ import pytest
 # Ensure the project root is importable for tests without packaging the module.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-# Set VICTORIA_HOME before importing the module (it caches APP_HOME at import time)
+# Set VICTORIA_HOME before importing the module (it may be needed at import time)
 TEST_APP_HOME = Path(__file__).resolve().parent / ".victoria-test-home"
 os.environ.setdefault("VICTORIA_HOME", str(TEST_APP_HOME))
 TEST_APP_HOME.mkdir(parents=True, exist_ok=True)
 
-# Now import the module
+# Import the package (uses backwards-compatible wrapper)
 import victoria_terminal as entrypoint  # noqa: E402
 
 if TYPE_CHECKING:
@@ -84,7 +84,8 @@ def generated_config(
             env=env_values,
             template_path=crush_template,
         )
-        output = config_dir / module.CRUSH_CONFIG_NAME
+        from victoria_terminal.constants import CRUSH_CONFIG_NAME
+        output = config_dir / CRUSH_CONFIG_NAME
         return json.loads(output.read_text(encoding="utf-8"))
 
     return _generate
@@ -108,26 +109,38 @@ def mock_requests_post(
     monkeypatch: pytest.MonkeyPatch, module: Any
 ) -> list[dict[str, Any]]:
     """Mock requests.post and capture payloads."""
+    import victoria_terminal.license as license_module
+
     payloads: list[dict[str, Any]] = []
 
     def fake_post(url: str, json: dict[str, Any], timeout: int) -> None:
         payloads.append(dict(json))
 
+    # Patch in both locations for backwards compatibility
     monkeypatch.setattr(module.requests, "post", fake_post)
+    monkeypatch.setattr(license_module.requests, "post", fake_post)
     return payloads
 
 
 @pytest.fixture
 def mock_email_valid(monkeypatch: pytest.MonkeyPatch, module: Any) -> None:
     """Mock email validation to always succeed."""
-    monkeypatch.setattr(module, "validate_email", lambda *args, **kwargs: None)
+    import victoria_terminal.license as license_module
+
+    fake_validate = lambda *args, **kwargs: None
+    # Patch in both locations for backwards compatibility
+    monkeypatch.setattr(module, "validate_email", fake_validate)
+    monkeypatch.setattr(license_module, "validate_email", fake_validate)
 
 
 @pytest.fixture
 def mock_email_invalid(monkeypatch: pytest.MonkeyPatch, module: Any) -> None:
     """Mock email validation to always fail."""
+    import victoria_terminal.license as license_module
 
     def always_fail(*args: object, **kwargs: object) -> None:
         raise module.EmailNotValidError("invalid")
 
+    # Patch in both locations for backwards compatibility
     monkeypatch.setattr(module, "validate_email", always_fail)
+    monkeypatch.setattr(license_module, "validate_email", always_fail)
