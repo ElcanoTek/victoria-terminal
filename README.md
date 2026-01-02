@@ -70,12 +70,12 @@ The guided installer checks for Podman, ensures your `~/Victoria` workspace exis
 
 **macOS / Linux**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ElcanoTek/victoria-terminal/main/install_victoria.sh | bash
+curl -fsSL https://raw.githubusercontent.com/ElcanoTek/victoria-terminal/main/scripts/install_victoria.sh | bash
 ```
 
 **Windows (PowerShell)**
 ```powershell
-& ([scriptblock]::Create((irm 'https://raw.githubusercontent.com/ElcanoTek/victoria-terminal/main/install_victoria.ps1')))
+& ([scriptblock]::Create((irm 'https://raw.githubusercontent.com/ElcanoTek/victoria-terminal/main/scripts/install_victoria.ps1')))
 ```
 
 After the installer finishes, open a new terminal session (or reload your profile) and start Victoria:
