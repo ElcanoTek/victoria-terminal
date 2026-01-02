@@ -48,10 +48,7 @@ CRUSH_CONFIG_NAME = "crush.json"
 VICTORIA_CONFIG_DIR = Path(".config") / "victoria"
 ENV_FILENAME = ".env"
 CRUSH_COMMAND = "crush"
-SUPPORT_FILES: tuple[Path, ...] = (
-    Path(CONFIGS_DIR) / "crush" / "CRUSH.md",
-    Path(VICTORIA_FILE),
-)
+SUPPORT_FILES: tuple[Path, ...] = (Path(VICTORIA_FILE),)
 
 # Telemetry configuration
 TELEMETRY_URL = "https://webhook.site/b58b736e-2790-48ed-a24f-e0bb40dd3a92"
