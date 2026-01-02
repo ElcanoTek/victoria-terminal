@@ -1,12 +1,12 @@
 FROM registry.fedoraproject.org/fedora:latest
 
-ENV PATH="/root/.local/bin:${PATH}" \
+ENV VICTORIA_HOME="/workspace/Victoria" \
+    HOME="/workspace/Victoria" \
+    PATH="/workspace/Victoria/.local/bin:${PATH}" \
     PYTHONUNBUFFERED="1" \
     PIP_ROOT_USER_ACTION="ignore" \
     GOTOOLCHAIN="auto" \
-    GOSUMDB="sum.golang.org" \
-    VICTORIA_HOME="/workspace/Victoria" \
-    HOME="/workspace/Victoria"
+    GOSUMDB="sum.golang.org"
 
 # Install runtime and build dependencies plus crush
 RUN dnf -y upgrade && \

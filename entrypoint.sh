@@ -1,16 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Ensure the user home directory exists (may be a mounted volume)
+# Ensure home directory exists (may be a mounted volume)
 mkdir -p "${HOME}"
 
-# Add user's local bin to PATH if not already present
-case ":${PATH}:" in
-    *:"${HOME}/.local/bin":*) ;;
-    *) export PATH="${HOME}/.local/bin:${PATH}" ;;
-esac
-
-# Default command when none provided
 DEFAULT_CMD=("python3" "-m" "configurator")
 
 # No arguments: run default command
