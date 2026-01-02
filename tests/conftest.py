@@ -149,7 +149,9 @@ def crush_template() -> Path:
 
 
 @pytest.fixture
-def generated_config(victoria_home: Path, crush_template: Path, monkeypatch: pytest.MonkeyPatch) -> Callable[[dict[str, str]], dict[str, Any]]:
+def generated_config(
+    victoria_home: Path, crush_template: Path, monkeypatch: pytest.MonkeyPatch
+) -> Callable[[dict[str, str]], dict[str, Any]]:
     """Factory fixture to generate crush config and return parsed JSON."""
 
     def _generate(env_values: dict[str, str]) -> dict[str, Any]:

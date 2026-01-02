@@ -64,17 +64,39 @@ The container setup for Victoria is intentionally designed to balance reliabilit
 
 ## Testing Instructions
 
-The test suite is located in the `tests/` directory and uses `pytest`.
+**IMPORTANT**: Before making ANY code changes, always run the full linting and test suite to ensure your changes don't break existing functionality.
 
-To run the tests:
+### Required Pre-Change Check
 
-1.  **Run `pytest`**: From the root of the repository (inside the container), run:
+```bash
+nox -s lint tests
+```
+
+This command runs:
+- **Linting** (`black`, `isort`, `flake8`) to ensure code style compliance
+- **Tests** (`pytest`) to verify all functionality works correctly
+
+**All agents must run this command and ensure it passes before:**
+- Making any code changes
+- Creating commits
+- Submitting pull requests
+
+### Individual Test Commands
+
+If you need to run components separately:
+
+1.  **Run `pytest` only**: From the root of the repository (inside the container), run:
     ```bash
     pytest
     ```
     This command will automatically discover and execute all tests in the `tests/` directory.
 
-2.  **CI Parity**: GitHub Actions runs the same `pytest` suite through the `ci.yml` workflow. You can mimic the automated lint-and-test pipeline locally with `nox -s lint tests` if you prefer matching the CI environment.
+2.  **Run linting only**:
+    ```bash
+    nox -s lint
+    ```
+
+3.  **CI Parity**: GitHub Actions runs the same `nox -s lint tests` suite through the `ci.yml` workflow.
 
 ## Code Style & Conventions
 
@@ -96,8 +118,7 @@ To run the tests:
 
 - **Title Format**: `[Component] Brief description of changes` (e.g., `[VictoriaTerminal] Add support for new data source`).
 - **Description**: Provide a clear and concise description of the changes.
-- **Testing**: Ensure all tests pass before submitting a pull request.
-- **Linting**: Run `nox -s lint` and resolve any issues before creating a pull request.
+- **PRE-SUBMISSION REQUIREMENT**: **ALWAYS** run `nox -s lint tests` and ensure both sessions pass successfully before creating a pull request. Do not submit pull requests with failing linting or tests.
 - **Code Review**: All pull requests must be reviewed and approved by at least one other team member.
 
 
