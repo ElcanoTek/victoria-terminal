@@ -31,7 +31,6 @@ from .config import (
     generate_crush_config,
     initialize_crush_init,
     load_environment,
-    remove_cache_folders,
     remove_local_duckdb,
 )
 from .constants import CRUSH_COMMAND, __version__
@@ -134,19 +133,17 @@ def launch_crush(
 
     Args:
         app_home: The Victoria home directory.
-        config_dir: Path to the config directory (defaults to app_home/.config/victoria).
+        config_dir: Path to the config directory (defaults to home directory).
         task_prompt: If provided, run in non-interactive task mode.
         ui: Optional UI instance for displaying messages.
     """
-    from .constants import VICTORIA_CONFIG_DIR
-
     if ui:
         ui.section("Mission launch")
         ui.info("Launching Crush...")
 
     # Set CRUSH_GLOBAL_CONFIG to point Crush directly to our config directory
     if config_dir is None:
-        config_dir = app_home / VICTORIA_CONFIG_DIR
+        config_dir = Path.home()
     os.environ["CRUSH_GLOBAL_CONFIG"] = str(config_dir)
 
     cmd = [CRUSH_COMMAND, "-c", str(app_home)]
@@ -216,7 +213,6 @@ def main(argv: Sequence[str] | None = None) -> None:
         ui.clear()
 
     # Setup configuration
-    remove_cache_folders(app_home, ui=ui)
     initialize_crush_init(app_home, ui=ui)
     ensure_app_home(app_home, ui=ui)
 

@@ -54,7 +54,6 @@ from configurator.config import (  # noqa: E402
     initialize_crush_init,
     load_environment,
     parse_env_file,
-    remove_cache_folders,
     remove_local_duckdb,
     resource_path,
     substitute_env,
@@ -97,7 +96,6 @@ def module() -> SimpleNamespace:
         ensure_app_home=ensure_app_home,
         copy_crush_local_config=copy_crush_local_config,
         remove_local_duckdb=remove_local_duckdb,
-        remove_cache_folders=remove_cache_folders,
         initialize_crush_init=initialize_crush_init,
         # JSON utilities
         _read_json=_read_json,
@@ -151,11 +149,13 @@ def crush_template() -> Path:
 
 
 @pytest.fixture
-def generated_config(victoria_home: Path, crush_template: Path) -> Callable[[dict[str, str]], dict[str, Any]]:
+def generated_config(victoria_home: Path, crush_template: Path, monkeypatch: pytest.MonkeyPatch) -> Callable[[dict[str, str]], dict[str, Any]]:
     """Factory fixture to generate crush config and return parsed JSON."""
 
     def _generate(env_values: dict[str, str]) -> dict[str, Any]:
         env_values.setdefault("VICTORIA_HOME", str(victoria_home))
+        # Mock Path.home() to use victoria_home for tests
+        monkeypatch.setattr(Path, "home", lambda: victoria_home)
         config_dir = generate_crush_config(
             app_home=victoria_home,
             env=env_values,

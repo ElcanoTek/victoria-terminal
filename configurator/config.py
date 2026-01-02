@@ -281,14 +281,14 @@ def generate_crush_config(
             mcp_config.pop("snowflake", None)
 
     resolved = substitute_env(config, resolved_env)
-    config_dir = app_home / VICTORIA_CONFIG_DIR
-    output_path = config_dir / CRUSH_CONFIG_NAME
+    home_dir = Path.home()
+    output_path = home_dir / CRUSH_CONFIG_NAME
     _write_json(output_path, resolved)
 
     if ui:
         ui.good(f"Configuration written to {output_path}")
 
-    return config_dir
+    return home_dir
 
 
 def copy_crush_local_config(
@@ -302,7 +302,8 @@ def copy_crush_local_config(
     if not local_config.exists():
         raise FileNotFoundError(f"Missing Crush local config at {local_config}")
 
-    crush_config_dir = app_home / ".local" / "share" / "crush"
+    home_dir = Path.home()
+    crush_config_dir = home_dir / ".local" / "share" / "crush"
     crush_config_dir.mkdir(parents=True, exist_ok=True)
 
     dest_path = crush_config_dir / CRUSH_CONFIG_NAME
@@ -318,7 +319,7 @@ def copy_crush_local_config(
 
 def remove_local_duckdb(app_home: Path, *, ui: Any = None) -> None:
     """Remove the cached DuckDB file so each run starts fresh."""
-    db_path = app_home / "adtech.duckdb"
+    db_path = app_home / ".adtech.duckdb"
     try:
         if db_path.exists():
             db_path.unlink()
@@ -327,21 +328,6 @@ def remove_local_duckdb(app_home: Path, *, ui: Any = None) -> None:
     except Exception as exc:  # pragma: no cover
         if ui:
             ui.warn(f"Could not remove {db_path}: {exc}")
-
-
-def remove_cache_folders(app_home: Path, *, ui: Any = None) -> None:
-    """Remove .crush and .local cache folders so each run starts fresh."""
-    cache_dirs = [".crush", ".local"]
-    for dir_name in cache_dirs:
-        dir_path = app_home / dir_name
-        try:
-            if dir_path.exists():
-                shutil.rmtree(dir_path)
-                if ui:
-                    ui.info(f"Removed cache folder: {dir_path}")
-        except Exception as exc:  # pragma: no cover
-            if ui:
-                ui.warn(f"Could not remove {dir_path}: {exc}")
 
 
 def initialize_crush_init(app_home: Path, *, ui: Any = None) -> Path:
