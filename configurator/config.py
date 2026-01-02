@@ -40,7 +40,6 @@ from .constants import (
     SENDGRID_ENV_KEY,
     SNOWFLAKE_ENV_KEYS,
     SUPPORT_FILES,
-    VICTORIA_CONFIG_DIR,
     VICTORIA_FILE,
 )
 
