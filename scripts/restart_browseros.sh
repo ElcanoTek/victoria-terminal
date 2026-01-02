@@ -27,6 +27,9 @@ CDP_PORT="${BROWSEROS_CDP_PORT:-9000}"
 AGENT_PORT="${BROWSEROS_AGENT_PORT:-9200}"
 EXTENSION_PORT="${BROWSEROS_EXTENSION_PORT:-9300}"
 
+# Default URL to navigate to after launch
+DEFAULT_URL="${BROWSEROS_DEFAULT_URL:-https://www.elcanotek.com/}"
+
 # macOS paths
 BROWSEROS_APP="/Applications/BrowserOS.app"
 
@@ -56,6 +59,7 @@ Options:
   --install     Install this script as 'restart-browseros' command
   --kill-ports  Kill processes using target ports without prompting
   --no-start    Kill BrowserOS but don't restart it
+  --url URL     URL to navigate to after launch (default: https://www.elcanotek.com/)
   -h, --help    Show this help message
 
 Environment Variables:
@@ -63,10 +67,12 @@ Environment Variables:
   BROWSEROS_CDP_PORT        CDP port (default: 9000)
   BROWSEROS_AGENT_PORT      Agent port (default: 9200)
   BROWSEROS_EXTENSION_PORT  Extension port (default: 9300)
+  BROWSEROS_DEFAULT_URL     URL to navigate to (default: https://www.elcanotek.com/)
 
 Examples:
-  restart-browseros                    # Normal restart
+  restart-browseros                    # Normal restart, opens elcanotek.com
   restart-browseros --kill-ports       # Kill port conflicts without asking
+  restart-browseros --url https://example.com  # Navigate to custom URL
   BROWSEROS_MCP_PORT=9200 restart-browseros  # Use custom port
 USAGE
 }
@@ -162,6 +168,7 @@ prompt_kill_port() {
 # Parse arguments
 KILL_PORTS=false
 NO_START=false
+NAVIGATE_URL="$DEFAULT_URL"
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -175,6 +182,15 @@ while [ $# -gt 0 ]; do
     --no-start)
       NO_START=true
       shift
+      ;;
+    --url)
+      if [ -n "${2:-}" ]; then
+        NAVIGATE_URL="$2"
+        shift 2
+      else
+        error "--url requires a URL argument"
+        exit 1
+      fi
       ;;
     -h|--help)
       usage
@@ -242,16 +258,19 @@ log "  MCP:       $MCP_PORT"
 log "  CDP:       $CDP_PORT"
 log "  Agent:     $AGENT_PORT"
 log "  Extension: $EXTENSION_PORT"
+log "  URL:       $NAVIGATE_URL"
 
 if [ -d "$BROWSEROS_APP" ]; then
-  # Launch BrowserOS with port flags
+  # Launch BrowserOS with port flags and navigate to URL
   open "$BROWSEROS_APP" --args \
     --browseros-mcp-port="$MCP_PORT" \
     --browseros-cdp-port="$CDP_PORT" \
     --browseros-agent-port="$AGENT_PORT" \
-    --browseros-extension-port="$EXTENSION_PORT"
+    --browseros-extension-port="$EXTENSION_PORT" \
+    "$NAVIGATE_URL"
   
   success "BrowserOS launched with fixed ports"
+  success "Navigating to: $NAVIGATE_URL"
 else
   error "BrowserOS.app not found at $BROWSEROS_APP"
   log "Please install BrowserOS from https://browseros.com"
