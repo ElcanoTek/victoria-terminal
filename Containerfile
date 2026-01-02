@@ -1,8 +1,6 @@
 FROM registry.fedoraproject.org/fedora:latest
 
 ENV VICTORIA_HOME="/workspace/Victoria" \
-    HOME="/workspace/Victoria" \
-    PATH="/workspace/Victoria/.local/bin:${PATH}" \
     PYTHONUNBUFFERED="1" \
     PIP_ROOT_USER_ACTION="ignore" \
     GOTOOLCHAIN="auto" \

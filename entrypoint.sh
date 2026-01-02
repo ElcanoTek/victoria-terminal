@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Ensure home directory exists (may be a mounted volume)
-mkdir -p "${HOME}"
+# Ensure Victoria directory exists (may be a mounted volume)
+mkdir -p "${VICTORIA_HOME}"
 
 DEFAULT_CMD=("python3" "-m" "configurator")
 
