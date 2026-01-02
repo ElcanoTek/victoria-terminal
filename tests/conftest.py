@@ -37,15 +37,40 @@ TEST_APP_HOME.mkdir(parents=True, exist_ok=True)
 from email_validator import EmailNotValidError  # noqa: E402
 
 import configurator.license as license_module  # noqa: E402
-from configurator.cli import launch_crush, parse_args  # noqa: E402
+from configurator.cli import get_app_home, launch_crush, parse_args  # noqa: E402
 from configurator.config import (  # noqa: E402
+    _has_valid_env_value,
+    _is_browserbase_enabled,
+    _is_browseros_enabled,
+    _is_email_enabled,
+    _is_gamma_enabled,
+    _is_sendgrid_enabled,
+    _is_snowflake_enabled,
+    _read_json,
+    _write_json,
+    copy_crush_local_config,
+    ensure_app_home,
     generate_crush_config,
+    initialize_crush_init,
     load_environment,
     parse_env_file,
+    remove_cache_folders,
+    remove_local_duckdb,
     resource_path,
     substitute_env,
 )
-from configurator.constants import CRUSH_CONFIG_NAME, CRUSH_TEMPLATE, ENV_FILENAME  # noqa: E402
+from configurator.constants import (  # noqa: E402
+    CRUSH_CONFIG_NAME,
+    CRUSH_TEMPLATE,
+    ENV_FILENAME,
+    LICENSE_ACCEPTANCE_KEY,
+)
+from configurator.license import (  # noqa: E402
+    _resolve_license_path,
+    get_license_text,
+    is_license_accepted,
+    persist_license_acceptance,
+)
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -69,16 +94,38 @@ def module() -> SimpleNamespace:
         substitute_env=substitute_env,
         generate_crush_config=generate_crush_config,
         resource_path=resource_path,
+        ensure_app_home=ensure_app_home,
+        copy_crush_local_config=copy_crush_local_config,
+        remove_local_duckdb=remove_local_duckdb,
+        remove_cache_folders=remove_cache_folders,
+        initialize_crush_init=initialize_crush_init,
+        # JSON utilities
+        _read_json=_read_json,
+        _write_json=_write_json,
+        # Feature detection
+        _has_valid_env_value=_has_valid_env_value,
+        _is_browserbase_enabled=_is_browserbase_enabled,
+        _is_gamma_enabled=_is_gamma_enabled,
+        _is_sendgrid_enabled=_is_sendgrid_enabled,
+        _is_email_enabled=_is_email_enabled,
+        _is_snowflake_enabled=_is_snowflake_enabled,
+        _is_browseros_enabled=_is_browseros_enabled,
         # CLI functions
         parse_args=parse_args,
         launch_crush=launch_crush,
+        get_app_home=get_app_home,
         # License functions
         _is_valid_email=license_module.is_valid_email,
         _track_license_acceptance=license_module.track_license_acceptance,
+        is_license_accepted=is_license_accepted,
+        persist_license_acceptance=persist_license_acceptance,
+        get_license_text=get_license_text,
+        _resolve_license_path=_resolve_license_path,
         # Constants
         ENV_FILENAME=ENV_FILENAME,
         CRUSH_TEMPLATE=CRUSH_TEMPLATE,
         CRUSH_CONFIG_NAME=CRUSH_CONFIG_NAME,
+        LICENSE_ACCEPTANCE_KEY=LICENSE_ACCEPTANCE_KEY,
         # For mocking
         os=os,
         EmailNotValidError=EmailNotValidError,
