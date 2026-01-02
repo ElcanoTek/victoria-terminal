@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # Copyright (c) 2025 ElcanoTek
 #
 # This file is part of Victoria Terminal.
@@ -13,9 +12,8 @@
 # Change License: GNU General Public License v3.0 or later
 # License Notes: 2026-01-02
 
-"""Entry point for Victoria Terminal."""
+"""Victoria Terminal - Container-first interface for advertising data analysis."""
 
-from victoria_terminal.cli import cli_main
+from .constants import __version__
 
-if __name__ == "__main__":
-    cli_main()
+__all__ = ["__version__"]
