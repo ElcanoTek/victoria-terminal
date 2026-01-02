@@ -31,15 +31,50 @@ RUN dnf -y upgrade && \
 
 WORKDIR /workspace
 
-COPY requirements.txt ./
-RUN pip3 install --no-cache-dir -r requirements.txt
+# Python packages (unpinned for rolling updates)
+RUN pip3 install --no-cache-dir \
+    altair \
+    black \
+    boto3 \
+    duckdb \
+    email-validator \
+    flake8 \
+    httpx \
+    ipykernel \
+    isort \
+    matplotlib \
+    mcp[cli] \
+    mcp-server-motherduck \
+    nox \
+    numpy \
+    openpyxl \
+    pandas \
+    plotly \
+    polars \
+    pyarrow \
+    pylsp-mypy \
+    pytest \
+    pytest-cov \
+    pytest-timeout \
+    python-dotenv \
+    python-lsp-ruff \
+    python-lsp-server \
+    requests \
+    rich \
+    scikit-learn \
+    scipy \
+    seaborn \
+    sendgrid \
+    snowflake-labs-mcp \
+    sqlalchemy \
+    statsmodels \
+    xlsxwriter
 
-COPY package.json ./
-RUN npm install -g $(node -e "console.log(Object.entries(require('./package.json').dependencies).map(([k,v]) => v === '*' ? k : k+'@'+v).join(' '))")
+# Node.js MCP servers
+RUN npm install -g @browserbasehq/mcp-server-browserbase
 
 COPY . .
 
 RUN install -Dm755 entrypoint.sh /usr/local/bin/entrypoint.sh
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-CMD ["python3", "-m", "configurator"]
