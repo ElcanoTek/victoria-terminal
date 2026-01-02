@@ -247,9 +247,7 @@ def generate_crush_config(
             else:
                 gamma_script = resource_path(Path("mcp") / "gamma.py")
                 if not gamma_script.exists():
-                    raise FileNotFoundError(
-                        f"Gamma MCP server script is missing (expected at {gamma_script})."
-                    )
+                    raise FileNotFoundError(f"Gamma MCP server script is missing (expected at {gamma_script}).")
                 resolved_env["GAMMA_MCP_SCRIPT"] = str(gamma_script)
                 resolved_env["GAMMA_MCP_DIR"] = str(gamma_script.parent)
 
@@ -261,9 +259,7 @@ def generate_crush_config(
             else:
                 sendgrid_script = resource_path(Path("mcp") / "sendgrid_server.py")
                 if not sendgrid_script.exists():
-                    raise FileNotFoundError(
-                        f"SendGrid MCP server script is missing (expected at {sendgrid_script})."
-                    )
+                    raise FileNotFoundError(f"SendGrid MCP server script is missing (expected at {sendgrid_script}).")
                 resolved_env["SENDGRID_MCP_SCRIPT"] = str(sendgrid_script)
                 resolved_env["SENDGRID_MCP_DIR"] = str(sendgrid_script.parent)
 
@@ -275,9 +271,7 @@ def generate_crush_config(
             else:
                 email_script = resource_path(Path("mcp") / "ses_s3_email.py")
                 if not email_script.exists():
-                    raise FileNotFoundError(
-                        f"Email MCP server script is missing (expected at {email_script})."
-                    )
+                    raise FileNotFoundError(f"Email MCP server script is missing (expected at {email_script}).")
                 resolved_env["EMAIL_MCP_SCRIPT"] = str(email_script)
                 resolved_env["EMAIL_MCP_DIR"] = str(email_script.parent)
 

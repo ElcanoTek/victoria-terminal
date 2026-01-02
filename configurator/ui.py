@@ -114,9 +114,7 @@ class VictoriaUI:
 
     def prompt_email(self) -> str:  # pragma: no cover
         """Prompt user for their email address."""
-        return self.console.input(
-            "[cyan]Enter your email address to complete license acceptance: [/cyan]"
-        ).strip()
+        return self.console.input("[cyan]Enter your email address to complete license acceptance: [/cyan]").strip()
 
     def notify_invalid_response(self) -> None:  # pragma: no cover
         """Notify user of invalid license response."""

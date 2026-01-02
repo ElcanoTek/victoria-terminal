@@ -43,9 +43,7 @@ class TestParseEnvFile:
 
         assert values == {"FOO": "bar", "QUOTED": "some value"}
 
-    def test_returns_empty_when_missing(
-        self, victoria_home: Path, module: Any
-    ) -> None:
+    def test_returns_empty_when_missing(self, victoria_home: Path, module: Any) -> None:
         env_path = victoria_home / module.ENV_FILENAME
         assert module.parse_env_file(env_path) == {}
 
@@ -75,15 +73,11 @@ class TestEmailValidation:
     ]
 
     @pytest.mark.parametrize("email", VALID_EMAILS)
-    def test_accepts_valid_emails(
-        self, email: str, mock_email_valid: None, module: Any
-    ) -> None:
+    def test_accepts_valid_emails(self, email: str, mock_email_valid: None, module: Any) -> None:
         assert module._is_valid_email(email) is True
 
     @pytest.mark.parametrize("email", INVALID_EMAILS)
-    def test_rejects_invalid_emails(
-        self, email: str, mock_email_invalid: None, module: Any
-    ) -> None:
+    def test_rejects_invalid_emails(self, email: str, mock_email_invalid: None, module: Any) -> None:
         assert module._is_valid_email(email) is False
 
 
@@ -127,9 +121,7 @@ class TestLicenseTracking:
 class TestLoadEnvironment:
     """Tests for load_environment function."""
 
-    def test_preserves_existing_values(
-        self, victoria_home: Path, env_file: Callable[[str], Path], module: Any
-    ) -> None:
+    def test_preserves_existing_values(self, victoria_home: Path, env_file: Callable[[str], Path], module: Any) -> None:
         env_file("FOO=bar\nSHARED=value\n")
         custom_env = {"SHARED": "existing"}
 
@@ -139,14 +131,10 @@ class TestLoadEnvironment:
         assert custom_env["FOO"] == "bar"
         assert custom_env["SHARED"] == "existing"
 
-    def test_returns_empty_when_file_absent(
-        self, victoria_home: Path, module: Any
-    ) -> None:
+    def test_returns_empty_when_file_absent(self, victoria_home: Path, module: Any) -> None:
         assert module.load_environment(app_home=victoria_home, env={}) == {}
 
-    def test_respects_runtime_env_without_file(
-        self, victoria_home: Path, module: Any
-    ) -> None:
+    def test_respects_runtime_env_without_file(self, victoria_home: Path, module: Any) -> None:
         custom_env = {"OPENROUTER_API_KEY": "from-runtime"}
 
         values = module.load_environment(app_home=victoria_home, env=custom_env)
@@ -154,9 +142,7 @@ class TestLoadEnvironment:
         assert values == {}
         assert custom_env["OPENROUTER_API_KEY"] == "from-runtime"
 
-    def test_loads_values_from_file(
-        self, victoria_home: Path, env_file: Callable[[str], Path], module: Any
-    ) -> None:
+    def test_loads_values_from_file(self, victoria_home: Path, env_file: Callable[[str], Path], module: Any) -> None:
         env_file("OPENROUTER_API_KEY=from-file\n")
         env: dict[str, str] = {}
 
@@ -187,9 +173,7 @@ class TestSubstituteEnv:
         assert result["list"][2] == "plain"
         assert result["missing"] == "${MISSING}"
 
-    def test_uses_process_environment(
-        self, monkeypatch: pytest.MonkeyPatch, module: Any
-    ) -> None:
+    def test_uses_process_environment(self, monkeypatch: pytest.MonkeyPatch, module: Any) -> None:
         monkeypatch.setenv("TOKEN", "value")
 
         assert module.substitute_env("${TOKEN}") == "value"
@@ -221,10 +205,12 @@ class TestGenerateCrushConfig:
         generated_config: Callable[[dict[str, str]], dict[str, Any]],
         module: Any,
     ) -> None:
-        data = generated_config({
-            "OPENROUTER_API_KEY": "test-key",
-            "GAMMA_API_KEY": "gamma-key",
-        })
+        data = generated_config(
+            {
+                "OPENROUTER_API_KEY": "test-key",
+                "GAMMA_API_KEY": "gamma-key",
+            }
+        )
 
         gamma_config = data["mcp"]["gamma"]
         gamma_script = module.resource_path(Path("mcp") / "gamma.py")
@@ -237,12 +223,14 @@ class TestGenerateCrushConfig:
     def test_includes_browserbase_when_fully_configured(
         self, generated_config: Callable[[dict[str, str]], dict[str, Any]]
     ) -> None:
-        data = generated_config({
-            "OPENROUTER_API_KEY": "test-key",
-            "BROWSERBASE_API_KEY": "bb-test-key",
-            "BROWSERBASE_PROJECT_ID": "test-project-id",
-            "GEMINI_API_KEY": "gemini-test-key",
-        })
+        data = generated_config(
+            {
+                "OPENROUTER_API_KEY": "test-key",
+                "BROWSERBASE_API_KEY": "bb-test-key",
+                "BROWSERBASE_PROJECT_ID": "test-project-id",
+                "GEMINI_API_KEY": "gemini-test-key",
+            }
+        )
 
         browserbase_cfg = data["mcp"]["browserbase"]
         assert browserbase_cfg["command"] == "mcp-server-browserbase"
@@ -280,9 +268,7 @@ class TestGenerateCrushConfig:
 
         assert "browserbase" not in data["mcp"]
 
-    def test_raises_for_missing_template(
-        self, victoria_home: Path, module: Any
-    ) -> None:
+    def test_raises_for_missing_template(self, victoria_home: Path, module: Any) -> None:
         with pytest.raises(FileNotFoundError):
             module.generate_crush_config(
                 app_home=victoria_home,
@@ -329,9 +315,7 @@ class TestLaunchCrush:
         assert cmd[:2] == ["crush", "--yolo"]
         assert "-c" in cmd
 
-    def test_uses_task_mode_with_prompt(
-        self, victoria_home: Path, mock_execvp: list[list[str]], module: Any
-    ) -> None:
+    def test_uses_task_mode_with_prompt(self, victoria_home: Path, mock_execvp: list[list[str]], module: Any) -> None:
         with pytest.raises(SystemExit):
             module.launch_crush(app_home=victoria_home, task_prompt="Chart conversions")
 
