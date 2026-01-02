@@ -6,17 +6,16 @@ reliable without relying on extensive mocking.
 
 ## Running the Tests
 
-Use `nox` to create an isolated virtual environment and execute the suite:
+Run tests inside the container for parity with CI:
 
 ```bash
-nox -s tests
+podman run --rm -v ~/Victoria:/workspace/Victoria victoria-terminal -- pytest
 ```
 
-The session installs dependencies from `requirements.txt`. To iterate quickly
-inside an existing environment you can still run:
+Or use `nox` which installs the minimal test dependencies automatically:
 
 ```bash
-pytest
+podman run --rm -v ~/Victoria:/workspace/Victoria victoria-terminal -- nox -s tests
 ```
 
 ## Covered Scenarios
