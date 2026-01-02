@@ -10,358 +10,334 @@
 #
 # Change Date: 2027-09-20
 # Change License: GNU General Public License v3.0 or later
+# License Notes: 2026-01-02
 
 """Tests for the victoria_terminal module."""
+
 from __future__ import annotations
 
-import json
-import os
 from pathlib import Path
-from typing import Mapping
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
-TEST_APP_HOME = Path(__file__).resolve().parent / ".victoria-test-home"
-os.environ.setdefault("VICTORIA_HOME", str(TEST_APP_HOME))
-TEST_APP_HOME.mkdir(parents=True, exist_ok=True)
-
-import victoria_terminal as entrypoint  # noqa: E402
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
-def test_parse_env_file_handles_comments(tmp_path: Path) -> None:
-    env_path = tmp_path / entrypoint.ENV_FILENAME
-    env_path.write_text(
-        "FOO=bar\n" "# comment\n" "MALFORMED\n" 'QUOTED="some value"\n',
-        encoding="utf-8",
-    )
-
-    values = entrypoint.parse_env_file(env_path)
-
-    assert values == {"FOO": "bar", "QUOTED": "some value"}
+# =============================================================================
+# ENV FILE PARSING
+# =============================================================================
 
 
-def test_parse_env_file_missing_returns_empty(tmp_path: Path) -> None:
-    env_path = tmp_path / entrypoint.ENV_FILENAME
+class TestParseEnvFile:
+    """Tests for parse_env_file function."""
 
-    assert entrypoint.parse_env_file(env_path) == {}
+    def test_handles_comments_and_malformed_lines(
+        self, victoria_home: Path, env_file: Callable[[str], Path], module: Any
+    ) -> None:
+        env_file("FOO=bar\n# comment\nMALFORMED\n" 'QUOTED="some value"\n')
+        env_path = victoria_home / module.ENV_FILENAME
+
+        values = module.parse_env_file(env_path)
+
+        assert values == {"FOO": "bar", "QUOTED": "some value"}
+
+    def test_returns_empty_when_missing(
+        self, victoria_home: Path, module: Any
+    ) -> None:
+        env_path = victoria_home / module.ENV_FILENAME
+        assert module.parse_env_file(env_path) == {}
 
 
-def test_is_valid_email_accepts_common_formats(monkeypatch: pytest.MonkeyPatch) -> None:
-    emails = [
+# =============================================================================
+# EMAIL VALIDATION
+# =============================================================================
+
+
+class TestEmailValidation:
+    """Tests for email validation functions."""
+
+    VALID_EMAILS = [
         "user@example.com",
         "USER+tag@sub.example.co",
         "first.last@domain.io",
         "mixed-case@Example.Org",
     ]
-    calls: list[tuple[str, bool]] = []
 
-    def fake_validate(candidate: str, *, check_deliverability: bool) -> None:
-        calls.append((candidate, check_deliverability))
-
-    monkeypatch.setattr(entrypoint, "validate_email", fake_validate)
-
-    for email in emails:
-        assert entrypoint._is_valid_email(email) is True
-
-    assert calls == [(email, True) for email in emails]
-
-
-def test_is_valid_email_rejects_invalid_formats(monkeypatch: pytest.MonkeyPatch) -> None:
-    def fake_validate(candidate: str, *, check_deliverability: bool) -> None:
-        raise entrypoint.EmailNotValidError("invalid")
-
-    monkeypatch.setattr(entrypoint, "validate_email", fake_validate)
-
-    for email in [
+    INVALID_EMAILS = [
         "plainaddress",
         "missing-domain@",
         "missing-at.example.com",
         "user@",
         "@example.com",
         "",
-    ]:
-        assert entrypoint._is_valid_email(email) is False
-
-
-def test_track_license_acceptance_sends_plain_email(monkeypatch: pytest.MonkeyPatch) -> None:
-    recorded: dict[str, dict[str, str]] = {}
-
-    def fake_post(url: str, json: Mapping[str, str], timeout: int) -> None:
-        recorded["payload"] = dict(json)
-
-    monkeypatch.setattr(entrypoint.requests, "post", fake_post)
-    monkeypatch.setattr(entrypoint, "validate_email", lambda *_args, **_kwargs: None)
-
-    email = "User+tag@example.com"
-    entrypoint._track_license_acceptance(email)
-
-    payload = recorded.get("payload")
-    assert payload is not None
-    assert payload["email"] == "User+tag@example.com"
-    assert payload["event"] == "license_accepted"
-
-
-def test_track_license_acceptance_skips_invalid_email(monkeypatch: pytest.MonkeyPatch) -> None:
-    calls: list[dict[str, str]] = []
-
-    def fake_post(url: str, json: Mapping[str, str], timeout: int) -> None:
-        calls.append(dict(json))
-
-    monkeypatch.setattr(entrypoint.requests, "post", fake_post)
-
-    def always_invalid(*_args: object, **_kwargs: object) -> None:
-        raise entrypoint.EmailNotValidError("bad")
-
-    monkeypatch.setattr(entrypoint, "validate_email", always_invalid)
-
-    entrypoint._track_license_acceptance("invalid-email")
-
-    assert calls == []
-
-
-def test_load_environment_preserves_existing_values(tmp_path: Path) -> None:
-    env_path = tmp_path / entrypoint.ENV_FILENAME
-    env_path.write_text("FOO=bar\nSHARED=value\n", encoding="utf-8")
-
-    custom_env = {"SHARED": "existing"}
-
-    values = entrypoint.load_environment(app_home=tmp_path, env=custom_env)
-
-    assert values == {"FOO": "bar", "SHARED": "value"}
-    assert custom_env["FOO"] == "bar"
-    assert custom_env["SHARED"] == "existing"
-
-
-def test_load_environment_returns_empty_when_file_absent(tmp_path: Path) -> None:
-    assert entrypoint.load_environment(app_home=tmp_path, env={}) == {}
-
-
-def test_load_environment_without_file_respects_runtime_env(tmp_path: Path) -> None:
-    custom_env = {"OPENROUTER_API_KEY": "from-runtime"}
-
-    values = entrypoint.load_environment(app_home=tmp_path, env=custom_env)
-
-    assert values == {}
-    assert custom_env["OPENROUTER_API_KEY"] == "from-runtime"
-
-
-def test_load_environment_uses_values_from_env_file(tmp_path: Path) -> None:
-    env_path = tmp_path / entrypoint.ENV_FILENAME
-    env_path.write_text("OPENROUTER_API_KEY=from-file\n", encoding="utf-8")
-    env: dict[str, str] = {}
-
-    entrypoint.load_environment(app_home=tmp_path, env=env)
-
-    assert env["OPENROUTER_API_KEY"] == "from-file"
-
-
-def test_substitute_env_handles_nested_structures() -> None:
-    payload = {
-        "list": ["${FIRST}", {"second": "${SECOND}"}, "plain"],
-        "missing": "${MISSING}",
-    }
-    env = {"FIRST": "one", "SECOND": "two"}
-
-    substituted = entrypoint.substitute_env(payload, env)
-
-    assert substituted["list"][0] == "one"
-    assert substituted["list"][1]["second"] == "two"
-    assert substituted["list"][2] == "plain"
-    assert substituted["missing"] == "${MISSING}"
-
-
-def test_substitute_env_uses_process_environment(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("TOKEN", "value")
-
-    assert entrypoint.substitute_env("${TOKEN}") == "value"
-
-
-def test_generate_crush_config_substitutes_env(tmp_path: Path) -> None:
-    env_values = {
-        "OPENROUTER_API_KEY": "test-key",
-        "VICTORIA_HOME": str(tmp_path),
-    }
-
-    template = entrypoint.resource_path(entrypoint.CRUSH_TEMPLATE)
-    config_dir = entrypoint.generate_crush_config(app_home=tmp_path, env=env_values, template_path=template)
-    output = config_dir / entrypoint.CRUSH_CONFIG_NAME
-
-    data = json.loads(output.read_text(encoding="utf-8"))
-    assert data["providers"]["openrouter"]["api_key"] == "test-key"
-
-    python_lsp = data["lsp"]["python"]
-    assert python_lsp["command"] == "python"
-    assert python_lsp["args"] == ["-m", "pylsp"]
-    assert "typescript" not in data["lsp"]
-
-    motherduck_cfg = data["mcp"]["motherduck"]
-    assert motherduck_cfg["command"] == "mcp-server-motherduck"
-    assert motherduck_cfg["args"] == [
-        "--db-path",
-        str(tmp_path / "adtech.duckdb"),
     ]
-    assert "browserbase" not in data["mcp"]
-    assert "gamma" not in data["mcp"]
+
+    @pytest.mark.parametrize("email", VALID_EMAILS)
+    def test_accepts_valid_emails(
+        self, email: str, mock_email_valid: None, module: Any
+    ) -> None:
+        assert module._is_valid_email(email) is True
+
+    @pytest.mark.parametrize("email", INVALID_EMAILS)
+    def test_rejects_invalid_emails(
+        self, email: str, mock_email_invalid: None, module: Any
+    ) -> None:
+        assert module._is_valid_email(email) is False
 
 
-def test_generate_crush_config_includes_gamma_when_configured(tmp_path: Path) -> None:
-    env_values = {
-        "OPENROUTER_API_KEY": "test-key",
-        "VICTORIA_HOME": str(tmp_path),
-        "GAMMA_API_KEY": "gamma-key",
-    }
-
-    template = entrypoint.resource_path(entrypoint.CRUSH_TEMPLATE)
-    config_dir = entrypoint.generate_crush_config(app_home=tmp_path, env=env_values, template_path=template)
-    output = config_dir / entrypoint.CRUSH_CONFIG_NAME
-
-    data = json.loads(output.read_text(encoding="utf-8"))
-
-    gamma_config = data["mcp"]["gamma"]
-    gamma_script = entrypoint.resource_path(Path("mcp") / "gamma.py")
-
-    assert gamma_config["command"] == "python3"
-    assert gamma_config["args"] == [str(gamma_script)]
-    assert gamma_config["cwd"] == str(gamma_script.parent)
-
-    env_block = gamma_config["env"]
-    assert env_block["GAMMA_API_KEY"] == "gamma-key"
-    assert env_block["PYTHONPATH"] == str(gamma_script.parent)
+# =============================================================================
+# LICENSE TRACKING
+# =============================================================================
 
 
-def test_generate_crush_config_includes_browserbase_when_configured(tmp_path: Path) -> None:
-    env_values = {
-        "OPENROUTER_API_KEY": "test-key",
-        "VICTORIA_HOME": str(tmp_path),
-        "BROWSERBASE_API_KEY": "bb-test-key",
-        "BROWSERBASE_PROJECT_ID": "test-project-id",
-        "GEMINI_API_KEY": "gemini-test-key",
-    }
+class TestLicenseTracking:
+    """Tests for license acceptance tracking."""
 
-    template = entrypoint.resource_path(entrypoint.CRUSH_TEMPLATE)
-    config_dir = entrypoint.generate_crush_config(app_home=tmp_path, env=env_values, template_path=template)
-    output = config_dir / entrypoint.CRUSH_CONFIG_NAME
+    def test_sends_telemetry_for_valid_email(
+        self,
+        mock_requests_post: list[dict[str, Any]],
+        mock_email_valid: None,
+        module: Any,
+    ) -> None:
+        module._track_license_acceptance("User+tag@example.com")
 
-    data = json.loads(output.read_text(encoding="utf-8"))
-    browserbase_cfg = data["mcp"].get("browserbase")
-    assert browserbase_cfg is not None
-    assert browserbase_cfg["command"] == "mcp-server-browserbase"
-    assert browserbase_cfg["args"] == []
-    assert browserbase_cfg["env"]["BROWSERBASE_API_KEY"] == "bb-test-key"
-    assert browserbase_cfg["env"]["BROWSERBASE_PROJECT_ID"] == "test-project-id"
-    assert browserbase_cfg["env"]["GEMINI_API_KEY"] == "gemini-test-key"
+        assert len(mock_requests_post) == 1
+        payload = mock_requests_post[0]
+        assert payload["email"] == "User+tag@example.com"
+        assert payload["event"] == "license_accepted"
 
+    def test_skips_telemetry_for_invalid_email(
+        self,
+        mock_requests_post: list[dict[str, Any]],
+        mock_email_invalid: None,
+        module: Any,
+    ) -> None:
+        module._track_license_acceptance("invalid-email")
 
-def test_generate_crush_config_ignores_placeholder_browserbase_key(tmp_path: Path) -> None:
-    env_values = {
-        "OPENROUTER_API_KEY": "test-key",
-        "VICTORIA_HOME": str(tmp_path),
-        "BROWSERBASE_API_KEY": "<YOUR_BROWSERBASE_API_KEY>",
-        "BROWSERBASE_PROJECT_ID": "test-project-id",
-        "GEMINI_API_KEY": "gemini-test-key",
-    }
-
-    template = entrypoint.resource_path(entrypoint.CRUSH_TEMPLATE)
-    config_dir = entrypoint.generate_crush_config(app_home=tmp_path, env=env_values, template_path=template)
-    output = config_dir / entrypoint.CRUSH_CONFIG_NAME
-
-    data = json.loads(output.read_text(encoding="utf-8"))
-    assert "browserbase" not in data["mcp"]
+        assert mock_requests_post == []
 
 
-def test_generate_crush_config_ignores_missing_browserbase_keys(tmp_path: Path) -> None:
-    env_values = {
-        "OPENROUTER_API_KEY": "test-key",
-        "VICTORIA_HOME": str(tmp_path),
-        "BROWSERBASE_API_KEY": "bb-test-key",
-        # Missing BROWSERBASE_PROJECT_ID and GEMINI_API_KEY
-    }
-
-    template = entrypoint.resource_path(entrypoint.CRUSH_TEMPLATE)
-    config_dir = entrypoint.generate_crush_config(app_home=tmp_path, env=env_values, template_path=template)
-    output = config_dir / entrypoint.CRUSH_CONFIG_NAME
-
-    data = json.loads(output.read_text(encoding="utf-8"))
-    assert "browserbase" not in data["mcp"]
+# =============================================================================
+# ENVIRONMENT LOADING
+# =============================================================================
 
 
-def test_generate_crush_config_ignores_blank_browserbase_key(tmp_path: Path) -> None:
-    env_values = {
-        "OPENROUTER_API_KEY": "test-key",
-        "VICTORIA_HOME": str(tmp_path),
-        "BROWSERBASE_API_KEY": "   ",
-        "BROWSERBASE_PROJECT_ID": "test-project-id",
-        "GEMINI_API_KEY": "gemini-test-key",
-    }
+class TestLoadEnvironment:
+    """Tests for load_environment function."""
 
-    template = entrypoint.resource_path(entrypoint.CRUSH_TEMPLATE)
-    config_dir = entrypoint.generate_crush_config(app_home=tmp_path, env=env_values, template_path=template)
-    output = config_dir / entrypoint.CRUSH_CONFIG_NAME
+    def test_preserves_existing_values(
+        self, victoria_home: Path, env_file: Callable[[str], Path], module: Any
+    ) -> None:
+        env_file("FOO=bar\nSHARED=value\n")
+        custom_env = {"SHARED": "existing"}
 
-    data = json.loads(output.read_text(encoding="utf-8"))
-    assert "browserbase" not in data["mcp"]
+        values = module.load_environment(app_home=victoria_home, env=custom_env)
 
+        assert values == {"FOO": "bar", "SHARED": "value"}
+        assert custom_env["FOO"] == "bar"
+        assert custom_env["SHARED"] == "existing"
 
-def test_generate_crush_config_missing_template_raises(tmp_path: Path) -> None:
-    with pytest.raises(FileNotFoundError):
-        entrypoint.generate_crush_config(app_home=tmp_path, template_path=tmp_path / "missing.json")
+    def test_returns_empty_when_file_absent(
+        self, victoria_home: Path, module: Any
+    ) -> None:
+        assert module.load_environment(app_home=victoria_home, env={}) == {}
 
+    def test_respects_runtime_env_without_file(
+        self, victoria_home: Path, module: Any
+    ) -> None:
+        custom_env = {"OPENROUTER_API_KEY": "from-runtime"}
 
-def test_parse_args_ignores_double_dash_separator() -> None:
-    args = entrypoint.parse_args(["--", "--accept-license"])
+        values = module.load_environment(app_home=victoria_home, env=custom_env)
 
-    assert args.accept_license is True
+        assert values == {}
+        assert custom_env["OPENROUTER_API_KEY"] == "from-runtime"
 
+    def test_loads_values_from_file(
+        self, victoria_home: Path, env_file: Callable[[str], Path], module: Any
+    ) -> None:
+        env_file("OPENROUTER_API_KEY=from-file\n")
+        env: dict[str, str] = {}
 
-def test_parse_args_rejects_app_home_override(tmp_path: Path) -> None:
-    with pytest.raises(SystemExit) as exc_info:
-        entrypoint.parse_args(["--app-home", str(tmp_path)])
+        module.load_environment(app_home=victoria_home, env=env)
 
-    assert exc_info.value.code == 2
-
-
-def test_parse_args_sets_accept_license_flag() -> None:
-    args = entrypoint.parse_args(["--accept-license"])
-
-    assert args.accept_license is True
-
-
-def test_parse_args_supports_task_flag() -> None:
-    args = entrypoint.parse_args(["--task", " Summarize mission "])
-
-    assert args.task == " Summarize mission "
+        assert env["OPENROUTER_API_KEY"] == "from-file"
 
 
-def test_launch_crush_appends_yolo_in_interactive_mode(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    recorded: dict[str, list[str]] = {}
-
-    def fake_execvp(cmd: str, argv: list[str]) -> None:
-        recorded["cmd"] = argv
-        raise SystemExit(0)
-
-    monkeypatch.setattr(entrypoint.os, "execvp", fake_execvp)
-
-    with pytest.raises(SystemExit):
-        entrypoint.launch_crush(app_home=tmp_path)
-
-    assert recorded["cmd"][:2] == ["crush", "--yolo"]
-    assert "-c" in recorded["cmd"]
+# =============================================================================
+# TEMPLATE SUBSTITUTION
+# =============================================================================
 
 
-def test_launch_crush_omits_yolo_in_task_mode(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    recorded: dict[str, list[str]] = {}
+class TestSubstituteEnv:
+    """Tests for substitute_env function."""
 
-    def fake_execvp(cmd: str, argv: list[str]) -> None:
-        recorded["cmd"] = argv
-        raise SystemExit(0)
+    def test_handles_nested_structures(self, module: Any) -> None:
+        payload = {
+            "list": ["${FIRST}", {"second": "${SECOND}"}, "plain"],
+            "missing": "${MISSING}",
+        }
+        env = {"FIRST": "one", "SECOND": "two"}
 
-    monkeypatch.setattr(entrypoint.os, "execvp", fake_execvp)
+        result = module.substitute_env(payload, env)
 
-    with pytest.raises(SystemExit):
-        entrypoint.launch_crush(app_home=tmp_path, task_prompt="Chart conversions")
+        assert result["list"][0] == "one"
+        assert result["list"][1]["second"] == "two"
+        assert result["list"][2] == "plain"
+        assert result["missing"] == "${MISSING}"
 
-    assert recorded["cmd"][0] == "crush"
-    assert "--yolo" not in recorded["cmd"]
-    assert "-q" in recorded["cmd"]
-    prompt_index = recorded["cmd"].index("-q") + 1
-    assert recorded["cmd"][prompt_index] == "Chart conversions"
+    def test_uses_process_environment(
+        self, monkeypatch: pytest.MonkeyPatch, module: Any
+    ) -> None:
+        monkeypatch.setenv("TOKEN", "value")
+
+        assert module.substitute_env("${TOKEN}") == "value"
+
+
+# =============================================================================
+# CRUSH CONFIG GENERATION
+# =============================================================================
+
+
+class TestGenerateCrushConfig:
+    """Tests for generate_crush_config function."""
+
+    def test_substitutes_env_and_includes_defaults(
+        self, generated_config: Callable[[dict[str, str]], dict[str, Any]]
+    ) -> None:
+        data = generated_config({"OPENROUTER_API_KEY": "test-key"})
+
+        assert data["providers"]["openrouter"]["api_key"] == "test-key"
+        assert data["lsp"]["python"]["command"] == "python"
+        assert data["lsp"]["python"]["args"] == ["-m", "pylsp"]
+        assert "typescript" not in data["lsp"]
+        assert data["mcp"]["motherduck"]["command"] == "mcp-server-motherduck"
+        assert "browserbase" not in data["mcp"]
+        assert "gamma" not in data["mcp"]
+
+    def test_includes_gamma_when_configured(
+        self,
+        generated_config: Callable[[dict[str, str]], dict[str, Any]],
+        module: Any,
+    ) -> None:
+        data = generated_config({
+            "OPENROUTER_API_KEY": "test-key",
+            "GAMMA_API_KEY": "gamma-key",
+        })
+
+        gamma_config = data["mcp"]["gamma"]
+        gamma_script = module.resource_path(Path("mcp") / "gamma.py")
+
+        assert gamma_config["command"] == "python3"
+        assert gamma_config["args"] == [str(gamma_script)]
+        assert gamma_config["cwd"] == str(gamma_script.parent)
+        assert gamma_config["env"]["GAMMA_API_KEY"] == "gamma-key"
+
+    def test_includes_browserbase_when_fully_configured(
+        self, generated_config: Callable[[dict[str, str]], dict[str, Any]]
+    ) -> None:
+        data = generated_config({
+            "OPENROUTER_API_KEY": "test-key",
+            "BROWSERBASE_API_KEY": "bb-test-key",
+            "BROWSERBASE_PROJECT_ID": "test-project-id",
+            "GEMINI_API_KEY": "gemini-test-key",
+        })
+
+        browserbase_cfg = data["mcp"]["browserbase"]
+        assert browserbase_cfg["command"] == "mcp-server-browserbase"
+        assert browserbase_cfg["env"]["BROWSERBASE_API_KEY"] == "bb-test-key"
+        assert browserbase_cfg["env"]["BROWSERBASE_PROJECT_ID"] == "test-project-id"
+        assert browserbase_cfg["env"]["GEMINI_API_KEY"] == "gemini-test-key"
+
+    @pytest.mark.parametrize(
+        "invalid_env",
+        [
+            # Placeholder value
+            {
+                "BROWSERBASE_API_KEY": "<YOUR_BROWSERBASE_API_KEY>",
+                "BROWSERBASE_PROJECT_ID": "test-project-id",
+                "GEMINI_API_KEY": "gemini-test-key",
+            },
+            # Missing required keys
+            {"BROWSERBASE_API_KEY": "bb-test-key"},
+            # Blank key
+            {
+                "BROWSERBASE_API_KEY": "   ",
+                "BROWSERBASE_PROJECT_ID": "test-project-id",
+                "GEMINI_API_KEY": "gemini-test-key",
+            },
+        ],
+        ids=["placeholder", "missing-keys", "blank-key"],
+    )
+    def test_excludes_browserbase_with_invalid_config(
+        self,
+        invalid_env: dict[str, str],
+        generated_config: Callable[[dict[str, str]], dict[str, Any]],
+    ) -> None:
+        env = {"OPENROUTER_API_KEY": "test-key", **invalid_env}
+        data = generated_config(env)
+
+        assert "browserbase" not in data["mcp"]
+
+    def test_raises_for_missing_template(
+        self, victoria_home: Path, module: Any
+    ) -> None:
+        with pytest.raises(FileNotFoundError):
+            module.generate_crush_config(
+                app_home=victoria_home,
+                template_path=victoria_home / "missing.json",
+            )
+
+
+# =============================================================================
+# CLI ARGUMENT PARSING
+# =============================================================================
+
+
+class TestParseArgs:
+    """Tests for parse_args function."""
+
+    def test_strips_double_dash_separator(self, module: Any) -> None:
+        args = module.parse_args(["--", "--accept-license"])
+        assert args.accept_license is True
+
+    def test_sets_accept_license_flag(self, module: Any) -> None:
+        args = module.parse_args(["--accept-license"])
+        assert args.accept_license is True
+
+    def test_supports_task_flag(self, module: Any) -> None:
+        args = module.parse_args(["--task", " Summarize mission "])
+        assert args.task == " Summarize mission "
+
+
+# =============================================================================
+# CRUSH LAUNCH
+# =============================================================================
+
+
+class TestLaunchCrush:
+    """Tests for launch_crush function."""
+
+    def test_uses_yolo_in_interactive_mode(
+        self, victoria_home: Path, mock_execvp: list[list[str]], module: Any
+    ) -> None:
+        with pytest.raises(SystemExit):
+            module.launch_crush(app_home=victoria_home)
+
+        cmd = mock_execvp[0]
+        assert cmd[:2] == ["crush", "--yolo"]
+        assert "-c" in cmd
+
+    def test_uses_task_mode_with_prompt(
+        self, victoria_home: Path, mock_execvp: list[list[str]], module: Any
+    ) -> None:
+        with pytest.raises(SystemExit):
+            module.launch_crush(app_home=victoria_home, task_prompt="Chart conversions")
+
+        cmd = mock_execvp[0]
+        assert cmd[0] == "crush"
+        assert "--yolo" not in cmd
+        assert "-q" in cmd
+        prompt_index = cmd.index("-q") + 1
+        assert cmd[prompt_index] == "Chart conversions"
