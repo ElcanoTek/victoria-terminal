@@ -20,6 +20,7 @@ import json
 import os
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 from typing import TYPE_CHECKING
 
 import pytest
@@ -27,13 +28,24 @@ import pytest
 # Ensure the project root is importable for tests without packaging the module.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-# Set VICTORIA_HOME before importing the module (it may be needed at import time)
+# Set VICTORIA_HOME before importing the modules
 TEST_APP_HOME = Path(__file__).resolve().parent / ".victoria-test-home"
 os.environ.setdefault("VICTORIA_HOME", str(TEST_APP_HOME))
 TEST_APP_HOME.mkdir(parents=True, exist_ok=True)
 
-# Import the package (uses backwards-compatible wrapper)
-import victoria_terminal as entrypoint  # noqa: E402
+# Import from submodules  # noqa: E402
+from email_validator import EmailNotValidError
+
+import victoria_terminal.license as license_module
+from victoria_terminal.cli import launch_crush, parse_args
+from victoria_terminal.config import (
+    generate_crush_config,
+    load_environment,
+    parse_env_file,
+    resource_path,
+    substitute_env,
+)
+from victoria_terminal.constants import CRUSH_CONFIG_NAME, CRUSH_TEMPLATE, ENV_FILENAME
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -48,17 +60,37 @@ def victoria_home(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def module() -> Any:
-    """Provide the victoria_terminal module."""
-    return entrypoint
+def module() -> SimpleNamespace:
+    """Provide a namespace with all tested functions."""
+    return SimpleNamespace(
+        # Config functions
+        parse_env_file=parse_env_file,
+        load_environment=load_environment,
+        substitute_env=substitute_env,
+        generate_crush_config=generate_crush_config,
+        resource_path=resource_path,
+        # CLI functions
+        parse_args=parse_args,
+        launch_crush=launch_crush,
+        # License functions
+        _is_valid_email=license_module.is_valid_email,
+        _track_license_acceptance=license_module.track_license_acceptance,
+        # Constants
+        ENV_FILENAME=ENV_FILENAME,
+        CRUSH_TEMPLATE=CRUSH_TEMPLATE,
+        CRUSH_CONFIG_NAME=CRUSH_CONFIG_NAME,
+        # For mocking
+        os=os,
+        EmailNotValidError=EmailNotValidError,
+    )
 
 
 @pytest.fixture
-def env_file(victoria_home: Path, module: Any) -> Callable[[str], Path]:
+def env_file(victoria_home: Path) -> Callable[[str], Path]:
     """Factory fixture to create .env files with custom content."""
 
     def _create(content: str) -> Path:
-        env_path = victoria_home / module.ENV_FILENAME
+        env_path = victoria_home / ENV_FILENAME
         env_path.write_text(content, encoding="utf-8")
         return env_path
 
@@ -66,25 +98,24 @@ def env_file(victoria_home: Path, module: Any) -> Callable[[str], Path]:
 
 
 @pytest.fixture
-def crush_template(module: Any) -> Path:
+def crush_template() -> Path:
     """Return the path to the crush template file."""
-    return module.resource_path(module.CRUSH_TEMPLATE)
+    return resource_path(CRUSH_TEMPLATE)
 
 
 @pytest.fixture
 def generated_config(
-    victoria_home: Path, crush_template: Path, module: Any
+    victoria_home: Path, crush_template: Path
 ) -> Callable[[dict[str, str]], dict[str, Any]]:
     """Factory fixture to generate crush config and return parsed JSON."""
 
     def _generate(env_values: dict[str, str]) -> dict[str, Any]:
         env_values.setdefault("VICTORIA_HOME", str(victoria_home))
-        config_dir = module.generate_crush_config(
+        config_dir = generate_crush_config(
             app_home=victoria_home,
             env=env_values,
             template_path=crush_template,
         )
-        from victoria_terminal.constants import CRUSH_CONFIG_NAME
         output = config_dir / CRUSH_CONFIG_NAME
         return json.loads(output.read_text(encoding="utf-8"))
 
@@ -92,7 +123,7 @@ def generated_config(
 
 
 @pytest.fixture
-def mock_execvp(monkeypatch: pytest.MonkeyPatch, module: Any) -> list[list[str]]:
+def mock_execvp(monkeypatch: pytest.MonkeyPatch) -> list[list[str]]:
     """Mock os.execvp and capture called commands."""
     calls: list[list[str]] = []
 
@@ -100,47 +131,33 @@ def mock_execvp(monkeypatch: pytest.MonkeyPatch, module: Any) -> list[list[str]]
         calls.append(argv)
         raise SystemExit(0)
 
-    monkeypatch.setattr(module.os, "execvp", fake_execvp)
+    monkeypatch.setattr(os, "execvp", fake_execvp)
     return calls
 
 
 @pytest.fixture
-def mock_requests_post(
-    monkeypatch: pytest.MonkeyPatch, module: Any
-) -> list[dict[str, Any]]:
+def mock_requests_post(monkeypatch: pytest.MonkeyPatch) -> list[dict[str, Any]]:
     """Mock requests.post and capture payloads."""
-    import victoria_terminal.license as license_module
-
     payloads: list[dict[str, Any]] = []
 
     def fake_post(url: str, json: dict[str, Any], timeout: int) -> None:
         payloads.append(dict(json))
 
-    # Patch in both locations for backwards compatibility
-    monkeypatch.setattr(module.requests, "post", fake_post)
     monkeypatch.setattr(license_module.requests, "post", fake_post)
     return payloads
 
 
 @pytest.fixture
-def mock_email_valid(monkeypatch: pytest.MonkeyPatch, module: Any) -> None:
+def mock_email_valid(monkeypatch: pytest.MonkeyPatch) -> None:
     """Mock email validation to always succeed."""
-    import victoria_terminal.license as license_module
-
-    fake_validate = lambda *args, **kwargs: None
-    # Patch in both locations for backwards compatibility
-    monkeypatch.setattr(module, "validate_email", fake_validate)
-    monkeypatch.setattr(license_module, "validate_email", fake_validate)
+    monkeypatch.setattr(license_module, "validate_email", lambda *args, **kwargs: None)
 
 
 @pytest.fixture
-def mock_email_invalid(monkeypatch: pytest.MonkeyPatch, module: Any) -> None:
+def mock_email_invalid(monkeypatch: pytest.MonkeyPatch) -> None:
     """Mock email validation to always fail."""
-    import victoria_terminal.license as license_module
 
     def always_fail(*args: object, **kwargs: object) -> None:
-        raise module.EmailNotValidError("invalid")
+        raise EmailNotValidError("invalid")
 
-    # Patch in both locations for backwards compatibility
-    monkeypatch.setattr(module, "validate_email", always_fail)
     monkeypatch.setattr(license_module, "validate_email", always_fail)

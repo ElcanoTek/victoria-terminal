@@ -259,7 +259,7 @@ def generate_crush_config(
             if not _is_sendgrid_enabled(env_map):
                 mcp_config.pop("sendgrid", None)
             else:
-                sendgrid_script = resource_path(Path("mcp") / "sendgrid.py")
+                sendgrid_script = resource_path(Path("mcp") / "sendgrid_server.py")
                 if not sendgrid_script.exists():
                     raise FileNotFoundError(
                         f"SendGrid MCP server script is missing (expected at {sendgrid_script})."
