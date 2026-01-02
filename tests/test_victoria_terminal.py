@@ -183,7 +183,8 @@ def test_generate_crush_config_substitutes_env(tmp_path: Path) -> None:
     }
 
     template = entrypoint.resource_path(entrypoint.CRUSH_TEMPLATE)
-    output = entrypoint.generate_crush_config(app_home=tmp_path, env=env_values, template_path=template)
+    config_dir = entrypoint.generate_crush_config(app_home=tmp_path, env=env_values, template_path=template)
+    output = config_dir / entrypoint.CRUSH_CONFIG_NAME
 
     data = json.loads(output.read_text(encoding="utf-8"))
     assert data["providers"]["openrouter"]["api_key"] == "test-key"
@@ -211,7 +212,8 @@ def test_generate_crush_config_includes_gamma_when_configured(tmp_path: Path) ->
     }
 
     template = entrypoint.resource_path(entrypoint.CRUSH_TEMPLATE)
-    output = entrypoint.generate_crush_config(app_home=tmp_path, env=env_values, template_path=template)
+    config_dir = entrypoint.generate_crush_config(app_home=tmp_path, env=env_values, template_path=template)
+    output = config_dir / entrypoint.CRUSH_CONFIG_NAME
 
     data = json.loads(output.read_text(encoding="utf-8"))
 
@@ -237,7 +239,8 @@ def test_generate_crush_config_includes_browserbase_when_configured(tmp_path: Pa
     }
 
     template = entrypoint.resource_path(entrypoint.CRUSH_TEMPLATE)
-    output = entrypoint.generate_crush_config(app_home=tmp_path, env=env_values, template_path=template)
+    config_dir = entrypoint.generate_crush_config(app_home=tmp_path, env=env_values, template_path=template)
+    output = config_dir / entrypoint.CRUSH_CONFIG_NAME
 
     data = json.loads(output.read_text(encoding="utf-8"))
     browserbase_cfg = data["mcp"].get("browserbase")
@@ -259,7 +262,8 @@ def test_generate_crush_config_ignores_placeholder_browserbase_key(tmp_path: Pat
     }
 
     template = entrypoint.resource_path(entrypoint.CRUSH_TEMPLATE)
-    output = entrypoint.generate_crush_config(app_home=tmp_path, env=env_values, template_path=template)
+    config_dir = entrypoint.generate_crush_config(app_home=tmp_path, env=env_values, template_path=template)
+    output = config_dir / entrypoint.CRUSH_CONFIG_NAME
 
     data = json.loads(output.read_text(encoding="utf-8"))
     assert "browserbase" not in data["mcp"]
@@ -274,7 +278,8 @@ def test_generate_crush_config_ignores_missing_browserbase_keys(tmp_path: Path) 
     }
 
     template = entrypoint.resource_path(entrypoint.CRUSH_TEMPLATE)
-    output = entrypoint.generate_crush_config(app_home=tmp_path, env=env_values, template_path=template)
+    config_dir = entrypoint.generate_crush_config(app_home=tmp_path, env=env_values, template_path=template)
+    output = config_dir / entrypoint.CRUSH_CONFIG_NAME
 
     data = json.loads(output.read_text(encoding="utf-8"))
     assert "browserbase" not in data["mcp"]
@@ -290,7 +295,8 @@ def test_generate_crush_config_ignores_blank_browserbase_key(tmp_path: Path) -> 
     }
 
     template = entrypoint.resource_path(entrypoint.CRUSH_TEMPLATE)
-    output = entrypoint.generate_crush_config(app_home=tmp_path, env=env_values, template_path=template)
+    config_dir = entrypoint.generate_crush_config(app_home=tmp_path, env=env_values, template_path=template)
+    output = config_dir / entrypoint.CRUSH_CONFIG_NAME
 
     data = json.loads(output.read_text(encoding="utf-8"))
     assert "browserbase" not in data["mcp"]
