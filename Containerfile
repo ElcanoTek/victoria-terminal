@@ -5,7 +5,8 @@ ENV PATH="/root/.local/bin:${PATH}" \
     PIP_ROOT_USER_ACTION="ignore" \
     GOTOOLCHAIN="auto" \
     GOSUMDB="sum.golang.org" \
-    VICTORIA_HOME="/workspace/Victoria"
+    VICTORIA_HOME="/workspace/Victoria" \
+    HOME="/workspace/Victoria"
 
 # Install runtime and build dependencies plus crush
 RUN dnf -y upgrade && \
@@ -40,7 +41,7 @@ RUN npm install -g $(node -e "console.log(Object.entries(require('./package.json
 
 COPY . .
 
-RUN install -Dm755 container_entrypoint.sh /usr/local/bin/container-entrypoint.sh
+RUN install -Dm755 entrypoint.sh /usr/local/bin/entrypoint.sh
 
-ENTRYPOINT ["/usr/local/bin/container-entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["python3", "-m", "configurator"]
