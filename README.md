@@ -95,5 +95,5 @@ Check [CONTRIBUTING.md](CONTRIBUTING.md) for coding standards, testing, and rele
 ## Learn More
 
 - [Model Context Protocol](https://modelcontextprotocol.io/)
-- [Elcano Devlog](https://elcanotek.substack.com)
+- [Elcano Dev Blog](https://elcanotek.substack.com)
 - [Elcano Website](https://www.elcanotek.com/)
