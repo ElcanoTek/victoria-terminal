@@ -71,6 +71,7 @@ class Config:
     mode: str  # "push" or "pull"
     orchestrator_url: str
     node_api_key: str
+    registration_token: str  # Token for initial registration with orchestrator
     container_runtime: str  # "podman" or "docker"
     container_image: str
     victoria_home: Path
@@ -143,6 +144,7 @@ def run_container(
         "-v", f"{config.victoria_home}:/workspace/Victoria:Z",
         "-e", f"ORCHESTRATOR_URL={orchestrator_url}",
         "-e", f"JOB_ID={task_id}",
+        "-e", f"NODE_API_KEY={config.node_api_key}",
     ]
 
     # Add Crush server URL if provided for log aggregation
@@ -257,8 +259,57 @@ class PushModeServer:
                     "exit_code": poll_result,
                 })
 
+    def _register_node(self) -> Optional[str]:
+        """Register this node with the orchestrator.
+        
+        Returns the assigned API key on success, None on failure.
+        """
+        try:
+            import httpx
+            with httpx.Client(timeout=30.0) as client:
+                # Determine the API endpoint for this node
+                api_endpoint = f"http://{self.config.listen_host}:{self.config.listen_port}"
+                if self.config.listen_host == "0.0.0.0":
+                    # Try to get the actual hostname/IP
+                    api_endpoint = f"http://{platform.node()}:{self.config.listen_port}"
+                
+                response = client.post(
+                    f"{self.config.orchestrator_url}/register",
+                    json={
+                        "hostname": platform.node(),
+                        "name": self.config.node_name,
+                        "mode": "push",
+                        "api_endpoint": api_endpoint,
+                        "os_type": detect_os_type(),
+                        "capabilities": [],
+                        "tags": {},
+                    },
+                    headers={
+                        "X-Registration-Token": self.config.registration_token,
+                    },
+                )
+                response.raise_for_status()
+                data = response.json()
+                api_key = data.get("api_key")
+                logger.info(f"Registered with orchestrator as node {data['id']} (name: {self.config.node_name})")
+                return api_key
+        except Exception as e:
+            logger.error(f"Failed to register with orchestrator: {e}")
+            return None
+
     def run(self):
         """Start the push-mode server."""
+        # Register with orchestrator and get API key
+        logger.info("Registering with orchestrator...")
+        assigned_api_key = self._register_node()
+        if not assigned_api_key:
+            logger.error("Failed to register with orchestrator. Exiting.")
+            sys.exit(1)
+        
+        # Update config with the assigned API key
+        self.config.node_api_key = assigned_api_key
+        logger.info("Registration successful - using assigned API key")
+        
         logger.info(f"Starting push-mode server on {self.config.listen_host}:{self.config.listen_port}")
         self.app.run(
             host=self.config.listen_host,
@@ -278,8 +329,11 @@ class PullModeDaemon:
         self.running = True
         self.current_process: Optional[subprocess.Popen] = None
 
-    def _register_node(self) -> bool:
-        """Register this node with the orchestrator."""
+    def _register_node(self) -> Optional[str]:
+        """Register this node with the orchestrator.
+        
+        Returns the assigned API key on success, None on failure.
+        """
         try:
             with httpx.Client(timeout=30.0) as client:
                 response = client.post(
@@ -292,16 +346,26 @@ class PullModeDaemon:
                         "capabilities": [],
                         "tags": {},
                     },
+                    headers={
+                        "X-Registration-Token": self.config.registration_token,
+                    },
                 )
                 response.raise_for_status()
                 data = response.json()
-                # Update the API key with the one assigned by the orchestrator
-                # In a real implementation, this would be persisted
+                api_key = data.get("api_key")
                 logger.info(f"Registered with orchestrator as node {data['id']} (name: {self.config.node_name})")
-                return True
+                return api_key
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 401:
+                logger.error("Registration failed - invalid registration token")
+            elif e.response.status_code == 503:
+                logger.error("Registration failed - orchestrator has registration disabled")
+            else:
+                logger.error(f"Registration failed: HTTP {e.response.status_code} - {e.response.text}")
+            return None
         except Exception as e:
             logger.error(f"Failed to register with orchestrator: {e}")
-            return False
+            return None
 
     def _poll_for_tasks(self) -> Optional[dict]:
         """Poll the orchestrator for pending tasks."""
@@ -350,6 +414,17 @@ class PullModeDaemon:
         logger.info("Starting pull-mode daemon")
         logger.info(f"Polling orchestrator at {self.config.orchestrator_url}")
         logger.info(f"Poll interval: {self.config.poll_interval} seconds")
+
+        # Register with orchestrator and get API key
+        logger.info("Registering with orchestrator...")
+        assigned_api_key = self._register_node()
+        if not assigned_api_key:
+            logger.error("Failed to register with orchestrator. Exiting.")
+            sys.exit(1)
+        
+        # Update config with the assigned API key for subsequent requests
+        self.config.node_api_key = assigned_api_key
+        logger.info("Registration successful - using assigned API key")
 
         # Set up signal handlers
         def handle_signal(signum, frame):
@@ -403,15 +478,15 @@ def parse_args() -> argparse.Namespace:
 Examples:
   # Push mode (cloud server with static IP)
   %(prog)s push --orchestrator-url http://quarterback.example.com:8000 \\
-                --api-key your-node-api-key --name "prod-server-1"
+                --registration-token your-token --name "prod-server-1"
 
   # Pull mode (local workstation with dynamic IP)
   %(prog)s pull --orchestrator-url http://quarterback.example.com:8000 \\
-                --api-key your-node-api-key --name "client-acme-workstation-1"
+                --registration-token your-token --name "client-acme-workstation-1"
 
   # Named node for client-specific tasks (tasks targeting "client-acme-*" will match)
   %(prog)s pull --orchestrator-url http://quarterback.example.com:8000 \\
-                --api-key your-node-api-key --name "client-acme-gpu-runner"
+                --registration-token your-token --name "client-acme-gpu-runner"
         """,
     )
 
@@ -428,9 +503,9 @@ Examples:
     )
 
     parser.add_argument(
-        "--api-key",
+        "--registration-token",
         required=True,
-        help="API key for authenticating with the orchestrator",
+        help="Registration token for authenticating with the orchestrator during registration",
     )
 
     parser.add_argument(
@@ -525,7 +600,8 @@ def main():
     config = Config(
         mode=args.mode,
         orchestrator_url=args.orchestrator_url.rstrip("/"),
-        node_api_key=args.api_key,
+        node_api_key="",  # Will be assigned during registration
+        registration_token=args.registration_token,
         container_runtime=container_runtime,
         container_image=args.container_image,
         victoria_home=args.victoria_home,

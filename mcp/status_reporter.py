@@ -22,9 +22,10 @@ This MCP server provides tools that allow the LLM agent to:
 The server is configured via environment variables:
 - ORCHESTRATOR_URL: URL of the orchestrator's /status endpoint
 - JOB_ID: Unique identifier for the current task/job
+- NODE_API_KEY: API key for authenticating with the orchestrator
 - VICTORIA_HOME: Path to the Victoria home directory (for finding Crush logs)
 
-If these variables are not set, the MCP server will not be configured
+If ORCHESTRATOR_URL and JOB_ID are not set, the MCP server will not be configured
 (following the pattern of other optional MCP servers in Victoria Terminal).
 """
 
@@ -82,6 +83,11 @@ def get_orchestrator_url() -> Optional[str]:
 def get_job_id() -> Optional[str]:
     """Get the current job ID from environment."""
     return os.environ.get("JOB_ID")
+
+
+def get_node_api_key() -> Optional[str]:
+    """Get the node API key from environment."""
+    return os.environ.get("NODE_API_KEY")
 
 
 def get_victoria_home() -> Path:
@@ -224,13 +230,19 @@ async def send_status_update(
 
     try:
         async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT) as client:
+            headers = {
+                "User-Agent": USER_AGENT,
+                "Content-Type": "application/json",
+            }
+            # Add node API key for authentication
+            api_key = get_node_api_key()
+            if api_key:
+                headers["X-API-Key"] = api_key
+            
             response = await client.post(
                 f"{orchestrator_url}/status",
                 json=payload,
-                headers={
-                    "User-Agent": USER_AGENT,
-                    "Content-Type": "application/json",
-                },
+                headers=headers,
             )
             response.raise_for_status()
             result = response.json()
@@ -499,13 +511,19 @@ async def submit_crush_logs(session_id: Optional[str] = None) -> Dict[str, Any]:
 
     try:
         async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT) as client:
+            headers = {
+                "User-Agent": USER_AGENT,
+                "Content-Type": "application/json",
+            }
+            # Add node API key for authentication
+            api_key = get_node_api_key()
+            if api_key:
+                headers["X-API-Key"] = api_key
+            
             response = await client.post(
                 f"{orchestrator_url}/logs",
                 json=payload,
-                headers={
-                    "User-Agent": USER_AGENT,
-                    "Content-Type": "application/json",
-                },
+                headers=headers,
             )
             response.raise_for_status()
             logger.info("Logs submitted successfully")

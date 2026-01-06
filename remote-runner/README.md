@@ -20,7 +20,7 @@ For servers with static IP addresses, the runner exposes an HTTP API that the or
 ```bash
 python -m remote_runner push \
     --orchestrator-url http://quarterback.example.com:8000 \
-    --api-key your-node-api-key \
+    --registration-token your-registration-token \
     --name "prod-server-1" \
     --port 8080
 ```
@@ -40,7 +40,7 @@ For workstations or edge devices with dynamic IPs, the runner polls the orchestr
 ```bash
 python -m remote_runner pull \
     --orchestrator-url http://quarterback.example.com:8000 \
-    --api-key your-node-api-key \
+    --registration-token your-registration-token \
     --name "client-acme-workstation-1" \
     --poll-interval 30
 ```
@@ -82,7 +82,7 @@ Type=simple
 User=victoria
 ExecStart=/usr/bin/python3 -m remote_runner pull \
     --orchestrator-url http://quarterback.example.com:8000 \
-    --api-key your-node-api-key \
+    --registration-token your-registration-token \
     --name "client-acme-runner-1"
 Restart=always
 RestartSec=10
@@ -107,7 +107,7 @@ Create `/etc/rc.d/victoria_runner`:
 #!/bin/ksh
 
 daemon="/usr/local/bin/python3"
-daemon_flags="-m remote_runner pull --orchestrator-url http://quarterback.example.com:8000 --api-key your-node-api-key --name client-acme-runner-1"
+daemon_flags="-m remote_runner pull --orchestrator-url http://quarterback.example.com:8000 --registration-token your-registration-token --name client-acme-runner-1"
 daemon_user="victoria"
 
 . /etc/rc.d/rc.subr
@@ -132,7 +132,7 @@ rcctl start victoria_runner
 |--------|-------------|---------|
 | `--name` | Unique name for task targeting (supports wildcards) | System hostname |
 | `--orchestrator-url` | URL of the quarterback orchestrator | Required |
-| `--api-key` | Node API key for authentication | Required |
+| `--registration-token` | Token for registering with the orchestrator | Required |
 | `--container-image` | Victoria Terminal container image | `ghcr.io/elcanotek/victoria-terminal:latest` |
 | `--victoria-home` | Path to Victoria home directory | `~/Victoria` |
 | `--env-file` | Path to .env file for container | None |
@@ -162,13 +162,23 @@ The runner passes these environment variables to the container:
 
 Additional variables can be passed via the `--env-file` option.
 
-## Security Considerations
+## Security
 
-1. **API Key Protection**: Keep your node API key secure. It authenticates your node with the orchestrator.
+### Authentication Flow
 
-2. **Network Security**: In push mode, consider using a reverse proxy with TLS termination.
+1. **Registration**: When the runner starts, it registers with the orchestrator using the `--registration-token`
+2. **API Key Assignment**: The orchestrator validates the token and returns a unique Node API Key
+3. **Subsequent Requests**: The runner uses this API key for all subsequent communication
 
-3. **Container Isolation**: The runner uses standard container isolation. Ensure your container runtime is properly configured.
+### Security Considerations
+
+1. **Registration Token Protection**: Keep your registration token secure. It allows new nodes to register with the orchestrator.
+
+2. **Node API Key**: Automatically assigned during registration. Used for polling tasks and sending status updates.
+
+3. **Network Security**: In push mode, consider using a reverse proxy with TLS termination.
+
+4. **Container Isolation**: The runner uses standard container isolation. Ensure your container runtime is properly configured.
 
 ## Troubleshooting
 
@@ -188,13 +198,19 @@ sudo dnf install podman
 sudo apt install podman
 ```
 
-### Authentication Failed
+### Registration Failed
 
 ```
-Authentication failed - check node API key
+Registration failed - invalid registration token
 ```
 
-Verify your API key matches the one assigned during node registration with the orchestrator.
+Verify your `--registration-token` matches the `REGISTRATION_TOKEN` configured on the orchestrator.
+
+```
+Registration failed - orchestrator has registration disabled
+```
+
+The orchestrator doesn't have `REGISTRATION_TOKEN` set. Contact the orchestrator administrator.
 
 ### Connection Refused
 
