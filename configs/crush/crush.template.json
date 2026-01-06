@@ -91,6 +91,17 @@
         "EMAIL_LAST_CHECK_FILE": "${EMAIL_LAST_CHECK_FILE}",
         "PYTHONPATH": "${EMAIL_MCP_DIR}"
       }
+    },
+    "status-reporter": {
+      "type": "stdio",
+      "command": "python3",
+      "args": ["${STATUS_REPORTER_MCP_SCRIPT}"],
+      "cwd": "${STATUS_REPORTER_MCP_DIR}",
+      "env": {
+        "ORCHESTRATOR_URL": "${ORCHESTRATOR_URL}",
+        "JOB_ID": "${JOB_ID}",
+        "PYTHONPATH": "${STATUS_REPORTER_MCP_DIR}"
+      }
     }
   }
 }
