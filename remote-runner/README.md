@@ -133,7 +133,6 @@ The runner passes these environment variables to the container:
 | Variable | Description |
 |----------|-------------|
 | `ORCHESTRATOR_URL` | URL for MCP status reporting |
-| `JOB_ID` | Unique task identifier |
 | `NODE_API_KEY` | API key for authenticating with the orchestrator |
 
 Additional variables can be passed via the `--env-file` option.
