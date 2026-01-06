@@ -35,6 +35,7 @@ from .constants import (
     EMAIL_ENV_KEYS,
     ENV_FILENAME,
     GAMMA_ENV_KEY,
+    ORCHESTRATOR_ENV_KEYS,
     PROTOCOLS_DIR,
     REQUIRED_ENV_KEYS,
     SENDGRID_ENV_KEY,
@@ -203,6 +204,10 @@ def _is_browseros_enabled(env_map: Mapping[str, str]) -> bool:
     return _has_valid_env_value(env_map, BROWSEROS_ENV_KEY)
 
 
+def _is_orchestrator_enabled(env_map: Mapping[str, str]) -> bool:
+    return all(_has_valid_env_value(env_map, key) for key in ORCHESTRATOR_ENV_KEYS)
+
+
 def generate_crush_config(
     *,
     app_home: Path,
@@ -278,6 +283,20 @@ def generate_crush_config(
         snowflake_config = mcp_config.get("snowflake")
         if isinstance(snowflake_config, dict) and not _is_snowflake_enabled(env_map):
             mcp_config.pop("snowflake", None)
+
+        # Status Reporter MCP server (for All-Time Quarterback orchestration)
+        status_reporter_config = mcp_config.get("status-reporter")
+        if isinstance(status_reporter_config, dict):
+            if not _is_orchestrator_enabled(env_map):
+                mcp_config.pop("status-reporter", None)
+            else:
+                status_script = resource_path(Path("mcp") / "status_reporter.py")
+                if not status_script.exists():
+                    raise FileNotFoundError(
+                        f"Status Reporter MCP server script is missing (expected at {status_script})."
+                    )
+                resolved_env["STATUS_REPORTER_MCP_SCRIPT"] = str(status_script)
+                resolved_env["STATUS_REPORTER_MCP_DIR"] = str(status_script.parent)
 
     resolved = substitute_env(config, resolved_env)
     home_dir = Path.home()
