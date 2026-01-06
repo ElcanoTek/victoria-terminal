@@ -67,6 +67,11 @@ except ImportError:
     logger.warning("flask not installed - Push mode will not be available")
 
 
+# Registration retry configuration
+REGISTRATION_MAX_RETRIES = 5
+REGISTRATION_RETRY_DELAY = 10  # seconds
+
+
 @dataclass
 class Config:
     """Configuration for the remote runner."""
@@ -79,6 +84,7 @@ class Config:
     container_image: str
     victoria_home: Path
     node_name: Optional[str] = None  # Unique name for task targeting
+    node_id: Optional[str] = None  # Assigned by orchestrator during registration
     listen_host: str = "0.0.0.0"
     listen_port: int = 8080
     poll_interval: int = 30  # seconds
@@ -287,10 +293,10 @@ class PushModeServer:
                     "exit_code": poll_result,
                 })
 
-    def _register_node(self) -> Optional[str]:
+    def _register_node(self) -> Optional[tuple[str, str]]:
         """Register this node with the orchestrator.
         
-        Returns the assigned API key on success, None on failure.
+        Returns a tuple of (api_key, node_id) on success, None on failure.
         """
         try:
             import httpx
@@ -319,23 +325,44 @@ class PushModeServer:
                 response.raise_for_status()
                 data = response.json()
                 api_key = data.get("api_key")
-                logger.info(f"Registered with orchestrator as node {data['id']} (name: {self.config.node_name})")
-                return api_key
+                node_id = data.get("id")
+                logger.info(f"Registered with orchestrator as node {node_id} (name: {self.config.node_name})")
+                return (api_key, node_id)
         except Exception as e:
             logger.error(f"Failed to register with orchestrator: {e}")
             return None
 
+    def _register_with_retry(self) -> Optional[tuple[str, str]]:
+        """Attempt to register with the orchestrator, with retries.
+        
+        Returns a tuple of (api_key, node_id) on success, None after all retries exhausted.
+        """
+        for attempt in range(1, REGISTRATION_MAX_RETRIES + 1):
+            logger.info(f"Registration attempt {attempt}/{REGISTRATION_MAX_RETRIES}...")
+            result = self._register_node()
+            if result:
+                return result
+            
+            if attempt < REGISTRATION_MAX_RETRIES:
+                logger.info(f"Retrying in {REGISTRATION_RETRY_DELAY} seconds...")
+                time.sleep(REGISTRATION_RETRY_DELAY)
+        
+        logger.error(f"Failed to register after {REGISTRATION_MAX_RETRIES} attempts")
+        return None
+
     def run(self):
         """Start the push-mode server."""
-        # Register with orchestrator and get API key
+        # Register with orchestrator and get API key (with retries)
         logger.info("Registering with orchestrator...")
-        assigned_api_key = self._register_node()
-        if not assigned_api_key:
+        registration_result = self._register_with_retry()
+        if not registration_result:
             logger.error("Failed to register with orchestrator. Exiting.")
             sys.exit(1)
         
-        # Update config with the assigned API key
+        # Update config with the assigned API key and node ID
+        assigned_api_key, assigned_node_id = registration_result
         self.config.node_api_key = assigned_api_key
+        self.config.node_id = assigned_node_id
         logger.info("Registration successful - using assigned API key")
         
         logger.info(f"Starting push-mode server on {self.config.listen_host}:{self.config.listen_port}")
@@ -357,10 +384,10 @@ class PullModeDaemon:
         self.running = True
         self.current_process: Optional[subprocess.Popen] = None
 
-    def _register_node(self) -> Optional[str]:
+    def _register_node(self) -> Optional[tuple[str, str]]:
         """Register this node with the orchestrator.
         
-        Returns the assigned API key on success, None on failure.
+        Returns a tuple of (api_key, node_id) on success, None on failure.
         """
         try:
             with httpx.Client(timeout=30.0) as client:
@@ -381,8 +408,9 @@ class PullModeDaemon:
                 response.raise_for_status()
                 data = response.json()
                 api_key = data.get("api_key")
-                logger.info(f"Registered with orchestrator as node {data['id']} (name: {self.config.node_name})")
-                return api_key
+                node_id = data.get("id")
+                logger.info(f"Registered with orchestrator as node {node_id} (name: {self.config.node_name})")
+                return (api_key, node_id)
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 401:
                 logger.error("Registration failed - invalid registration token")
@@ -394,6 +422,24 @@ class PullModeDaemon:
         except Exception as e:
             logger.error(f"Failed to register with orchestrator: {e}")
             return None
+
+    def _register_with_retry(self) -> Optional[tuple[str, str]]:
+        """Attempt to register with the orchestrator, with retries.
+        
+        Returns a tuple of (api_key, node_id) on success, None after all retries exhausted.
+        """
+        for attempt in range(1, REGISTRATION_MAX_RETRIES + 1):
+            logger.info(f"Registration attempt {attempt}/{REGISTRATION_MAX_RETRIES}...")
+            result = self._register_node()
+            if result:
+                return result
+            
+            if attempt < REGISTRATION_MAX_RETRIES:
+                logger.info(f"Retrying in {REGISTRATION_RETRY_DELAY} seconds...")
+                time.sleep(REGISTRATION_RETRY_DELAY)
+        
+        logger.error(f"Failed to register after {REGISTRATION_MAX_RETRIES} attempts")
+        return None
 
     def _poll_for_tasks(self) -> Optional[dict]:
         """Poll the orchestrator for pending tasks."""
@@ -418,6 +464,10 @@ class PullModeDaemon:
 
     def _send_heartbeat(self):
         """Send a heartbeat to the orchestrator."""
+        if not self.config.node_id:
+            logger.debug("Skipping heartbeat - node_id not set")
+            return
+        
         try:
             status = "idle"
             task_id = None
@@ -428,7 +478,7 @@ class PullModeDaemon:
                 client.post(
                     f"{self.config.orchestrator_url}/nodes/heartbeat",
                     json={
-                        "node_id": str(uuid4()),  # Would be persisted in real impl
+                        "node_id": self.config.node_id,
                         "status": status,
                         "current_task_id": task_id,
                     },
@@ -443,15 +493,17 @@ class PullModeDaemon:
         logger.info(f"Polling orchestrator at {self.config.orchestrator_url}")
         logger.info(f"Poll interval: {self.config.poll_interval} seconds")
 
-        # Register with orchestrator and get API key
+        # Register with orchestrator and get API key (with retries)
         logger.info("Registering with orchestrator...")
-        assigned_api_key = self._register_node()
-        if not assigned_api_key:
+        registration_result = self._register_with_retry()
+        if not registration_result:
             logger.error("Failed to register with orchestrator. Exiting.")
             sys.exit(1)
         
-        # Update config with the assigned API key for subsequent requests
+        # Update config with the assigned API key and node ID for subsequent requests
+        assigned_api_key, assigned_node_id = registration_result
         self.config.node_api_key = assigned_api_key
+        self.config.node_id = assigned_node_id
         logger.info("Registration successful - using assigned API key")
 
         # Set up signal handlers
