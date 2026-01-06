@@ -99,31 +99,6 @@ sudo systemctl enable victoria-runner
 sudo systemctl start victoria-runner
 ```
 
-#### OpenBSD (rc.d)
-
-Create `/etc/rc.d/victoria_runner`:
-
-```sh
-#!/bin/ksh
-
-daemon="/usr/local/bin/python3"
-daemon_flags="-m remote_runner pull --orchestrator-url http://quarterback.example.com:8000 --registration-token your-registration-token --name client-acme-runner-1"
-daemon_user="victoria"
-
-. /etc/rc.d/rc.subr
-
-rc_bg=YES
-rc_cmd $1
-```
-
-Then:
-
-```bash
-chmod +x /etc/rc.d/victoria_runner
-rcctl enable victoria_runner
-rcctl start victoria_runner
-```
-
 ## Configuration
 
 ### Command Line Options
