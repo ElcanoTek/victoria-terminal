@@ -21,7 +21,7 @@ The orchestration system enables centralized management of multiple Victoria Ter
 │  └─────────────┘  └─────────────┘  └─────────────────────────┘ │
 └─────────────────────────────────────────────────────────────────┘
          │                    │                    ▲
-         │ Push (HTTP)        │ Pull (Polling)     │ Status (MCP)
+         │ Push (HTTP)        │ Pull (Polling)     │ Status + Logs (MCP)
          ▼                    ▼                    │
 ┌─────────────────┐  ┌─────────────────┐          │
 │  Remote Runner  │  │  Remote Runner  │          │
@@ -57,7 +57,7 @@ See [remote-runner/README.md](../remote-runner/README.md) for detailed documenta
 
 ### 2. Status Reporter MCP Server
 
-The Status Reporter is an MCP server that runs inside the Victoria container and reports task progress back to the orchestrator.
+The Status Reporter is an MCP server that runs inside the Victoria container and reports task progress and logs back to the orchestrator.
 
 **Available Tools:**
 
@@ -65,9 +65,10 @@ The Status Reporter is an MCP server that runs inside the Victoria container and
 |------|-------------|
 | `report_status` | Report current task status with optional message and progress |
 | `report_started` | Convenience wrapper for reporting task start |
-| `report_complete` | Report successful task completion |
-| `report_error` | Report task failure with error message |
-| `get_job_info` | Get current job ID and orchestrator URL |
+| `report_complete` | Report successful task completion (auto-submits logs) |
+| `report_error` | Report task failure with error message (auto-submits logs) |
+| `submit_crush_logs` | Manually submit Crush session logs to the orchestrator |
+| `get_job_info` | Get current job ID, orchestrator URL, and Crush database info |
 
 **Example Usage (from within Victoria):**
 
@@ -80,16 +81,56 @@ report_status(status="analyzing", message="Analyzing sales data from Q4")
 # Report progress on a long task
 report_status(status="running", message="Processing files", progress=45.0)
 
-# Report successful completion
+# Report successful completion (automatically submits logs)
 report_complete(message="Analysis complete. Found 3 key insights.")
 
-# Report an error
+# Report an error (automatically submits logs)
 report_error(error_message="Failed to connect to database")
+
+# Manually submit logs without changing status
+submit_crush_logs()
 ```
 
 ### 3. Crush Log Integration
 
-Victoria Terminal streams logs to Crush for aggregation. The orchestrator can link to specific Crush sessions for historical log viewing.
+Victoria Terminal stores conversation logs in a local SQLite database (Crush). The Status Reporter MCP server reads this database and uploads the full conversation history to the orchestrator.
+
+**How it works:**
+
+1. Crush stores all agent conversations in `~/.crush/crush.db` (or `~/Victoria/.crush/crush.db`)
+2. The database contains sessions (conversations) and messages (individual turns)
+3. When `report_complete()` or `report_error()` is called, the Status Reporter:
+   - Reads the most recent session from the Crush database
+   - Extracts all messages with their roles, content, model info, and timestamps
+   - POSTs the session data to the orchestrator's `/logs` endpoint
+4. The orchestrator stores the logs and links them to the task for dashboard viewing
+
+**Database Schema:**
+
+```sql
+-- Sessions table
+sessions (
+    id TEXT PRIMARY KEY,
+    title TEXT,
+    prompt_tokens INTEGER,
+    completion_tokens INTEGER,
+    cost REAL,
+    created_at INTEGER,
+    updated_at INTEGER
+)
+
+-- Messages table
+messages (
+    id TEXT PRIMARY KEY,
+    session_id TEXT,
+    role TEXT,           -- user, assistant, system, tool
+    parts TEXT,          -- message content (JSON)
+    model TEXT,
+    provider TEXT,
+    created_at INTEGER,
+    finished_at INTEGER
+)
+```
 
 ## Configuration
 
@@ -101,7 +142,7 @@ The following environment variables are set by the Remote Runner when launching 
 |----------|-------------|
 | `ORCHESTRATOR_URL` | URL of the quarterback orchestrator |
 | `JOB_ID` | Unique identifier for the current task |
-| `CRUSH_SERVER_URL` | (Optional) URL for Crush log server |
+| `VICTORIA_HOME` | Path to Victoria home directory (for finding Crush DB) |
 
 ### .env Configuration
 
@@ -113,6 +154,9 @@ ORCHESTRATOR_URL="http://quarterback.example.com:8000"
 
 # Job ID (set by remote-runner when launching containers)
 JOB_ID="your-job-id-here"
+
+# Victoria home directory (optional, defaults to ~/Victoria)
+VICTORIA_HOME="/home/user/Victoria"
 ```
 
 **Note:** In production, these variables are automatically set by the Remote Runner. You only need to configure them manually for testing.
@@ -125,16 +169,40 @@ JOB_ID="your-job-id-here"
 2. Orchestrator sends POST request to Cloud Node's Remote Runner
 3. Remote Runner validates request and runs `podman run victoria-terminal`
 4. Victoria starts and reports "Status: Started" via MCP
-5. Victoria processes task and streams logs to Crush
-6. Victoria reports "Status: Complete" via MCP
+5. Victoria processes task (Crush logs conversation to local DB)
+6. Victoria reports "Status: Complete" via MCP and submits logs
 
 ### Pull Strategy (Local Hardware)
 
 1. Remote Runner (on local machine) polls Orchestrator: "Any jobs?"
 2. Orchestrator replies with task details
 3. Remote Runner runs `podman run victoria-terminal`
-4. Victoria processes task and reports status via MCP
-5. Victoria reports "Status: Complete" via MCP
+4. Victoria processes task (Crush logs conversation to local DB)
+5. Victoria reports "Status: Complete" via MCP and submits logs
+
+### Log Submission Flow
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│  Victoria Agent │     │   Crush DB      │     │  Orchestrator   │
+│                 │     │ ~/.crush/       │     │                 │
+└────────┬────────┘     └────────┬────────┘     └────────┬────────┘
+         │                       │                       │
+         │ Conversation happens  │                       │
+         │──────────────────────>│                       │
+         │                       │ (stored locally)      │
+         │                       │                       │
+         │ report_complete()     │                       │
+         │───────────────────────┼──────────────────────>│
+         │                       │                       │
+         │ Read session data     │                       │
+         │<──────────────────────│                       │
+         │                       │                       │
+         │ POST /logs            │                       │
+         │──────────────────────────────────────────────>│
+         │                       │                       │ (stored for dashboard)
+         │                       │                       │
+```
 
 ## Security
 
@@ -166,6 +234,8 @@ JOB_ID="your-job-id-here"
 
 ### Logs Not Appearing in Dashboard
 
-1. Verify Crush session ID is being reported
-2. Check Crush server connectivity
-3. Ensure logs are being written to stdout/stderr
+1. Verify the Crush database exists at `~/.crush/crush.db` or `~/Victoria/.crush/crush.db`
+2. Check that `submit_crush_logs()` was called (or `report_complete()`/`report_error()`)
+3. Verify network connectivity to the orchestrator
+4. Check orchestrator logs for any errors receiving the log submission
+5. Use `get_job_info()` to verify the Crush database path is detected
