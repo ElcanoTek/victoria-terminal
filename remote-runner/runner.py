@@ -74,6 +74,7 @@ class Config:
     container_runtime: str  # "podman" or "docker"
     container_image: str
     victoria_home: Path
+    node_name: Optional[str] = None  # Unique name for task targeting
     listen_host: str = "0.0.0.0"
     listen_port: int = 8080
     poll_interval: int = 30  # seconds
@@ -196,6 +197,7 @@ class PushModeServer:
         def health():
             return jsonify({
                 "status": "healthy",
+                "name": self.config.node_name,
                 "mode": "push",
                 "os_type": detect_os_type(),
                 "container_runtime": self.config.container_runtime,
@@ -284,6 +286,7 @@ class PullModeDaemon:
                     f"{self.config.orchestrator_url}/register",
                     json={
                         "hostname": platform.node(),
+                        "name": self.config.node_name,
                         "mode": "pull",
                         "os_type": detect_os_type(),
                         "capabilities": [],
@@ -294,7 +297,7 @@ class PullModeDaemon:
                 data = response.json()
                 # Update the API key with the one assigned by the orchestrator
                 # In a real implementation, this would be persisted
-                logger.info(f"Registered with orchestrator as node {data['id']}")
+                logger.info(f"Registered with orchestrator as node {data['id']} (name: {self.config.node_name})")
                 return True
         except Exception as e:
             logger.error(f"Failed to register with orchestrator: {e}")
@@ -400,11 +403,15 @@ def parse_args() -> argparse.Namespace:
 Examples:
   # Push mode (cloud server with static IP)
   %(prog)s push --orchestrator-url http://quarterback.example.com:8000 \\
-                --api-key your-node-api-key
+                --api-key your-node-api-key --name "prod-server-1"
 
   # Pull mode (local workstation with dynamic IP)
   %(prog)s pull --orchestrator-url http://quarterback.example.com:8000 \\
-                --api-key your-node-api-key --poll-interval 60
+                --api-key your-node-api-key --name "client-acme-workstation-1"
+
+  # Named node for client-specific tasks (tasks targeting "client-acme-*" will match)
+  %(prog)s pull --orchestrator-url http://quarterback.example.com:8000 \\
+                --api-key your-node-api-key --name "client-acme-gpu-runner"
         """,
     )
 
@@ -424,6 +431,16 @@ Examples:
         "--api-key",
         required=True,
         help="API key for authenticating with the orchestrator",
+    )
+
+    parser.add_argument(
+        "--name",
+        dest="node_name",
+        help=(
+            "Unique name for this node, used for task targeting. "
+            "Tasks can target nodes by name pattern (e.g., 'client-acme-*'). "
+            "Defaults to the system hostname if not specified."
+        ),
     )
 
     parser.add_argument(
@@ -502,6 +519,9 @@ def main():
     # Ensure Victoria home exists
     args.victoria_home.mkdir(parents=True, exist_ok=True)
 
+    # Use provided name or default to hostname
+    node_name = args.node_name or platform.node()
+
     config = Config(
         mode=args.mode,
         orchestrator_url=args.orchestrator_url.rstrip("/"),
@@ -509,6 +529,7 @@ def main():
         container_runtime=container_runtime,
         container_image=args.container_image,
         victoria_home=args.victoria_home,
+        node_name=node_name,
         listen_host=args.host,
         listen_port=args.port,
         poll_interval=args.poll_interval,
@@ -516,6 +537,7 @@ def main():
     )
 
     logger.info(f"Remote Runner starting in {args.mode} mode")
+    logger.info(f"Node Name: {node_name}")
     logger.info(f"OS Type: {detect_os_type()}")
     logger.info(f"Container Runtime: {container_runtime}")
     logger.info(f"Victoria Home: {config.victoria_home}")

@@ -21,6 +21,7 @@ For servers with static IP addresses, the runner exposes an HTTP API that the or
 python -m remote_runner push \
     --orchestrator-url http://quarterback.example.com:8000 \
     --api-key your-node-api-key \
+    --name "prod-server-1" \
     --port 8080
 ```
 
@@ -40,6 +41,7 @@ For workstations or edge devices with dynamic IPs, the runner polls the orchestr
 python -m remote_runner pull \
     --orchestrator-url http://quarterback.example.com:8000 \
     --api-key your-node-api-key \
+    --name "client-acme-workstation-1" \
     --poll-interval 30
 ```
 
@@ -80,7 +82,8 @@ Type=simple
 User=victoria
 ExecStart=/usr/bin/python3 -m remote_runner pull \
     --orchestrator-url http://quarterback.example.com:8000 \
-    --api-key your-node-api-key
+    --api-key your-node-api-key \
+    --name "client-acme-runner-1"
 Restart=always
 RestartSec=10
 
@@ -104,7 +107,7 @@ Create `/etc/rc.d/victoria_runner`:
 #!/bin/ksh
 
 daemon="/usr/local/bin/python3"
-daemon_flags="-m remote_runner pull --orchestrator-url http://quarterback.example.com:8000 --api-key your-node-api-key"
+daemon_flags="-m remote_runner pull --orchestrator-url http://quarterback.example.com:8000 --api-key your-node-api-key --name client-acme-runner-1"
 daemon_user="victoria"
 
 . /etc/rc.d/rc.subr
@@ -127,6 +130,7 @@ rcctl start victoria_runner
 
 | Option | Description | Default |
 |--------|-------------|---------|
+| `--name` | Unique name for task targeting (supports wildcards) | System hostname |
 | `--orchestrator-url` | URL of the quarterback orchestrator | Required |
 | `--api-key` | Node API key for authentication | Required |
 | `--container-image` | Victoria Terminal container image | `ghcr.io/elcanotek/victoria-terminal:latest` |
@@ -202,3 +206,53 @@ Check that:
 1. The orchestrator URL is correct
 2. The orchestrator is running
 3. Network/firewall allows the connection
+
+
+## Node Naming and Task Targeting
+
+The `--name` option assigns a unique identifier to your runner that the orchestrator uses for task targeting.
+
+### Naming Convention
+
+We recommend using a consistent naming convention:
+
+```
+{client}-{environment}-{role}-{number}
+```
+
+**Examples:**
+- `client-acme-prod-1` - Acme's first production runner
+- `client-acme-dev-1` - Acme's development runner
+- `internal-gpu-1` - Internal GPU-enabled runner
+
+### How Targeting Works
+
+When a task is created with `target_node_name`, the orchestrator uses wildcard pattern matching:
+
+| Task Target | Runner Name | Match? |
+|-------------|-------------|--------|
+| `client-acme-*` | `client-acme-prod-1` | ✅ Yes |
+| `client-acme-*` | `client-acme-dev-2` | ✅ Yes |
+| `client-acme-*` | `client-beta-prod-1` | ❌ No |
+| `*-gpu-*` | `client-acme-gpu-1` | ✅ Yes |
+| `prod-*` | `prod-server-1` | ✅ Yes |
+
+### Client Isolation Example
+
+To ensure a client's tasks only run on their dedicated runners:
+
+1. **Start runners with client-specific names:**
+   ```bash
+   # On Client Acme's servers
+   python -m remote_runner pull --name "client-acme-runner-1" ...
+   python -m remote_runner pull --name "client-acme-runner-2" ...
+   ```
+
+2. **Create tasks targeting that client:**
+   ```bash
+   curl -X POST http://quarterback.example.com:8000/tasks \
+     -H "X-API-Key: $ADMIN_API_KEY" \
+     -d '{"prompt": "Analyze data", "target_node_name": "client-acme-*"}'
+   ```
+
+3. **Only runners matching `client-acme-*` will pick up the task.**
