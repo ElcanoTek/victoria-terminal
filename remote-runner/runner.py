@@ -48,6 +48,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger("remote-runner")
 
+# Cache for GNU timeout check
+_IS_GNU_TIMEOUT: Optional[bool] = None
+
 # Try to import optional dependencies
 try:
     import httpx
@@ -164,6 +167,33 @@ def run_container(
         "--accept-license",
         "--task", prompt,
     ])
+
+    # Wrap with timeout command if available to prevent zombie processes
+    # and enforce orchestrator-specified TTL
+    timeout_cmd = shutil.which("timeout")
+    if timeout_cmd and timeout_seconds and int(timeout_seconds) > 0:
+        # Check if timeout supports extended flags (GNU coreutils)
+        # We cache this check to avoid running it for every task
+        global _IS_GNU_TIMEOUT
+        if _IS_GNU_TIMEOUT is None:
+            try:
+                _IS_GNU_TIMEOUT = "GNU coreutils" in subprocess.check_output(
+                    [timeout_cmd, "--version"],
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                )
+            except Exception:
+                _IS_GNU_TIMEOUT = False
+
+        if _IS_GNU_TIMEOUT:
+            # --preserve-status: allow normal exit codes if task finishes in time
+            # -k 5s: send SIGKILL if process refuses to die 5s after SIGTERM
+            cmd = [timeout_cmd, "--preserve-status", "-k", "5s", str(timeout_seconds)] + cmd
+        else:
+            # Fallback for BusyBox or other timeout implementations
+            cmd = [timeout_cmd, str(timeout_seconds)] + cmd
+
+        logger.info(f"Enforcing timeout of {timeout_seconds}s (GNU: {_IS_GNU_TIMEOUT})")
 
     logger.info(f"Starting container for task {task_id}")
     logger.debug(f"Command: {' '.join(cmd)}")
