@@ -94,9 +94,7 @@ def detect_container_runtime() -> str:
 def detect_os_type() -> str:
     """Detect the operating system type."""
     system = platform.system().lower()
-    if system == "openbsd":
-        return "openbsd"
-    elif system == "linux":
+    if system == "linux":
         # Try to detect distribution
         try:
             with open("/etc/os-release") as f:

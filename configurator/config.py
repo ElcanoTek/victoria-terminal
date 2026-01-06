@@ -292,7 +292,9 @@ def generate_crush_config(
             else:
                 status_script = resource_path(Path("mcp") / "status_reporter.py")
                 if not status_script.exists():
-                    raise FileNotFoundError(f"Status Reporter MCP server script is missing (expected at {status_script}).")
+                    raise FileNotFoundError(
+                        f"Status Reporter MCP server script is missing (expected at {status_script})."
+                    )
                 resolved_env["STATUS_REPORTER_MCP_SCRIPT"] = str(status_script)
                 resolved_env["STATUS_REPORTER_MCP_DIR"] = str(status_script.parent)
 
