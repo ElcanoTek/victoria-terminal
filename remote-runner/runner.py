@@ -242,11 +242,22 @@ def download_task_files(
 
     logger.info(f"Downloading {len(files)} file(s) for task {task_id[:8]}")
 
-    # Build a mapping of filename to expected checksum if checksums are provided
+    # Build a mapping of normalized filename to expected checksum if checksums are provided
     # The file_checksums list corresponds positionally to the files list per OpenAPI spec
     checksum_map: dict[str, str] = {}
     if file_checksums and len(file_checksums) == len(files):
-        checksum_map = dict(zip(files, file_checksums))
+        for filename, checksum in zip(files, file_checksums):
+            normalized_name = Path(filename).name
+            if normalized_name in checksum_map:
+                logger.error(
+                    "Filename collision detected after normalization: "
+                    f"{normalized_name} (from {filename})"
+                )
+                raise ValueError(
+                    "Filename collision detected in task files. "
+                    "Ensure filenames are unique after normalization."
+                )
+            checksum_map[normalized_name] = checksum
     elif file_checksums:
         logger.warning(
             f"file_checksums length ({len(file_checksums)}) does not match "
@@ -290,7 +301,7 @@ def download_task_files(
 
                 # Verify checksum if provided in TaskAssignment.file_checksums
                 # (aligned with OpenAPI spec which defines checksums in the task assignment)
-                expected_checksum = checksum_map.get(filename)
+                expected_checksum = checksum_map.get(safe_filename)
                 if expected_checksum:
                     actual_checksum = hashlib.sha256(response.content).hexdigest()
                     if actual_checksum.lower() != expected_checksum.lower():
@@ -348,7 +359,17 @@ class Runner:
                 data = response.json()
                 api_key = data.get("api_key")
                 node_id = data.get("id")
-                logger.info(f"Registered with orchestrator as node {node_id} (name: {self.config.node_name})")
+                if not api_key or not node_id:
+                    logger.error(
+                        "Registration response missing required fields "
+                        f"(id: {bool(node_id)}, api_key: {bool(api_key)}). "
+                        f"Response keys: {sorted(data.keys())}"
+                    )
+                    return None
+                logger.info(
+                    "Registered with orchestrator as node "
+                    f"{node_id} (name: {self.config.node_name})"
+                )
                 return (api_key, node_id)
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 401:
@@ -413,7 +434,7 @@ class Runner:
                 status = "busy"
             
             with httpx.Client(timeout=10.0) as client:
-                client.post(
+                response = client.post(
                     f"{self.config.orchestrator_url}/nodes/heartbeat",
                     json={
                         "node_id": self.config.node_id,
@@ -422,8 +443,14 @@ class Runner:
                     },
                     headers={"X-API-Key": self.config.node_api_key},
                 )
+                response.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            logger.warning(
+                "Heartbeat rejected by orchestrator: "
+                f"HTTP {e.response.status_code} - {e.response.text}"
+            )
         except Exception as e:
-            logger.debug(f"Failed to send heartbeat: {e}")
+            logger.warning(f"Failed to send heartbeat: {e}")
 
     def run(self):
         """Start the runner daemon."""
