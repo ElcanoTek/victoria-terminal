@@ -36,6 +36,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional
+from urllib.parse import quote
 
 # Configure logging
 logging.basicConfig(
@@ -215,6 +216,7 @@ def download_task_files(
     task_id: str,
     files: List[str],
     orchestrator_url: str,
+    file_checksums: Optional[List[str]] = None,
 ) -> Path:
     """
     Download task-specific files from the orchestrator.
@@ -227,6 +229,8 @@ def download_task_files(
         task_id: Unique task identifier
         files: List of filenames to download from the orchestrator
         orchestrator_url: Base URL of the orchestrator
+        file_checksums: Optional list of SHA-256 checksums corresponding to files
+                        (as provided in TaskAssignment.file_checksums per OpenAPI spec)
 
     Returns:
         Path to the directory containing downloaded files
@@ -237,6 +241,17 @@ def download_task_files(
     files_dir.mkdir(parents=True, exist_ok=True)
 
     logger.info(f"Downloading {len(files)} file(s) for task {task_id[:8]}")
+
+    # Build a mapping of filename to expected checksum if checksums are provided
+    # The file_checksums list corresponds positionally to the files list per OpenAPI spec
+    checksum_map: dict[str, str] = {}
+    if file_checksums and len(file_checksums) == len(files):
+        checksum_map = dict(zip(files, file_checksums))
+    elif file_checksums:
+        logger.warning(
+            f"file_checksums length ({len(file_checksums)}) does not match "
+            f"files length ({len(files)}), skipping checksum verification"
+        )
 
     with httpx.Client(timeout=60.0) as client:
         for filename in files:
@@ -256,7 +271,10 @@ def download_task_files(
                 logger.error(f"Path traversal attempt detected, skipping: {filename}")
                 continue
 
-            download_url = f"{orchestrator_url}/files/{filename}"
+            # URL-encode the filename as required by the OpenAPI spec
+            # This handles spaces, special characters, and non-ASCII characters
+            encoded_filename = quote(safe_filename, safe="")
+            download_url = f"{orchestrator_url}/files/{encoded_filename}"
 
             try:
                 logger.info(f"Downloading: {filename} -> {safe_filename}")
@@ -270,11 +288,12 @@ def download_task_files(
                 with open(dest_path, "wb") as f:
                     f.write(response.content)
 
-                # Verify checksum if provided
-                expected_checksum = response.headers.get("X-Checksum-SHA256")
+                # Verify checksum if provided in TaskAssignment.file_checksums
+                # (aligned with OpenAPI spec which defines checksums in the task assignment)
+                expected_checksum = checksum_map.get(filename)
                 if expected_checksum:
                     actual_checksum = hashlib.sha256(response.content).hexdigest()
-                    if actual_checksum != expected_checksum:
+                    if actual_checksum.lower() != expected_checksum.lower():
                         logger.error(
                             f"Checksum mismatch for {filename}: "
                             f"expected {expected_checksum}, got {actual_checksum}"
@@ -459,6 +478,7 @@ class Runner:
                                 task["task_id"],
                                 task_files,
                                 task["orchestrator_url"],
+                                file_checksums=task.get("file_checksums"),
                             )
 
                         self.current_process = run_container(
