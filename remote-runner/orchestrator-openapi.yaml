@@ -1,20 +1,26 @@
 openapi: 3.0.0
 info:
-  title: Victoria Terminal Orchestrator API
+  title: All-Time Quarterback Orchestrator API
   description: |
-    OpenAPI specification for orchestrators compatible with Victoria Terminal.
+    OpenAPI specification for the All-Time Quarterback fleet management orchestrator.
     
-    Any orchestrator that implements this API can manage Victoria Terminal agents
-    using the pull-based hub-and-spoke model. This design ensures that agents only
-    make outbound HTTPS connections, requiring no inbound ports to be opened on
-    the agent machines.
+    This API enables orchestrators to manage Victoria Terminal agents using a pull-based
+    hub-and-spoke model. This design ensures that agents only make outbound HTTPS
+    connections, requiring no inbound ports to be opened on the agent machines.
     
     Key features:
     - Node registration and heartbeat monitoring
     - Task creation, assignment, and status tracking
     - Log collection and storage
     - File upload/download for task attachments
-  version: 1.0.0
+    
+    ## Authentication
+    
+    All authenticated endpoints require the `X-API-Key` header. Requests without a valid
+    API key will receive a 401 Unauthorized response. Ensure your client is configured
+    with the correct API key before making requests to avoid authentication errors that
+    may appear as runtime failures.
+  version: 1.1.0
   license:
     name: BSL 1.1
     url: https://mariadb.com/bsl11/
@@ -29,12 +35,16 @@ components:
       type: apiKey
       in: header
       name: X-API-Key
-      description: Admin API key for privileged operations.
+      description: |
+        Admin API key for privileged operations. Required for all admin endpoints.
+        Requests without this header will receive a 401 Unauthorized response.
     NodeApiKey:
       type: apiKey
       in: header
       name: X-API-Key
-      description: Node-specific API key for node operations.
+      description: |
+        Node-specific API key for node operations. Required for all node endpoints.
+        Requests without this header will receive a 401 Unauthorized response.
     RegistrationToken:
       type: apiKey
       in: header
@@ -53,42 +63,30 @@ components:
         name:
           type: string
           description: Optional custom name for the node.
-        capabilities:
-          type: array
-          items:
-            type: string
-          description: List of capabilities the node supports.
         os_type:
           type: string
           description: Operating system type.
-        tags:
-          type: object
-          additionalProperties:
-            type: string
-          description: Key-value tags for the node.
     Node:
       type: object
+      required:
+        - id
+        - api_key
       properties:
         id:
           type: string
           format: uuid
+          description: Unique identifier for the node. Always present in registration response.
         hostname:
           type: string
         name:
           type: string
         api_key:
           type: string
-          description: The API key assigned to the node.
-        capabilities:
-          type: array
-          items:
-            type: string
+          description: |
+            The API key assigned to the node. Always present in registration response.
+            Store this securely as it is required for all subsequent node API calls.
         os_type:
           type: string
-        tags:
-          type: object
-          additionalProperties:
-            type: string
         status:
           type: string
           enum: [idle, busy, offline, error]
@@ -206,21 +204,37 @@ components:
             type: string
     TaskAssignment:
       type: object
+      required:
+        - task_id
+        - prompt
+        - orchestrator_url
       properties:
         task_id:
           type: string
           format: uuid
+          description: Unique identifier for the task. Required for status updates.
         prompt:
           type: string
+          description: The task prompt/instruction to execute. Required.
         timeout_seconds:
           type: integer
         orchestrator_url:
           type: string
+          description: |
+            Base URL of the orchestrator for callbacks. Required for status updates
+            and log submissions.
         files:
           type: array
           items:
             type: string
-          description: List of filenames available for download from /files/{filename}
+          description: |
+            List of filenames available for download from /files/{filename}.
+            Filenames should be URL-encoded when constructing download URLs.
+        file_checksums:
+          type: array
+          items:
+            type: string
+          description: List of SHA-256 checksums corresponding to the files.
     StatusUpdate:
       type: object
       required:
@@ -240,6 +254,10 @@ components:
           format: double
         crush_session_id:
           type: string
+        timestamp:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp of when this status update was generated.
     LogSubmission:
       type: object
       required:
@@ -457,6 +475,10 @@ paths:
   /register:
     post:
       summary: Register a new node
+      description: |
+        Register a new node with the orchestrator. On success, the response includes
+        the node's `id` and `api_key` which are required for all subsequent API calls.
+        Store these values securely.
       security:
         - RegistrationToken: []
       requestBody:
@@ -467,7 +489,9 @@ paths:
               $ref: '#/components/schemas/NodeRegistration'
       responses:
         '200':
-          description: Node registered successfully
+          description: |
+            Node registered successfully. The response always includes `id` and `api_key`
+            fields which must be stored for subsequent API calls.
           content:
             application/json:
               schema:
@@ -591,15 +615,24 @@ paths:
   /tasks/pending:
     get:
       summary: Get pending task for node
+      description: |
+        Retrieve the next pending task assigned to this node. Returns null if no
+        task is currently pending. Clients should handle both a TaskAssignment
+        object and a null response.
       security:
         - NodeApiKey: []
       responses:
         '200':
-          description: Pending task or null
+          description: |
+            Pending task assignment or null if no task is available. When a task
+            is returned, the `task_id`, `prompt`, and `orchestrator_url` fields
+            are always present.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TaskAssignment'
+                nullable: true
+                allOf:
+                  - $ref: '#/components/schemas/TaskAssignment'
   /tasks/{task_id}:
     get:
       summary: Get task details
@@ -682,19 +715,38 @@ paths:
                 properties:
                   filename:
                     type: string
+                    description: |
+                      The stored filename. This may differ from the original filename
+                      and should be used when constructing download URLs.
                   original_name:
                     type: string
+                  checksum:
+                    type: string
+                    description: SHA-256 checksum of the uploaded file.
+                  size:
+                    type: integer
+                    description: Size of the uploaded file in bytes.
   /files/{filename}:
     get:
       summary: Download a file
       description: |
         Download a task attachment file. Files are associated with tasks and
         should only be accessible to the node assigned to execute the task.
+        
+        **Important**: The filename parameter must be URL-encoded if it contains
+        special characters, spaces, or non-ASCII characters. Failure to properly
+        encode the filename may result in 404 errors or unexpected behavior.
+        
+        Example: A file named "my report.pdf" should be requested as
+        `/files/my%20report.pdf`
       security:
         - NodeApiKey: []
       parameters:
         - in: path
           name: filename
+          description: |
+            The filename to download. Must be URL-encoded if it contains special
+            characters, spaces, or reserved URI characters.
           schema:
             type: string
           required: true
@@ -747,6 +799,10 @@ paths:
   /status:
     post:
       summary: Report task status
+      description: |
+        Report the current status of a task execution. The `job_id` and `status`
+        fields are required. The optional `timestamp` field should be an ISO 8601
+        formatted datetime string.
       security:
         - NodeApiKey: []
       requestBody:
