@@ -100,6 +100,7 @@
       "env": {
         "ORCHESTRATOR_URL": "${ORCHESTRATOR_URL}",
         "JOB_ID": "${JOB_ID}",
+        "NODE_API_KEY": "${NODE_API_KEY}",
         "PYTHONPATH": "${STATUS_REPORTER_MCP_DIR}"
       }
     }
