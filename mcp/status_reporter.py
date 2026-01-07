@@ -216,7 +216,7 @@ async def send_status_update(
         return {"error": "JOB_ID not configured", "sent": False}
 
     payload = {
-        "task_id": job_id,
+        "job_id": job_id,
         "status": status.value,
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
@@ -507,7 +507,7 @@ async def submit_crush_logs(session_id: Optional[str] = None) -> Dict[str, Any]:
     logger.info(f"Submitting logs for session {session['id']} with {len(session['messages'])} messages")
 
     payload = {
-        "task_id": job_id,
+        "job_id": job_id,
         "session": session,
     }
 
