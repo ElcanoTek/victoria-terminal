@@ -25,6 +25,7 @@ HTTPS connections to the orchestrator, requiring no inbound ports to be opened.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import logging
 import platform
 import shutil
@@ -269,6 +270,18 @@ def download_task_files(
                 with open(dest_path, "wb") as f:
                     f.write(response.content)
 
+                # Verify checksum if provided
+                expected_checksum = response.headers.get("X-Checksum-SHA256")
+                if expected_checksum:
+                    actual_checksum = hashlib.sha256(response.content).hexdigest()
+                    if actual_checksum != expected_checksum:
+                        logger.error(
+                            f"Checksum mismatch for {filename}: "
+                            f"expected {expected_checksum}, got {actual_checksum}"
+                        )
+                        raise ValueError(f"Checksum verification failed for {filename}")
+                    logger.info(f"Checksum verified for {safe_filename}")
+
                 logger.info(f"Downloaded: {safe_filename} ({len(response.content)} bytes)")
 
             except httpx.HTTPStatusError as e:
@@ -307,8 +320,6 @@ class Runner:
                         "hostname": platform.node(),
                         "name": self.config.node_name,
                         "os_type": detect_os_type(),
-                        "capabilities": [],
-                        "tags": {},
                     },
                     headers={
                         "X-Registration-Token": self.config.registration_token,

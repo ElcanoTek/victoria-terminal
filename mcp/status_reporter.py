@@ -35,6 +35,7 @@ import logging
 import os
 import sqlite3
 import sys
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -215,8 +216,9 @@ async def send_status_update(
         return {"error": "JOB_ID not configured", "sent": False}
 
     payload = {
-        "job_id": job_id,
+        "task_id": job_id,
         "status": status.value,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
     if message:
@@ -505,7 +507,7 @@ async def submit_crush_logs(session_id: Optional[str] = None) -> Dict[str, Any]:
     logger.info(f"Submitting logs for session {session['id']} with {len(session['messages'])} messages")
 
     payload = {
-        "job_id": job_id,
+        "task_id": job_id,
         "session": session,
     }
 
