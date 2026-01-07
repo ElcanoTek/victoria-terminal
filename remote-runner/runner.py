@@ -577,8 +577,10 @@ Examples:
     parser.add_argument(
         "--victoria-home",
         type=Path,
-        default=Path.home() / "Victoria",
-        help="Path to Victoria home directory (default: ~/Victoria)",
+        help=(
+            "Path to Victoria home directory (default: ~/Victoria). "
+            "If omitted in an interactive terminal, you'll be prompted."
+        ),
     )
 
     parser.add_argument(
@@ -610,6 +612,24 @@ Examples:
     return parser.parse_args()
 
 
+def resolve_victoria_home(victoria_home_arg: Optional[Path]) -> Path:
+    """Resolve the Victoria home directory, prompting in interactive shells."""
+    default_home = Path.home() / "Victoria"
+    if victoria_home_arg:
+        return victoria_home_arg.expanduser()
+
+    if not sys.stdin.isatty():
+        return default_home
+
+    from rich.prompt import Prompt
+
+    response = Prompt.ask(
+        "Shared Victoria folder on this host (mounted to /workspace/Victoria)",
+        default=str(default_home),
+    )
+    return Path(response).expanduser()
+
+
 def main():
     """Main entry point."""
     args = parse_args()
@@ -625,6 +645,8 @@ def main():
         if not shutil.which(container_runtime):
             logger.error(f"Container runtime '{container_runtime}' not found")
             sys.exit(1)
+
+    args.victoria_home = resolve_victoria_home(args.victoria_home)
 
     # Ensure Victoria home exists
     args.victoria_home.mkdir(parents=True, exist_ok=True)
