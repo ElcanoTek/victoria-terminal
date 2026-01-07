@@ -4,10 +4,7 @@ This document describes how Victoria Terminal integrates with the [All-Time Quar
 
 ## Overview
 
-The orchestration system enables centralized management of multiple Victoria Terminal instances across hybrid infrastructure:
-
-- **Cloud Servers** (Static IP): Receive tasks via push (HTTP API)
-- **Local/Edge Devices** (Dynamic IP): Poll for tasks via pull
+The orchestration system enables centralized management of multiple Victoria Terminal instances across hybrid infrastructure. All runners use **pull mode** for simplified security—they only make outbound HTTPS connections to the orchestrator, requiring no inbound ports to be opened.
 
 ## Architecture
 
@@ -20,19 +17,19 @@ The orchestration system enables centralized management of multiple Victoria Ter
 │  │  Registry   │  │  Scheduler  │  │   (Web UI + API)        │ │
 │  └─────────────┘  └─────────────┘  └─────────────────────────┘ │
 └─────────────────────────────────────────────────────────────────┘
-         │                    │                    ▲
-         │ Push (HTTP)        │ Pull (Polling)     │ Status + Logs (MCP)
-         ▼                    ▼                    │
-┌─────────────────┐  ┌─────────────────┐          │
-│  Remote Runner  │  │  Remote Runner  │          │
-│   (Push Mode)   │  │   (Pull Mode)   │          │
-│                 │  │                 │          │
-│  ┌───────────┐  │  │  ┌───────────┐  │          │
-│  │ Victoria  │──┼──┼──│ Victoria  │──┼──────────┘
-│  │ Container │  │  │  │ Container │  │
-│  └───────────┘  │  │  └───────────┘  │
-└─────────────────┘  └─────────────────┘
-   Cloud Server         Local Device
+                          │                    ▲
+                          │ Pull (Polling)     │ Status + Logs (MCP)
+                          ▼                    │
+                 ┌─────────────────┐          │
+                 │  Remote Runner  │          │
+                 │   (Pull Mode)   │          │
+                 │                 │          │
+                 │  ┌───────────┐  │          │
+                 │  │ Victoria  │──┼──────────┘
+                 │  │ Container │  │
+                 │  └───────────┘  │
+                 └─────────────────┘
+                   Cloud or Local
 ```
 
 ## Components
@@ -42,15 +39,10 @@ The orchestration system enables centralized management of multiple Victoria Ter
 The Remote Runner runs on the host OS (outside the container) and manages container lifecycle:
 
 ```bash
-# Push mode (cloud server)
-python -m remote_runner push \
-    --orchestrator-url http://quarterback.example.com:8000 \
-    --api-key your-node-api-key
-
-# Pull mode (local workstation)
-python -m remote_runner pull \
-    --orchestrator-url http://quarterback.example.com:8000 \
-    --api-key your-node-api-key
+python -m runner \
+    --orchestrator-url https://quarterback.example.com \
+    --registration-token your-registration-token \
+    --name "prod-runner-01"
 ```
 
 See [remote-runner/README.md](../remote-runner/README.md) for detailed documentation.
@@ -142,7 +134,7 @@ The following environment variables are set by the Remote Runner when launching 
 |----------|-------------|
 | `ORCHESTRATOR_URL` | URL of the quarterback orchestrator |
 | `JOB_ID` | Unique identifier for the current task |
-| `VICTORIA_HOME` | Path to Victoria home directory (for finding Crush DB) |
+| `NODE_API_KEY` | API key for authenticating with the orchestrator |
 
 ### .env Configuration
 
@@ -155,26 +147,17 @@ ORCHESTRATOR_URL="http://quarterback.example.com:8000"
 # Job ID (set by remote-runner when launching containers)
 JOB_ID="your-job-id-here"
 
-# Victoria home directory (optional, defaults to ~/Victoria)
-VICTORIA_HOME="/home/user/Victoria"
+# Node API key (set by remote-runner when launching containers)
+NODE_API_KEY="your-node-api-key"
 ```
 
 **Note:** In production, these variables are automatically set by the Remote Runner. You only need to configure them manually for testing.
 
 ## Workflow
 
-### Push Strategy (Cloud Servers)
+### Task Execution Flow
 
-1. Orchestrator receives a task creation request
-2. Orchestrator sends POST request to Cloud Node's Remote Runner
-3. Remote Runner validates request and runs `podman run victoria-terminal`
-4. Victoria starts and reports "Status: Started" via MCP
-5. Victoria processes task (Crush logs conversation to local DB)
-6. Victoria reports "Status: Complete" via MCP and submits logs
-
-### Pull Strategy (Local Hardware)
-
-1. Remote Runner (on local machine) polls Orchestrator: "Any jobs?"
+1. Remote Runner (on host machine) polls Orchestrator: "Any jobs?"
 2. Orchestrator replies with task details
 3. Remote Runner runs `podman run victoria-terminal`
 4. Victoria processes task (Crush logs conversation to local DB)
@@ -208,7 +191,7 @@ VICTORIA_HOME="/home/user/Victoria"
 
 ### API Key Authentication
 
-- Each node receives a unique API key upon registration
+- Each node receives a unique API key upon registration with the orchestrator
 - All API calls require the `X-API-Key` header
 - Admin operations require a separate admin API key
 
@@ -216,7 +199,7 @@ VICTORIA_HOME="/home/user/Victoria"
 
 - Use TLS/HTTPS for all orchestrator communications
 - Consider VPN or private networking for sensitive deployments
-- Push-mode nodes should use firewall rules to restrict access
+- Runners only make outbound connections, simplifying firewall configuration
 
 ## Troubleshooting
 
@@ -229,7 +212,7 @@ VICTORIA_HOME="/home/user/Victoria"
 ### Node Not Receiving Tasks
 
 1. Verify node registration with the orchestrator
-2. Check API key is correct
+2. Check that the registration token is correct
 3. Ensure node status is "idle" (not "busy" or "offline")
 
 ### Logs Not Appearing in Dashboard
