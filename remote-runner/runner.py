@@ -16,20 +16,16 @@
 Remote Runner (Host Shim) for Victoria Terminal.
 
 This script runs on the host OS (outside the container) and manages
-Victoria Terminal container execution in either Push or Pull mode.
+Victoria Terminal container execution via pull mode.
 
-Push Mode (Cloud/Static IP):
-    Exposes an HTTP API endpoint to receive run commands from the orchestrator.
-
-Pull Mode (Local/Dynamic IP):
-    Polls the orchestrator for pending tasks and executes them locally.
+All runners use pull mode for simplified security - they only make outbound
+HTTPS connections to the orchestrator, requiring no inbound ports to be opened.
 """
 
 from __future__ import annotations
 
 import argparse
 import logging
-import os
 import platform
 import shutil
 import signal
@@ -39,7 +35,6 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
-from uuid import uuid4
 
 # Configure logging
 logging.basicConfig(
@@ -51,20 +46,13 @@ logger = logging.getLogger("remote-runner")
 # Cache for GNU timeout check
 _IS_GNU_TIMEOUT: Optional[bool] = None
 
-# Try to import optional dependencies
+# Try to import httpx
 try:
     import httpx
     HAS_HTTPX = True
 except ImportError:
     HAS_HTTPX = False
-    logger.warning("httpx not installed - HTTP functionality will be limited")
-
-try:
-    from flask import Flask, jsonify, request
-    HAS_FLASK = True
-except ImportError:
-    HAS_FLASK = False
-    logger.warning("flask not installed - Push mode will not be available")
+    logger.warning("httpx not installed - install with: pip install httpx")
 
 
 # Registration retry configuration
@@ -76,7 +64,6 @@ REGISTRATION_RETRY_DELAY = 10  # seconds
 class Config:
     """Configuration for the remote runner."""
 
-    mode: str  # "push" or "pull"
     orchestrator_url: str
     node_api_key: str
     registration_token: str  # Token for initial registration with orchestrator
@@ -85,8 +72,6 @@ class Config:
     victoria_home: Path
     node_name: Optional[str] = None  # Unique name for task targeting
     node_id: Optional[str] = None  # Assigned by orchestrator during registration
-    listen_host: str = "0.0.0.0"
-    listen_port: int = 8080
     poll_interval: int = 30  # seconds
     env_file: Optional[Path] = None
 
@@ -214,171 +199,12 @@ def run_container(
     return process
 
 
-class PushModeServer:
-    """HTTP server for push-mode operation."""
-
-    def __init__(self, config: Config):
-        if not HAS_FLASK:
-            raise RuntimeError("Flask is required for push mode. Install with: pip install flask")
-        
-        self.config = config
-        self.app = Flask(__name__)
-        self.current_process: Optional[subprocess.Popen] = None
-        self._setup_routes()
-
-    def _setup_routes(self):
-        """Set up Flask routes."""
-
-        @self.app.route("/health", methods=["GET"])
-        def health():
-            return jsonify({
-                "status": "healthy",
-                "name": self.config.node_name,
-                "mode": "push",
-                "os_type": detect_os_type(),
-                "container_runtime": self.config.container_runtime,
-            })
-
-        @self.app.route("/run", methods=["POST"])
-        def run_task():
-            # Verify API key
-            api_key = request.headers.get("X-API-Key")
-            if api_key != self.config.node_api_key:
-                return jsonify({"error": "Unauthorized"}), 401
-
-            data = request.json
-            if not data:
-                return jsonify({"error": "Missing request body"}), 400
-
-            task_id = data.get("task_id")
-            prompt = data.get("prompt")
-            orchestrator_url = data.get("orchestrator_url", self.config.orchestrator_url)
-            timeout_seconds = data.get("timeout_seconds", 3600)
-
-            if not task_id or not prompt:
-                return jsonify({"error": "Missing task_id or prompt"}), 400
-
-            # Check if already running a task
-            if self.current_process and self.current_process.poll() is None:
-                return jsonify({"error": "Already running a task"}), 409
-
-            try:
-                self.current_process = run_container(
-                    self.config,
-                    task_id,
-                    prompt,
-                    orchestrator_url,
-                    timeout_seconds,
-                )
-                return jsonify({
-                    "status": "started",
-                    "task_id": task_id,
-                    "pid": self.current_process.pid,
-                })
-            except Exception as e:
-                logger.error(f"Failed to start container: {e}")
-                return jsonify({"error": str(e)}), 500
-
-        @self.app.route("/status", methods=["GET"])
-        def status():
-            if self.current_process is None:
-                return jsonify({"status": "idle"})
-            
-            poll_result = self.current_process.poll()
-            if poll_result is None:
-                return jsonify({"status": "running", "pid": self.current_process.pid})
-            else:
-                return jsonify({
-                    "status": "completed",
-                    "exit_code": poll_result,
-                })
-
-    def _register_node(self) -> Optional[tuple[str, str]]:
-        """Register this node with the orchestrator.
-        
-        Returns a tuple of (api_key, node_id) on success, None on failure.
-        """
-        try:
-            import httpx
-            with httpx.Client(timeout=30.0) as client:
-                # Determine the API endpoint for this node
-                api_endpoint = f"http://{self.config.listen_host}:{self.config.listen_port}"
-                if self.config.listen_host == "0.0.0.0":
-                    # Try to get the actual hostname/IP
-                    api_endpoint = f"http://{platform.node()}:{self.config.listen_port}"
-                
-                response = client.post(
-                    f"{self.config.orchestrator_url}/register",
-                    json={
-                        "hostname": platform.node(),
-                        "name": self.config.node_name,
-                        "mode": "push",
-                        "api_endpoint": api_endpoint,
-                        "os_type": detect_os_type(),
-                        "capabilities": [],
-                        "tags": {},
-                    },
-                    headers={
-                        "X-Registration-Token": self.config.registration_token,
-                    },
-                )
-                response.raise_for_status()
-                data = response.json()
-                api_key = data.get("api_key")
-                node_id = data.get("id")
-                logger.info(f"Registered with orchestrator as node {node_id} (name: {self.config.node_name})")
-                return (api_key, node_id)
-        except Exception as e:
-            logger.error(f"Failed to register with orchestrator: {e}")
-            return None
-
-    def _register_with_retry(self) -> Optional[tuple[str, str]]:
-        """Attempt to register with the orchestrator, with retries.
-        
-        Returns a tuple of (api_key, node_id) on success, None after all retries exhausted.
-        """
-        for attempt in range(1, REGISTRATION_MAX_RETRIES + 1):
-            logger.info(f"Registration attempt {attempt}/{REGISTRATION_MAX_RETRIES}...")
-            result = self._register_node()
-            if result:
-                return result
-            
-            if attempt < REGISTRATION_MAX_RETRIES:
-                logger.info(f"Retrying in {REGISTRATION_RETRY_DELAY} seconds...")
-                time.sleep(REGISTRATION_RETRY_DELAY)
-        
-        logger.error(f"Failed to register after {REGISTRATION_MAX_RETRIES} attempts")
-        return None
-
-    def run(self):
-        """Start the push-mode server."""
-        # Register with orchestrator and get API key (with retries)
-        logger.info("Registering with orchestrator...")
-        registration_result = self._register_with_retry()
-        if not registration_result:
-            logger.error("Failed to register with orchestrator. Exiting.")
-            sys.exit(1)
-        
-        # Update config with the assigned API key and node ID
-        assigned_api_key, assigned_node_id = registration_result
-        self.config.node_api_key = assigned_api_key
-        self.config.node_id = assigned_node_id
-        logger.info("Registration successful - using assigned API key")
-        
-        logger.info(f"Starting push-mode server on {self.config.listen_host}:{self.config.listen_port}")
-        self.app.run(
-            host=self.config.listen_host,
-            port=self.config.listen_port,
-            threaded=True,
-        )
-
-
-class PullModeDaemon:
-    """Daemon for pull-mode operation."""
+class Runner:
+    """Pull-mode runner daemon for Victoria Terminal."""
 
     def __init__(self, config: Config):
         if not HAS_HTTPX:
-            raise RuntimeError("httpx is required for pull mode. Install with: pip install httpx")
+            raise RuntimeError("httpx is required. Install with: pip install httpx")
         
         self.config = config
         self.running = True
@@ -396,7 +222,6 @@ class PullModeDaemon:
                     json={
                         "hostname": platform.node(),
                         "name": self.config.node_name,
-                        "mode": "pull",
                         "os_type": detect_os_type(),
                         "capabilities": [],
                         "tags": {},
@@ -488,8 +313,8 @@ class PullModeDaemon:
             logger.debug(f"Failed to send heartbeat: {e}")
 
     def run(self):
-        """Start the pull-mode daemon."""
-        logger.info("Starting pull-mode daemon")
+        """Start the runner daemon."""
+        logger.info("Starting remote runner")
         logger.info(f"Polling orchestrator at {self.config.orchestrator_url}")
         logger.info(f"Poll interval: {self.config.poll_interval} seconds")
 
@@ -546,7 +371,7 @@ class PullModeDaemon:
             # Wait before next poll
             time.sleep(self.config.poll_interval)
 
-        logger.info("Pull-mode daemon stopped")
+        logger.info("Remote runner stopped")
 
 
 def parse_args() -> argparse.Namespace:
@@ -556,30 +381,20 @@ def parse_args() -> argparse.Namespace:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Push mode (cloud server with static IP)
-  %(prog)s push --orchestrator-url http://quarterback.example.com:8000 \\
-                --registration-token your-token --name "prod-server-1"
-
-  # Pull mode (local workstation with dynamic IP)
-  %(prog)s pull --orchestrator-url http://quarterback.example.com:8000 \\
-                --registration-token your-token --name "client-acme-workstation-1"
+  # Start the runner (polls orchestrator for tasks)
+  %(prog)s --orchestrator-url https://quarterback.example.com \\
+           --registration-token your-token --name "prod-server-1"
 
   # Named node for client-specific tasks (tasks targeting "client-acme-*" will match)
-  %(prog)s pull --orchestrator-url http://quarterback.example.com:8000 \\
-                --registration-token your-token --name "client-acme-gpu-runner"
+  %(prog)s --orchestrator-url https://quarterback.example.com \\
+           --registration-token your-token --name "client-acme-gpu-runner"
         """,
-    )
-
-    parser.add_argument(
-        "mode",
-        choices=["push", "pull"],
-        help="Operating mode: push (HTTP server) or pull (polling daemon)",
     )
 
     parser.add_argument(
         "--orchestrator-url",
         required=True,
-        help="URL of the All-Time Quarterback orchestrator",
+        help="URL of the All-Time Quarterback orchestrator (e.g., https://quarterback.example.com)",
     )
 
     parser.add_argument(
@@ -617,26 +432,11 @@ Examples:
         help="Path to .env file for container environment variables",
     )
 
-    # Push mode options
-    parser.add_argument(
-        "--host",
-        default="0.0.0.0",
-        help="Host to bind to in push mode (default: 0.0.0.0)",
-    )
-
-    parser.add_argument(
-        "--port",
-        type=int,
-        default=8080,
-        help="Port to listen on in push mode (default: 8080)",
-    )
-
-    # Pull mode options
     parser.add_argument(
         "--poll-interval",
         type=int,
         default=30,
-        help="Polling interval in seconds for pull mode (default: 30)",
+        help="Polling interval in seconds (default: 30)",
     )
 
     parser.add_argument(
@@ -678,7 +478,6 @@ def main():
     node_name = args.node_name or platform.node()
 
     config = Config(
-        mode=args.mode,
         orchestrator_url=args.orchestrator_url.rstrip("/"),
         node_api_key="",  # Will be assigned during registration
         registration_token=args.registration_token,
@@ -686,24 +485,18 @@ def main():
         container_image=args.container_image,
         victoria_home=args.victoria_home,
         node_name=node_name,
-        listen_host=args.host,
-        listen_port=args.port,
         poll_interval=args.poll_interval,
         env_file=args.env_file,
     )
 
-    logger.info(f"Remote Runner starting in {args.mode} mode")
+    logger.info("Remote Runner starting")
     logger.info(f"Node Name: {node_name}")
     logger.info(f"OS Type: {detect_os_type()}")
     logger.info(f"Container Runtime: {container_runtime}")
     logger.info(f"Victoria Home: {config.victoria_home}")
 
-    if args.mode == "push":
-        server = PushModeServer(config)
-        server.run()
-    else:
-        daemon = PullModeDaemon(config)
-        daemon.run()
+    runner = Runner(config)
+    runner.run()
 
 
 if __name__ == "__main__":
