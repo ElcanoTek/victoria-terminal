@@ -209,6 +209,7 @@ class Runner:
         self.config = config
         self.running = True
         self.current_process: Optional[subprocess.Popen] = None
+        self.current_task_id: Optional[str] = None
 
     def _register_node(self) -> Optional[tuple[str, str]]:
         """Register this node with the orchestrator.
@@ -295,7 +296,6 @@ class Runner:
         
         try:
             status = "idle"
-            task_id = None
             if self.current_process and self.current_process.poll() is None:
                 status = "busy"
             
@@ -305,7 +305,7 @@ class Runner:
                     json={
                         "node_id": self.config.node_id,
                         "status": status,
-                        "current_task_id": task_id,
+                        "current_task_id": self.current_task_id,
                     },
                     headers={"X-API-Key": self.config.node_api_key},
                 )
@@ -348,6 +348,7 @@ class Runner:
                 if poll_result is not None:
                     logger.info(f"Task completed with exit code {poll_result}")
                     self.current_process = None
+                    self.current_task_id = None
 
             # If idle, poll for new tasks
             if self.current_process is None:
@@ -362,6 +363,7 @@ class Runner:
                             task["orchestrator_url"],
                             task.get("timeout_seconds", 3600),
                         )
+                        self.current_task_id = task["task_id"]
                     except Exception as e:
                         logger.error(f"Failed to start container: {e}")
 
