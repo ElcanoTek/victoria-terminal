@@ -75,6 +75,8 @@ class Config:
     node_id: Optional[str] = None  # Assigned by orchestrator during registration
     poll_interval: int = 30  # seconds
     env_file: Optional[Path] = None
+    capabilities: Optional[List[str]] = None  # Node capabilities for task routing
+    tags: Optional[dict] = None  # Key-value tags for task targeting
 
 
 def detect_container_runtime() -> str:
@@ -314,13 +316,21 @@ class Runner:
         """
         try:
             with httpx.Client(timeout=30.0) as client:
+                registration_data = {
+                    "hostname": platform.node(),
+                    "name": self.config.node_name,
+                    "os_type": detect_os_type(),
+                }
+                # Include capabilities if configured
+                if self.config.capabilities:
+                    registration_data["capabilities"] = self.config.capabilities
+                # Include tags if configured
+                if self.config.tags:
+                    registration_data["tags"] = self.config.tags
+                    
                 response = client.post(
                     f"{self.config.orchestrator_url}/register",
-                    json={
-                        "hostname": platform.node(),
-                        "name": self.config.node_name,
-                        "os_type": detect_os_type(),
-                    },
+                    json=registration_data,
                     headers={
                         "X-Registration-Token": self.config.registration_token,
                     },
@@ -555,6 +565,26 @@ Examples:
     )
 
     parser.add_argument(
+        "--capabilities",
+        nargs="+",
+        help=(
+            "List of capabilities this node supports (e.g., 'gpu', 'high-memory'). "
+            "Tasks can require specific capabilities for routing."
+        ),
+    )
+
+    parser.add_argument(
+        "--tag",
+        action="append",
+        dest="tags",
+        metavar="KEY=VALUE",
+        help=(
+            "Key-value tag for task targeting (can be specified multiple times). "
+            "Example: --tag client=acme --tag env=prod"
+        ),
+    )
+
+    parser.add_argument(
         "-v", "--verbose",
         action="store_true",
         help="Enable verbose logging",
@@ -585,6 +615,17 @@ def main():
     # Use provided name or default to hostname
     node_name = args.node_name or platform.node()
 
+    # Parse tags from KEY=VALUE format
+    tags = None
+    if args.tags:
+        tags = {}
+        for tag in args.tags:
+            if "=" in tag:
+                key, value = tag.split("=", 1)
+                tags[key] = value
+            else:
+                logger.warning(f"Ignoring malformed tag (expected KEY=VALUE): {tag}")
+
     config = Config(
         orchestrator_url=args.orchestrator_url.rstrip("/"),
         node_api_key="",  # Will be assigned during registration
@@ -595,6 +636,8 @@ def main():
         node_name=node_name,
         poll_interval=args.poll_interval,
         env_file=args.env_file,
+        capabilities=args.capabilities,
+        tags=tags,
     )
 
     logger.info("Remote Runner starting")
@@ -602,6 +645,10 @@ def main():
     logger.info(f"OS Type: {detect_os_type()}")
     logger.info(f"Container Runtime: {container_runtime}")
     logger.info(f"Victoria Home: {config.victoria_home}")
+    if config.capabilities:
+        logger.info(f"Capabilities: {', '.join(config.capabilities)}")
+    if config.tags:
+        logger.info(f"Tags: {config.tags}")
 
     runner = Runner(config)
     runner.run()
