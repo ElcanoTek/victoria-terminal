@@ -20,7 +20,7 @@ info:
     API key will receive a 401 Unauthorized response. Ensure your client is configured
     with the correct API key before making requests to avoid authentication errors that
     may appear as runtime failures.
-  version: 1.1.1
+  version: 1.1.2
   license:
     name: BSL 1.1
     url: https://mariadb.com/bsl11/
@@ -68,11 +68,13 @@ components:
           description: Operating system type.
     Node:
       type: object
+      required:
+        - id
       properties:
         id:
           type: string
           format: uuid
-          description: Unique identifier for the node.
+          description: Unique identifier for the node. Always present in all responses.
         hostname:
           type: string
         name:
@@ -99,18 +101,13 @@ components:
     NodeRegistrationResponse:
       description: |
         Response returned when a node is successfully registered. Extends Node
-        with required id and api_key fields that must be stored for subsequent API calls.
+        with required api_key field. The id field is inherited as required from Node.
       allOf:
         - $ref: '#/components/schemas/Node'
         - type: object
           required:
-            - id
             - api_key
           properties:
-            id:
-              type: string
-              format: uuid
-              description: Unique identifier for the node. Store this for subsequent API calls.
             api_key:
               type: string
               description: |
