@@ -20,7 +20,7 @@ info:
     API key will receive a 401 Unauthorized response. Ensure your client is configured
     with the correct API key before making requests to avoid authentication errors that
     may appear as runtime failures.
-  version: 1.1.0
+  version: 1.1.1
   license:
     name: BSL 1.1
     url: https://mariadb.com/bsl11/
@@ -68,14 +68,11 @@ components:
           description: Operating system type.
     Node:
       type: object
-      required:
-        - id
-        - api_key
       properties:
         id:
           type: string
           format: uuid
-          description: Unique identifier for the node. Always present in registration response.
+          description: Unique identifier for the node.
         hostname:
           type: string
         name:
@@ -83,8 +80,8 @@ components:
         api_key:
           type: string
           description: |
-            The API key assigned to the node. Always present in registration response.
-            Store this securely as it is required for all subsequent node API calls.
+            The API key assigned to the node. Only included in registration response.
+            Not returned by other endpoints for security reasons.
         os_type:
           type: string
         status:
@@ -99,6 +96,26 @@ components:
         registered_at:
           type: string
           format: date-time
+    NodeRegistrationResponse:
+      description: |
+        Response returned when a node is successfully registered. Extends Node
+        with required id and api_key fields that must be stored for subsequent API calls.
+      allOf:
+        - $ref: '#/components/schemas/Node'
+        - type: object
+          required:
+            - id
+            - api_key
+          properties:
+            id:
+              type: string
+              format: uuid
+              description: Unique identifier for the node. Store this for subsequent API calls.
+            api_key:
+              type: string
+              description: |
+                The API key assigned to the node. This is only returned once during registration.
+                Store this securely as it is required for all subsequent node API calls.
     NodeHeartbeat:
       type: object
       required:
@@ -495,7 +512,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Node'
+                $ref: '#/components/schemas/NodeRegistrationResponse'
         '401':
           description: Invalid registration token
         '503':
