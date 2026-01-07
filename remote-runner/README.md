@@ -6,42 +6,20 @@ The Remote Runner is a host-side component that manages Victoria Terminal contai
 
 The Remote Runner runs **outside** the container on the host OS (bare metal or VM) and handles:
 
-- Receiving task assignments from the orchestrator
+- Polling the orchestrator for pending task assignments
 - Launching Victoria Terminal containers with appropriate configuration
 - Managing container lifecycle
 - Reporting status back to the orchestrator
 
-## Operating Modes
+All communication uses **outbound HTTPS connections only**. Runners require no inbound ports, simplifying firewall configuration and improving security.
 
-### Push Mode (Cloud/Static IP)
-
-For servers with static IP addresses, the runner exposes an HTTP API that the orchestrator can call directly to trigger task execution.
+## Quick Start
 
 ```bash
-python -m remote_runner push \
-    --orchestrator-url http://quarterback.example.com:8000 \
+python -m runner \
+    --orchestrator-url https://quarterback.example.com \
     --registration-token your-registration-token \
-    --name "prod-server-1" \
-    --port 8080
-```
-
-**Endpoints:**
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/health` | GET | Health check |
-| `/run` | POST | Start a new task |
-| `/status` | GET | Get current status |
-
-### Pull Mode (Local/Dynamic IP)
-
-For workstations or edge devices with dynamic IPs, the runner polls the orchestrator for pending tasks.
-
-```bash
-python -m remote_runner pull \
-    --orchestrator-url http://quarterback.example.com:8000 \
-    --registration-token your-registration-token \
-    --name "client-acme-workstation-1" \
+    --name "prod-runner-01" \
     --poll-interval 30
 ```
 
@@ -51,19 +29,12 @@ python -m remote_runner pull \
 
 - Python 3.10 or later
 - Podman or Docker
-- Network access to the All-Time Quarterback orchestrator
+- Network access to the All-Time Quarterback orchestrator (outbound HTTPS)
 
 ### Install Dependencies
 
 ```bash
-# For push mode
-pip install flask
-
-# For pull mode
 pip install httpx
-
-# For both modes
-pip install flask httpx
 ```
 
 ### Running as a Service
@@ -80,10 +51,11 @@ After=network.target
 [Service]
 Type=simple
 User=victoria
-ExecStart=/usr/bin/python3 -m remote_runner pull \
-    --orchestrator-url http://quarterback.example.com:8000 \
+WorkingDirectory=/home/victoria/victoria-terminal/remote-runner
+ExecStart=/usr/bin/python3 -m runner \
+    --orchestrator-url https://quarterback.example.com \
     --registration-token your-registration-token \
-    --name "client-acme-runner-1"
+    --name "prod-runner-01"
 Restart=always
 RestartSec=10
 
@@ -108,23 +80,11 @@ sudo systemctl start victoria-runner
 | `--name` | Unique name for task targeting (supports wildcards) | System hostname |
 | `--orchestrator-url` | URL of the quarterback orchestrator | Required |
 | `--registration-token` | Token for registering with the orchestrator | Required |
+| `--poll-interval` | Polling interval in seconds | `30` |
 | `--container-image` | Victoria Terminal container image | `ghcr.io/elcanotek/victoria-terminal:latest` |
 | `--victoria-home` | Path to Victoria home directory | `~/Victoria` |
 | `--env-file` | Path to .env file for container | None |
 | `--container-runtime` | Container runtime (podman/docker/auto) | `auto` |
-
-### Push Mode Options
-
-| Option | Description | Default |
-|--------|-------------|---------|
-| `--host` | Host to bind to | `0.0.0.0` |
-| `--port` | Port to listen on | `8080` |
-
-### Pull Mode Options
-
-| Option | Description | Default |
-|--------|-------------|---------|
-| `--poll-interval` | Polling interval in seconds | `30` |
 
 ## Environment Variables
 
@@ -151,7 +111,7 @@ Additional variables can be passed via the `--env-file` option.
 
 2. **Node API Key**: Automatically assigned during registration. Used for polling tasks and sending status updates.
 
-3. **Network Security**: In push mode, consider using a reverse proxy with TLS termination.
+3. **Outbound-Only Connections**: Runners only make outbound HTTPS requests to the orchestrator. No inbound ports need to be opened.
 
 4. **Container Isolation**: The runner uses standard container isolation. Ensure your container runtime is properly configured.
 
@@ -189,6 +149,7 @@ The orchestrator doesn't have `REGISTRATION_TOKEN` set. Contact the orchestrator
 
 ### Connection Refused
 
+
 ```
 Error polling for tasks: Connection refused
 ```
@@ -196,7 +157,7 @@ Error polling for tasks: Connection refused
 Check that:
 1. The orchestrator URL is correct
 2. The orchestrator is running
-3. Network/firewall allows the connection
+3. Network/firewall allows outbound HTTPS connections
 
 
 ## Node Naming and Task Targeting
@@ -235,13 +196,13 @@ To ensure a client's tasks only run on their dedicated runners:
 1. **Start runners with client-specific names:**
    ```bash
    # On Client Acme's servers
-   python -m remote_runner pull --name "client-acme-runner-1" ...
-   python -m remote_runner pull --name "client-acme-runner-2" ...
+   python -m runner --name "client-acme-runner-1" ...
+   python -m runner --name "client-acme-runner-2" ...
    ```
 
 2. **Create tasks targeting that client:**
    ```bash
-   curl -X POST http://quarterback.example.com:8000/tasks \
+   curl -X POST https://quarterback.example.com/tasks \
      -H "X-API-Key: $ADMIN_API_KEY" \
      -d '{"prompt": "Analyze data", "target_node_name": "client-acme-*"}'
    ```
