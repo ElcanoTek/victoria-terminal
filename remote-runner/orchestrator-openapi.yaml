@@ -248,9 +248,26 @@ components:
           type: array
           items:
             type: string
-          description: List of SHA-256 checksums corresponding to the files.
+          description: |
+            List of SHA-256 checksums corresponding to the files array (same order).
+            Clients should use these checksums to verify file integrity after download.
+            Each checksum is a lowercase hex-encoded SHA-256 hash of the file content.
     StatusUpdate:
       type: object
+      description: |
+        Status update payload sent by nodes to report task progress.
+        
+        Note: Only a subset of status values should be reported by agents:
+        - running: Task is actively being processed
+        - analyzing: Task is in analysis phase  
+        - success: Task completed successfully
+        - error: Task failed with an error
+        
+        The following statuses are orchestrator-controlled and should NOT be
+        reported by agents:
+        - pending: Set when task is created
+        - assigned: Set when task is assigned to a node
+        - cancelled: Set when admin cancels a task
       required:
         - job_id
         - status
@@ -261,6 +278,10 @@ components:
         status:
           type: string
           enum: [pending, assigned, running, analyzing, success, error, cancelled]
+          description: |
+            Current task status. Agents should only report: running, analyzing,
+            success, or error. Other values (pending, assigned, cancelled) are
+            orchestrator-controlled.
         message:
           type: string
         progress:

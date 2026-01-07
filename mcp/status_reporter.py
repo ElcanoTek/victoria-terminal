@@ -313,11 +313,13 @@ async def report_status(
         # Report an error
         report_status(status="error", message="Failed to connect to database")
     """
-    # Validate status
+    # Validate status - only accept agent-reportable statuses
+    # Note: pending, assigned, and cancelled are orchestrator-controlled states
+    # and should not be reported by agents (see OpenAPI spec StatusUpdate schema)
     valid_statuses = {"running", "analyzing", "success", "error"}
     if status not in valid_statuses:
         return {
-            "error": f"Invalid status '{status}'. Must be one of: {', '.join(valid_statuses)}",
+            "error": f"Invalid status '{status}'. Must be one of: {', '.join(sorted(valid_statuses))}",
             "sent": False,
         }
 
