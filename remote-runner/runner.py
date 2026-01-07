@@ -34,7 +34,7 @@ import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 # Configure logging
 logging.basicConfig(
@@ -112,6 +112,7 @@ def run_container(
     orchestrator_url: str,
     timeout_seconds: int = 3600,
     crush_server_url: Optional[str] = None,
+    task_files_dir: Optional[Path] = None,
 ) -> subprocess.Popen:
     """
     Run a Victoria Terminal container with the given task.
@@ -123,6 +124,7 @@ def run_container(
         orchestrator_url: URL for status reporting
         timeout_seconds: Task timeout
         crush_server_url: Optional URL for Crush log server
+        task_files_dir: Optional path to directory containing task-specific files
 
     Returns:
         The subprocess.Popen object for the container process
@@ -138,6 +140,14 @@ def run_container(
         "-e", f"JOB_ID={task_id}",
         "-e", f"NODE_API_KEY={config.node_api_key}",
     ]
+
+    # Add task files directory path if files were downloaded
+    if task_files_dir:
+        # Convert host path to container path
+        # Host: ~/Victoria/tasks/{task_id}/files -> Container: /workspace/Victoria/tasks/{task_id}/files
+        container_files_path = f"/workspace/Victoria/tasks/{task_id[:8]}/files"
+        cmd.extend(["-e", f"TASK_FILES_DIR={container_files_path}"])
+        logger.info(f"Task files available at: {container_files_path}")
 
     # Add Crush server URL if provided for log aggregation
     if crush_server_url:
@@ -197,6 +207,79 @@ def run_container(
     )
 
     return process
+
+
+def download_task_files(
+    config: Config,
+    task_id: str,
+    files: List[str],
+    orchestrator_url: str,
+) -> Path:
+    """
+    Download task-specific files from the orchestrator.
+
+    Files are downloaded to a task-specific directory within Victoria home,
+    making them available to the agent container via the shared volume mount.
+
+    Args:
+        config: Runner configuration
+        task_id: Unique task identifier
+        files: List of filenames to download from the orchestrator
+        orchestrator_url: Base URL of the orchestrator
+
+    Returns:
+        Path to the directory containing downloaded files
+    """
+    # Create task-specific files directory
+    # Use first 8 chars of task_id for brevity in path
+    files_dir = config.victoria_home / "tasks" / task_id[:8] / "files"
+    files_dir.mkdir(parents=True, exist_ok=True)
+
+    logger.info(f"Downloading {len(files)} file(s) for task {task_id[:8]}")
+
+    with httpx.Client(timeout=60.0) as client:
+        for filename in files:
+            # Sanitize filename to prevent path traversal attacks
+            # Extract only the base filename, stripping any directory components
+            safe_filename = Path(filename).name
+            if not safe_filename or safe_filename in (".", ".."):
+                logger.warning(f"Skipping invalid filename: {filename}")
+                continue
+
+            dest_path = files_dir / safe_filename
+
+            # Double-check that resolved path is within files_dir
+            try:
+                dest_path.resolve().relative_to(files_dir.resolve())
+            except ValueError:
+                logger.error(f"Path traversal attempt detected, skipping: {filename}")
+                continue
+
+            download_url = f"{orchestrator_url}/files/{filename}"
+
+            try:
+                logger.info(f"Downloading: {filename} -> {safe_filename}")
+                response = client.get(
+                    download_url,
+                    headers={"X-API-Key": config.node_api_key},
+                )
+                response.raise_for_status()
+
+                # Write file content
+                with open(dest_path, "wb") as f:
+                    f.write(response.content)
+
+                logger.info(f"Downloaded: {safe_filename} ({len(response.content)} bytes)")
+
+            except httpx.HTTPStatusError as e:
+                logger.error(f"Failed to download {filename}: HTTP {e.response.status_code}")
+                raise
+            except Exception as e:
+                logger.error(f"Failed to download {filename}: {e}")
+                raise
+
+    logger.info(f"All files downloaded to {files_dir}")
+    return files_dir
 
 
 class Runner:
@@ -356,12 +439,24 @@ class Runner:
                 if task:
                     logger.info(f"Received task: {task['task_id']}")
                     try:
+                        # Download task files if any are specified
+                        task_files_dir = None
+                        task_files = task.get("files", [])
+                        if task_files:
+                            task_files_dir = download_task_files(
+                                self.config,
+                                task["task_id"],
+                                task_files,
+                                task["orchestrator_url"],
+                            )
+
                         self.current_process = run_container(
                             self.config,
                             task["task_id"],
                             task["prompt"],
                             task["orchestrator_url"],
                             task.get("timeout_seconds", 3600),
+                            task_files_dir=task_files_dir,
                         )
                         self.current_task_id = task["task_id"]
                     except Exception as e:

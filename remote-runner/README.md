@@ -134,8 +134,18 @@ The runner passes these environment variables to the container:
 | `ORCHESTRATOR_URL` | URL for MCP status reporting |
 | `JOB_ID` | Unique identifier for the current task |
 | `NODE_API_KEY` | API key for authenticating with the orchestrator |
+| `TASK_FILES_DIR` | Path to task-specific files (only set if files were uploaded with the task) |
 
 Additional variables can be passed via the `--env-file` option.
+
+### Task Files
+
+When a task includes uploaded files, the runner automatically downloads them before launching the container. Files are stored in a task-specific directory:
+
+- **Host path**: `~/Victoria/tasks/{task_id}/files/`
+- **Container path**: `/workspace/Victoria/tasks/{task_id}/files/`
+
+The `TASK_FILES_DIR` environment variable is set to the container path, allowing the agent to easily locate and access the files.
 
 ## API Reference
 
