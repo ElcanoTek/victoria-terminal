@@ -146,7 +146,7 @@ sudo systemctl status victoria-runner.service
 | `--registration-token` | Token for registering with the orchestrator | Required |
 | `--poll-interval` | Polling interval in seconds | `30` |
 | `--container-image` | Victoria Terminal container image | `ghcr.io/elcanotek/victoria-terminal:latest` |
-| `--victoria-home` | Path to Victoria home directory | `~/Victoria` |
+| `--victoria-home` | Path to Victoria home directory (prompted when omitted in an interactive shell) | `~/Victoria` |
 | `--env-file` | Path to .env file for container | None |
 | `--container-runtime` | Container runtime (podman/docker/auto) | `auto` |
 
@@ -164,6 +164,10 @@ The runner passes these environment variables to the container:
 Additional variables can be passed via the `--env-file` option.
 
 ### Task Files
+
+If you start the runner in an interactive shell without specifying `--victoria-home`,
+it will prompt you for the shared Victoria folder on the host so downloaded task files
+land in the same location that the container mounts with `-v`.
 
 When a task includes uploaded files, the runner automatically downloads them before launching the container. Files are stored in a task-specific directory:
 
