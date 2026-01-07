@@ -239,11 +239,26 @@ def download_task_files(
 
     with httpx.Client(timeout=60.0) as client:
         for filename in files:
+            # Sanitize filename to prevent path traversal attacks
+            # Extract only the base filename, stripping any directory components
+            safe_filename = Path(filename).name
+            if not safe_filename or safe_filename in (".", ".."):
+                logger.warning(f"Skipping invalid filename: {filename}")
+                continue
+
+            dest_path = files_dir / safe_filename
+
+            # Double-check that resolved path is within files_dir
+            try:
+                dest_path.resolve().relative_to(files_dir.resolve())
+            except ValueError:
+                logger.error(f"Path traversal attempt detected, skipping: {filename}")
+                continue
+
             download_url = f"{orchestrator_url}/files/{filename}"
-            dest_path = files_dir / filename
 
             try:
-                logger.info(f"Downloading: {filename}")
+                logger.info(f"Downloading: {filename} -> {safe_filename}")
                 response = client.get(
                     download_url,
                     headers={"X-API-Key": config.node_api_key},
@@ -254,7 +269,7 @@ def download_task_files(
                 with open(dest_path, "wb") as f:
                     f.write(response.content)
 
-                logger.info(f"Downloaded: {filename} ({len(response.content)} bytes)")
+                logger.info(f"Downloaded: {safe_filename} ({len(response.content)} bytes)")
 
             except httpx.HTTPStatusError as e:
                 logger.error(f"Failed to download {filename}: HTTP {e.response.status_code}")
