@@ -31,17 +31,53 @@ python -m runner \
 - Podman or Docker
 - Network access to the All-Time Quarterback orchestrator (outbound HTTPS)
 
-### Install Dependencies
+### Step 1: Provision and Prepare the Instance
 
-```bash
+Deploy a **Fedora** or **Ubuntu** instance (Vultr, DGX Spark, or any Linux host) and create a non-root user for running the service.
+
+```sh
+# As root, create a user and grant sudo access
+useradd -m -G wheel victoria  # Use 'sudo' group on Ubuntu
+passwd victoria
+# Log in as the `victoria` user
+```
+
+### Step 2: Install Dependencies
+
+Install Podman, Python, and other necessary tools.
+
+```sh
+# Fedora
+sudo dnf install -y podman python3 python3-pip git
+
+# Ubuntu
+sudo apt install -y podman python3 python3-pip git
+```
+
+### Step 3: Install the Remote Runner
+
+The remote runner is part of the `victoria-terminal` repository.
+
+```sh
+# Clone the repository
+git clone https://github.com/ElcanoTek/victoria-terminal.git
+cd victoria-terminal/remote-runner
+
+# Install Python dependencies
 pip install httpx
 ```
 
-### Running as a Service
+### Step 4: Configure and Run as a systemd Service
 
-#### Linux (systemd)
+Running the remote runner as a `systemd` service ensures it starts on boot and restarts if it fails.
 
-Create `/etc/systemd/system/victoria-runner.service`:
+Create a service file:
+
+```sh
+sudo vi /etc/systemd/system/victoria-runner.service
+```
+
+Paste the following content into the file. **Replace the placeholder values** with your actual Orchestrator URL, Registration Token, and a unique name for this runner.
 
 ```ini
 [Unit]
@@ -53,9 +89,10 @@ Type=simple
 User=victoria
 WorkingDirectory=/home/victoria/victoria-terminal/remote-runner
 ExecStart=/usr/bin/python3 -m runner \
-    --orchestrator-url https://quarterback.example.com \
-    --registration-token your-registration-token \
-    --name "prod-runner-01"
+    --orchestrator-url https://<your-orchestrator-domain> \
+    --registration-token <your-registration-token> \
+    --name "prod-runner-01" \
+    --poll-interval 30
 Restart=always
 RestartSec=10
 
@@ -63,12 +100,14 @@ RestartSec=10
 WantedBy=multi-user.target
 ```
 
-Then:
+Enable and start the service:
 
-```bash
+```sh
 sudo systemctl daemon-reload
-sudo systemctl enable victoria-runner
-sudo systemctl start victoria-runner
+sudo systemctl enable victoria-runner.service
+sudo systemctl start victoria-runner.service
+# Check the status to ensure it is running
+sudo systemctl status victoria-runner.service
 ```
 
 ## Configuration
@@ -86,16 +125,185 @@ sudo systemctl start victoria-runner
 | `--env-file` | Path to .env file for container | None |
 | `--container-runtime` | Container runtime (podman/docker/auto) | `auto` |
 
-## Environment Variables
+### Environment Variables
 
 The runner passes these environment variables to the container:
 
 | Variable | Description |
 |----------|-------------|
 | `ORCHESTRATOR_URL` | URL for MCP status reporting |
+| `JOB_ID` | Unique identifier for the current task |
 | `NODE_API_KEY` | API key for authenticating with the orchestrator |
 
 Additional variables can be passed via the `--env-file` option.
+
+## API Reference
+
+This section documents all API endpoints used by the Remote Runner and the Status Reporter MCP server when communicating with the All-Time Quarterback orchestrator.
+
+### Orchestrator API Endpoints
+
+The following endpoints are provided by the All-Time Quarterback orchestrator. The Remote Runner and Status Reporter MCP use these endpoints to communicate task status and logs.
+
+#### Node Management
+
+| Method | Path | Description | Auth | Used By |
+|--------|------|-------------|------|---------|
+| `POST` | `/register` | Register a new node with the orchestrator | Registration Token | Remote Runner |
+| `POST` | `/nodes/heartbeat` | Send node heartbeat with status | Node Key | Remote Runner |
+| `GET` | `/nodes` | List all registered nodes | Admin | Dashboard |
+| `GET` | `/nodes/{id}` | Get details for a specific node | Admin | Dashboard |
+| `DELETE` | `/nodes/{id}` | Unregister a node | Admin | Dashboard |
+
+#### Task Management
+
+| Method | Path | Description | Auth | Used By |
+|--------|------|-------------|------|---------|
+| `GET` | `/tasks/pending` | Get the next pending task for this node | Node Key | Remote Runner |
+| `POST` | `/tasks` | Create a new task | Admin or Scoped Key | External Systems |
+| `GET` | `/tasks` | List all tasks | Admin | Dashboard |
+| `GET` | `/tasks/{id}` | Get details for a specific task | Admin | Dashboard |
+| `DELETE` | `/tasks/{id}` | Cancel a task | Admin | Dashboard |
+| `POST` | `/tasks/cleanup` | Delete old task history | Admin | Maintenance |
+
+#### Status and Logging
+
+| Method | Path | Description | Auth | Used By |
+|--------|------|-------------|------|---------|
+| `POST` | `/status` | Report task status update | Node Key | Status Reporter MCP |
+| `POST` | `/logs` | Submit Crush session logs | Node Key | Status Reporter MCP |
+| `GET` | `/logs/{task_id}` | Retrieve logs for a task | Admin | Dashboard |
+
+#### API Key Management
+
+| Method | Path | Description | Auth |
+|--------|------|-------------|------|
+| `POST` | `/keys` | Create a new API key | Admin |
+| `GET` | `/keys` | List all API keys | Admin |
+| `GET` | `/keys/{id}` | Get API key details | Admin |
+| `POST` | `/keys/{id}/rotate` | Rotate an API key | Admin |
+| `POST` | `/keys/{id}/revoke` | Revoke an API key | Admin |
+| `DELETE` | `/keys/{id}` | Delete an API key | Admin |
+| `GET` | `/keys/audit` | Get API key audit log | Admin |
+
+#### System
+
+| Method | Path | Description | Auth |
+|--------|------|-------------|------|
+| `GET` | `/health` | Health check endpoint | None |
+| `GET` | `/dashboard` | Dashboard web UI | None |
+| `GET` | `/dashboard/stats` | Dashboard statistics | Admin |
+
+### Status Reporter MCP Tools
+
+The Status Reporter MCP server runs inside the Victoria container and provides tools for the LLM agent to report task progress. These tools communicate with the orchestrator via the `/status` and `/logs` endpoints.
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `report_status` | Report current task status | `status` (running/analyzing/success/error), `message` (optional), `progress` (0-100, optional) |
+| `report_started` | Convenience wrapper for task start | `message` (optional) |
+| `report_complete` | Report successful completion (auto-submits logs) | `message` (optional), `submit_logs` (default: true) |
+| `report_error` | Report task failure (auto-submits logs) | `error_message` (required), `submit_logs` (default: true) |
+| `submit_crush_logs` | Manually submit Crush session logs | `session_id` (optional, defaults to latest) |
+| `get_job_info` | Get current job configuration | None |
+
+### Request/Response Examples
+
+#### Node Registration
+
+```bash
+# Request
+curl -X POST https://quarterback.example.com/register \
+  -H "X-Registration-Token: your-registration-token" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "hostname": "server-01.example.com",
+    "name": "prod-runner-01",
+    "os_type": "fedora",
+    "capabilities": [],
+    "tags": {}
+  }'
+
+# Response
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "api_key": "assigned-node-api-key"
+}
+```
+
+#### Poll for Tasks
+
+```bash
+# Request
+curl -X GET https://quarterback.example.com/tasks/pending \
+  -H "X-API-Key: your-node-api-key"
+
+# Response (when task available)
+{
+  "task_id": "task-uuid-here",
+  "prompt": "Analyze the sales data and generate a report",
+  "orchestrator_url": "https://quarterback.example.com",
+  "timeout_seconds": 3600
+}
+```
+
+#### Report Status
+
+```bash
+# Request
+curl -X POST https://quarterback.example.com/status \
+  -H "X-API-Key: your-node-api-key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "job_id": "task-uuid-here",
+    "status": "running",
+    "message": "Processing data files",
+    "progress": 45.0
+  }'
+```
+
+#### Submit Logs
+
+```bash
+# Request
+curl -X POST https://quarterback.example.com/logs \
+  -H "X-API-Key: your-node-api-key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "job_id": "task-uuid-here",
+    "session": {
+      "id": "session-uuid",
+      "title": "Task Session",
+      "messages": [
+        {"role": "user", "content": "...", "created_at": 1234567890},
+        {"role": "assistant", "content": "...", "created_at": 1234567891}
+      ]
+    }
+  }'
+```
+
+#### Create Task (Admin)
+
+```bash
+# Request
+curl -X POST https://quarterback.example.com/tasks \
+  -H "X-API-Key: your-admin-api-key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Run security scan",
+    "target_node_name": "client-acme-prod-*",
+    "target_tags": {"env": "production"},
+    "priority": 10
+  }'
+```
+
+### Task Targeting
+
+Tasks can be targeted to specific nodes using:
+
+- **`target_node_id`**: Exact UUID match
+- **`target_node_name`**: Wildcard pattern (e.g., `client-acme-*`)
+- **`target_tags`**: Key-value tag matching
 
 ## Security
 
@@ -114,51 +322,6 @@ Additional variables can be passed via the `--env-file` option.
 3. **Outbound-Only Connections**: Runners only make outbound HTTPS requests to the orchestrator. No inbound ports need to be opened.
 
 4. **Container Isolation**: The runner uses standard container isolation. Ensure your container runtime is properly configured.
-
-## Troubleshooting
-
-### Container Runtime Not Found
-
-```
-RuntimeError: No container runtime found. Install podman or docker.
-```
-
-Install Podman (recommended) or Docker:
-
-```bash
-# Fedora
-sudo dnf install podman
-
-# Debian/Ubuntu
-sudo apt install podman
-```
-
-### Registration Failed
-
-```
-Registration failed - invalid registration token
-```
-
-Verify your `--registration-token` matches the `REGISTRATION_TOKEN` configured on the orchestrator.
-
-```
-Registration failed - orchestrator has registration disabled
-```
-
-The orchestrator doesn't have `REGISTRATION_TOKEN` set. Contact the orchestrator administrator.
-
-### Connection Refused
-
-
-```
-Error polling for tasks: Connection refused
-```
-
-Check that:
-1. The orchestrator URL is correct
-2. The orchestrator is running
-3. Network/firewall allows outbound HTTPS connections
-
 
 ## Node Naming and Task Targeting
 
@@ -208,3 +371,50 @@ To ensure a client's tasks only run on their dedicated runners:
    ```
 
 3. **Only runners matching `client-acme-*` will pick up the task.**
+
+## Troubleshooting
+
+### Container Runtime Not Found
+
+```
+RuntimeError: No container runtime found. Install podman or docker.
+```
+
+Install Podman (recommended) or Docker:
+
+```bash
+# Fedora
+sudo dnf install podman
+
+# Debian/Ubuntu
+sudo apt install podman
+```
+
+### Registration Failed
+
+```
+Registration failed - invalid registration token
+```
+
+Verify your `--registration-token` matches the `REGISTRATION_TOKEN` configured on the orchestrator.
+
+```
+Registration failed - orchestrator has registration disabled
+```
+
+The orchestrator doesn't have `REGISTRATION_TOKEN` set. Contact the orchestrator administrator.
+
+### Connection Refused
+
+```
+Error polling for tasks: Connection refused
+```
+
+Check that:
+1. The orchestrator URL is correct
+2. The orchestrator is running
+3. Network/firewall allows outbound HTTPS connections
+
+### Tasks Not Being Picked Up
+
+Verify that the `target_node_name` in your task creation request matches the `--name` of your intended runner. Wildcards (`*`) are supported.
