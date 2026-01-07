@@ -1,6 +1,6 @@
 # Remote Runner (Host Shim)
 
-The Remote Runner is a host-side component that manages Victoria Terminal container execution in coordination with the [All-Time Quarterback](https://github.com/ElcanoTek/all-time-quarterback) orchestrator.
+The Remote Runner is a host-side component that manages Victoria Terminal container execution in coordination with any compatible orchestrator.
 
 ## Overview
 
@@ -12,6 +12,31 @@ The Remote Runner runs **outside** the container on the host OS (bare metal or V
 - Reporting status back to the orchestrator
 
 All communication uses **outbound HTTPS connections only**. Runners require no inbound ports, simplifying firewall configuration and improving security.
+
+## Orchestrator Compatibility
+
+The Remote Runner is designed to work with **any orchestrator that implements the Victoria Terminal Orchestrator API**. This pull-based hub-and-spoke architecture provides several benefits:
+
+- **Security**: Agents only make outbound connections; no inbound ports required
+- **Firewall-friendly**: Works behind NAT and restrictive firewalls
+- **Flexibility**: Use any orchestrator implementation that follows the spec
+
+### OpenAPI Specification
+
+The complete API specification is available in [`orchestrator-openapi.yaml`](./orchestrator-openapi.yaml). Any orchestrator that implements this specification will be compatible with Victoria Terminal agents.
+
+You can use this spec to:
+- Build your own orchestrator in any language
+- Generate client/server code using OpenAPI tools
+- Validate your orchestrator implementation
+
+### Licensing Note
+
+Victoria Terminal is licensed under the [Business Source License 1.1](../LICENSE) (BSL 1.1), which converts to GPL v3 after two years from each release. For production use, please contact ElcanoTek for commercial licensing options.
+
+### Reference Implementation
+
+ElcanoTek maintains a private reference orchestrator. If you're interested in a managed orchestrator solution, contact us at [elcanotek.com](https://elcanotek.com).
 
 ## Quick Start
 
@@ -29,7 +54,7 @@ python -m runner \
 
 - Python 3.10 or later
 - Podman or Docker
-- Network access to the All-Time Quarterback orchestrator (outbound HTTPS)
+- Network access to a compatible orchestrator (outbound HTTPS)
 
 ### Step 1: Provision and Prepare the Instance
 
