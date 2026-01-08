@@ -56,6 +56,10 @@ import httpx
 REGISTRATION_MAX_RETRIES = 5
 REGISTRATION_RETRY_DELAY = 10  # seconds
 
+# Log submission configuration
+# Maximum log submission size in bytes (10MB) - must match orchestrator limit
+MAX_LOG_SUBMISSION_SIZE = 10 * 1024 * 1024
+
 
 @dataclass
 class Config:
@@ -540,7 +544,8 @@ class Runner:
                 "session": session,
             }
 
-            with httpx.Client(timeout=30.0) as client:
+            # Use longer timeout for large log submissions (up to 10MB)
+            with httpx.Client(timeout=120.0) as client:
                 response = client.post(
                     f"{self.config.orchestrator_url}/logs",
                     json=payload,
