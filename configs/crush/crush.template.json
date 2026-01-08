@@ -100,7 +100,9 @@
       "env": {
         "ORCHESTRATOR_URL": "${ORCHESTRATOR_URL}",
         "NODE_API_KEY": "${NODE_API_KEY}",
-        "PYTHONPATH": "${STATUS_REPORTER_MCP_DIR}"
+        "PYTHONPATH": "${STATUS_REPORTER_MCP_DIR}",
+        "TASK_ID": "${TASK_ID}",
+        "VICTORIA_HOME": "${VICTORIA_HOME}"
       }
     }
   }
