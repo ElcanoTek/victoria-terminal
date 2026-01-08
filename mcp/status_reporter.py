@@ -21,13 +21,15 @@ This MCP server provides tools that allow the LLM agent to:
 2. Submit Crush session logs for the completed task
 
 The server is configured via environment variables:
-- ORCHESTRATOR_URL: URL of the orchestrator's /status endpoint
-- TASK_ID: Unique identifier for the current task
-- NODE_API_KEY: API key for authenticating with the orchestrator
+- ORCHESTRATOR_URL: URL of the orchestrator's /status endpoint (static config)
+- NODE_API_KEY: API key for authenticating with the orchestrator (static config)
+- TASK_ID: Unique identifier for the current task (dynamic, set by runner)
 - VICTORIA_HOME: Path to the Victoria home directory (for finding Crush logs)
 
-If ORCHESTRATOR_URL and TASK_ID are not set, the MCP server will not be configured
-(following the pattern of other optional MCP servers in Victoria Terminal).
+The MCP server is enabled when ORCHESTRATOR_URL and NODE_API_KEY are present.
+TASK_ID is a dynamic runtime parameter inherited from the container environment
+(set by the remote runner via -e TASK_ID=...). If TASK_ID is missing, the MCP
+server exits gracefully, allowing standalone operation with orchestrator config.
 """
 
 from __future__ import annotations
