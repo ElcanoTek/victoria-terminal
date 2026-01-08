@@ -295,6 +295,8 @@ components:
           description: ISO 8601 timestamp of when this status update was generated.
     LogSubmission:
       type: object
+      description: |
+        Submission of session logs. The maximum request body size is 10MB.
       required:
         - task_id
         - session
