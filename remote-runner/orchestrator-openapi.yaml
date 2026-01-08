@@ -269,10 +269,10 @@ components:
         - assigned: Set when task is assigned to a node
         - cancelled: Set when admin cancels a task
       required:
-        - job_id
+        - task_id
         - status
       properties:
-        job_id:
+        task_id:
           type: string
           format: uuid
         status:
@@ -296,10 +296,10 @@ components:
     LogSubmission:
       type: object
       required:
-        - job_id
+        - task_id
         - session
       properties:
-        job_id:
+        task_id:
           type: string
           format: uuid
         session:
@@ -835,7 +835,7 @@ paths:
     post:
       summary: Report task status
       description: |
-        Report the current status of a task execution. The `job_id` and `status`
+        Report the current status of a task execution. The `task_id` and `status`
         fields are required. The optional `timestamp` field should be an ISO 8601
         formatted datetime string.
       security:

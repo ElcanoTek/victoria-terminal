@@ -10,7 +10,7 @@
 #
 # Change Date: 2027-09-20
 # Change License: GNU General Public License v3.0 or later
-# License Notes: 2026-01-02
+# License Notes: 2026-01-08
 
 """Constants and configuration values for Victoria Terminal."""
 
@@ -51,7 +51,9 @@ SENDGRID_ENV_KEY = "SENDGRID_API_KEY"
 EMAIL_ENV_KEYS = ("AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "EMAIL_S3_BUCKET")
 SNOWFLAKE_ENV_KEYS = ("SNOWFLAKE_ACCOUNT", "SNOWFLAKE_USER", "SNOWFLAKE_PASSWORD")
 BROWSEROS_ENV_KEY = "BROWSEROS_URL"
-ORCHESTRATOR_ENV_KEYS = ("ORCHESTRATOR_URL", "JOB_ID", "NODE_API_KEY")
+# Orchestrator static configuration (ORCHESTRATOR_URL, NODE_API_KEY)
+# TASK_ID is a dynamic runtime parameter passed by the runner, not static config
+ORCHESTRATOR_ENV_KEYS = ("ORCHESTRATOR_URL", "NODE_API_KEY")
 
 # UI Icons
 ICONS = {

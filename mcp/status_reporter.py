@@ -11,6 +11,7 @@
 #
 # Change Date: 2027-09-20
 # Change License: GNU General Public License v3.0 or later
+# License Notes: 2026-01-08
 
 """
 Status Reporter MCP Server for Victoria Terminal.
@@ -20,13 +21,15 @@ This MCP server provides tools that allow the LLM agent to:
 2. Submit Crush session logs for the completed task
 
 The server is configured via environment variables:
-- ORCHESTRATOR_URL: URL of the orchestrator's /status endpoint
-- JOB_ID: Unique identifier for the current task/job
-- NODE_API_KEY: API key for authenticating with the orchestrator
+- ORCHESTRATOR_URL: URL of the orchestrator's /status endpoint (static config)
+- NODE_API_KEY: API key for authenticating with the orchestrator (static config)
+- TASK_ID: Unique identifier for the current task (dynamic, set by runner)
 - VICTORIA_HOME: Path to the Victoria home directory (for finding Crush logs)
 
-If ORCHESTRATOR_URL and JOB_ID are not set, the MCP server will not be configured
-(following the pattern of other optional MCP servers in Victoria Terminal).
+The MCP server is enabled when ORCHESTRATOR_URL and NODE_API_KEY are present.
+TASK_ID is a dynamic runtime parameter inherited from the container environment
+(set by the remote runner via -e TASK_ID=...). If TASK_ID is missing, the MCP
+server exits gracefully, allowing standalone operation with orchestrator config.
 """
 
 from __future__ import annotations
@@ -81,9 +84,9 @@ def get_orchestrator_url() -> Optional[str]:
     return None
 
 
-def get_job_id() -> Optional[str]:
-    """Get the current job ID from environment."""
-    return os.environ.get("JOB_ID")
+def get_task_id() -> Optional[str]:
+    """Get the current task ID from environment."""
+    return os.environ.get("TASK_ID")
 
 
 def get_node_api_key() -> Optional[str]:
@@ -207,16 +210,16 @@ async def send_status_update(
         Response from the orchestrator or error information
     """
     orchestrator_url = get_orchestrator_url()
-    job_id = get_job_id()
+    task_id = get_task_id()
 
     if not orchestrator_url:
         return {"error": "ORCHESTRATOR_URL not configured", "sent": False}
 
-    if not job_id:
-        return {"error": "JOB_ID not configured", "sent": False}
+    if not task_id:
+        return {"error": "TASK_ID not configured", "sent": False}
 
     payload = {
-        "job_id": job_id,
+        "task_id": task_id,
         "status": status.value,
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
@@ -487,13 +490,13 @@ async def submit_crush_logs(session_id: Optional[str] = None) -> Dict[str, Any]:
         submit_crush_logs(session_id="abc123")
     """
     orchestrator_url = get_orchestrator_url()
-    job_id = get_job_id()
+    task_id = get_task_id()
 
     if not orchestrator_url:
         return {"error": "ORCHESTRATOR_URL not configured", "sent": False}
 
-    if not job_id:
-        return {"error": "JOB_ID not configured", "sent": False}
+    if not task_id:
+        return {"error": "TASK_ID not configured", "sent": False}
 
     # Get the session to submit
     if session_id:
@@ -509,7 +512,7 @@ async def submit_crush_logs(session_id: Optional[str] = None) -> Dict[str, Any]:
     logger.info(f"Submitting logs for session {session['id']} with {len(session['messages'])} messages")
 
     payload = {
-        "job_id": job_id,
+        "task_id": task_id,
         "session": session,
     }
 
@@ -566,20 +569,20 @@ async def get_job_info() -> Dict[str, Any]:
     Returns:
         Dictionary containing:
         - configured: Boolean indicating if orchestration is configured
-        - job_id: The current job ID (if configured)
+        - task_id: The current task ID (if configured)
         - orchestrator_url: The orchestrator URL (if configured)
         - crush_db_path: Path to the Crush database (if found)
         - session_count: Number of Crush sessions available
     """
     orchestrator_url = get_orchestrator_url()
-    job_id = get_job_id()
+    task_id = get_task_id()
     crush_db = get_crush_db_path()
     sessions = read_crush_sessions()
 
-    if orchestrator_url and job_id:
+    if orchestrator_url and task_id:
         return {
             "configured": True,
-            "job_id": job_id,
+            "task_id": task_id,
             "orchestrator_url": orchestrator_url,
             "crush_db_path": str(crush_db) if crush_db else None,
             "session_count": len(sessions),
@@ -596,19 +599,19 @@ async def get_job_info() -> Dict[str, Any]:
 if __name__ == "__main__":
     # Check if orchestration is configured
     orchestrator_url = get_orchestrator_url()
-    job_id = get_job_id()
+    task_id = get_task_id()
 
-    if not orchestrator_url or not job_id:
+    if not orchestrator_url or not task_id:
         logger.warning(
             "Status Reporter MCP Server not starting: "
-            "ORCHESTRATOR_URL and JOB_ID environment variables are required"
+            "ORCHESTRATOR_URL and TASK_ID environment variables are required"
         )
         # Exit gracefully - this is expected when not running in orchestrated mode
         sys.exit(0)
 
     logger.info("Starting Status Reporter MCP Server")
     logger.info(f"Orchestrator URL: {orchestrator_url}")
-    logger.info(f"Job ID: {job_id}")
+    logger.info(f"Task ID: {task_id}")
     
     crush_db = get_crush_db_path()
     if crush_db:

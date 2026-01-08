@@ -133,7 +133,7 @@ The following environment variables are set by the Remote Runner when launching 
 | Variable | Description |
 |----------|-------------|
 | `ORCHESTRATOR_URL` | URL of the quarterback orchestrator |
-| `JOB_ID` | Unique identifier for the current task |
+| `TASK_ID` | Unique identifier for the current task |
 | `NODE_API_KEY` | API key for authenticating with the orchestrator |
 
 ### .env Configuration
@@ -144,8 +144,8 @@ Add these to your `.env` file for manual testing:
 # Orchestrator URL (set by remote-runner when launching containers)
 ORCHESTRATOR_URL="http://quarterback.example.com:8000"
 
-# Job ID (set by remote-runner when launching containers)
-JOB_ID="your-job-id-here"
+# Task ID (set by remote-runner when launching containers)
+TASK_ID="your-task-id-here"
 
 # Node API key (set by remote-runner when launching containers)
 NODE_API_KEY="your-node-api-key"
@@ -205,7 +205,7 @@ NODE_API_KEY="your-node-api-key"
 
 ### Status Reporter Not Working
 
-1. Check that `ORCHESTRATOR_URL` and `JOB_ID` are set
+1. Check that `ORCHESTRATOR_URL` and `TASK_ID` are set
 2. Verify network connectivity to the orchestrator
 3. Check container logs for MCP server startup errors
 
