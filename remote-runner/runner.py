@@ -140,7 +140,7 @@ def run_container(
         "--name", f"victoria-{task_id[:8]}",
         "-v", f"{config.victoria_home}:/workspace/Victoria:Z",
         "-e", f"ORCHESTRATOR_URL={orchestrator_url}",
-        "-e", f"JOB_ID={task_id}",
+        "-e", f"TASK_ID={task_id}",
         "-e", f"NODE_API_KEY={config.node_api_key}",
     ]
 
@@ -453,11 +453,11 @@ class Runner:
         except Exception as e:
             logger.warning(f"Failed to send heartbeat: {e}")
 
-    def _report_task_status(self, job_id: str, status: str, message: str = None):
+    def _report_task_status(self, task_id: str, status: str, message: str = None):
         """Report task status to the orchestrator."""
         try:
             payload = {
-                "job_id": job_id,
+                "task_id": task_id,
                 "status": status,
                 "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
             }
@@ -471,7 +471,7 @@ class Runner:
                     headers={"X-API-Key": self.config.node_api_key},
                 )
                 response.raise_for_status()
-                logger.info(f"Reported task status: {status} for job {job_id}")
+                logger.info(f"Reported task status: {status} for task {task_id}")
         except httpx.HTTPStatusError as e:
             logger.error(
                 f"Failed to report task status: HTTP {e.response.status_code} - {e.response.text}"

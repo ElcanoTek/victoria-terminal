@@ -52,7 +52,7 @@ EMAIL_ENV_KEYS = ("AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "EMAIL_S3_BUCKET
 SNOWFLAKE_ENV_KEYS = ("SNOWFLAKE_ACCOUNT", "SNOWFLAKE_USER", "SNOWFLAKE_PASSWORD")
 BROWSEROS_ENV_KEY = "BROWSEROS_URL"
 # Orchestrator static configuration (ORCHESTRATOR_URL, NODE_API_KEY)
-# JOB_ID is a dynamic runtime parameter passed by the runner, not static config
+# TASK_ID is a dynamic runtime parameter passed by the runner, not static config
 ORCHESTRATOR_ENV_KEYS = ("ORCHESTRATOR_URL", "NODE_API_KEY")
 
 # UI Icons

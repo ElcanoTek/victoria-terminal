@@ -157,7 +157,7 @@ The runner passes these environment variables to the container:
 | Variable | Description |
 |----------|-------------|
 | `ORCHESTRATOR_URL` | URL for MCP status reporting |
-| `JOB_ID` | Unique identifier for the current task |
+| `TASK_ID` | Unique identifier for the current task |
 | `NODE_API_KEY` | API key for authenticating with the orchestrator |
 | `TASK_FILES_DIR` | Path to task-specific files (only set if files were uploaded with the task) |
 
@@ -294,7 +294,7 @@ curl -X POST https://quarterback.example.com/status \
   -H "X-API-Key: your-node-api-key" \
   -H "Content-Type: application/json" \
   -d '{
-    "job_id": "task-uuid-here",
+    "task_id": "task-uuid-here",
     "status": "running",
     "message": "Processing data files",
     "progress": 45.0
@@ -309,7 +309,7 @@ curl -X POST https://quarterback.example.com/logs \
   -H "X-API-Key: your-node-api-key" \
   -H "Content-Type: application/json" \
   -d '{
-    "job_id": "task-uuid-here",
+    "task_id": "task-uuid-here",
     "session": {
       "id": "session-uuid",
       "title": "Task Session",

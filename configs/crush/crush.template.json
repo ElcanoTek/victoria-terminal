@@ -99,7 +99,7 @@
       "cwd": "${STATUS_REPORTER_MCP_DIR}",
       "env": {
         "ORCHESTRATOR_URL": "${ORCHESTRATOR_URL}",
-        "JOB_ID": "${JOB_ID}",
+        "TASK_ID": "${TASK_ID}",
         "NODE_API_KEY": "${NODE_API_KEY}",
         "PYTHONPATH": "${STATUS_REPORTER_MCP_DIR}"
       }
