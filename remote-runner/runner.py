@@ -27,6 +27,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import logging
+import datetime
 import platform
 import shutil
 import signal
@@ -452,6 +453,32 @@ class Runner:
         except Exception as e:
             logger.warning(f"Failed to send heartbeat: {e}")
 
+    def _report_task_status(self, job_id: str, status: str, message: str = None):
+        """Report task status to the orchestrator."""
+        try:
+            payload = {
+                "job_id": job_id,
+                "status": status,
+                "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            }
+            if message:
+                payload["message"] = message
+
+            with httpx.Client(timeout=10.0) as client:
+                response = client.post(
+                    f"{self.config.orchestrator_url}/status",
+                    json=payload,
+                    headers={"X-API-Key": self.config.node_api_key},
+                )
+                response.raise_for_status()
+                logger.info(f"Reported task status: {status} for job {job_id}")
+        except httpx.HTTPStatusError as e:
+            logger.error(
+                f"Failed to report task status: HTTP {e.response.status_code} - {e.response.text}"
+            )
+        except Exception as e:
+            logger.error(f"Failed to report task status: {e}")
+
     def run(self):
         """Start the runner daemon."""
         logger.info("Starting remote runner")
@@ -487,6 +514,21 @@ class Runner:
                 poll_result = self.current_process.poll()
                 if poll_result is not None:
                     logger.info(f"Task completed with exit code {poll_result}")
+
+                    # Report final status to orchestrator
+                    if poll_result == 0:
+                        self._report_task_status(
+                            self.current_task_id,
+                            "success",
+                            "Task completed successfully",
+                        )
+                    else:
+                        self._report_task_status(
+                            self.current_task_id,
+                            "error",
+                            f"Task failed with exit code {poll_result}",
+                        )
+
                     self.current_process = None
                     self.current_task_id = None
 
