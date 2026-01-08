@@ -31,12 +31,13 @@ import datetime
 import platform
 import shutil
 import signal
+import sqlite3
 import subprocess
 import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from urllib.parse import quote
 
 # Configure logging
@@ -49,14 +50,7 @@ logger = logging.getLogger("remote-runner")
 # Cache for GNU timeout check
 _IS_GNU_TIMEOUT: Optional[bool] = None
 
-# Try to import httpx
-try:
-    import httpx
-    HAS_HTTPX = True
-except ImportError:
-    HAS_HTTPX = False
-    logger.warning("httpx not installed - install with: pip install httpx")
-
+import httpx
 
 # Registration retry configuration
 REGISTRATION_MAX_RETRIES = 5
@@ -139,9 +133,7 @@ def run_container(
         "-it" if sys.stdin.isatty() else "-i",
         "--name", f"victoria-{task_id[:8]}",
         "-v", f"{config.victoria_home}:/workspace/Victoria:Z",
-        "-e", f"ORCHESTRATOR_URL={orchestrator_url}",
         "-e", f"TASK_ID={task_id}",
-        "-e", f"NODE_API_KEY={config.node_api_key}",
     ]
 
     # Add task files directory path if files were downloaded
@@ -330,9 +322,6 @@ class Runner:
     """Pull-mode runner daemon for Victoria Terminal."""
 
     def __init__(self, config: Config):
-        if not HAS_HTTPX:
-            raise RuntimeError("httpx is required. Install with: pip install httpx")
-        
         self.config = config
         self.running = True
         self.current_process: Optional[subprocess.Popen] = None
@@ -479,6 +468,94 @@ class Runner:
         except Exception as e:
             logger.error(f"Failed to report task status: {e}")
 
+    def _report_task_processing(self, task_id: str):
+        """Report that the task is processing."""
+        self._report_task_status(task_id, "running", "Task received and processing started")
+
+    def _submit_logs(self, task_id: str):
+        """Submit Crush session logs to the orchestrator."""
+        # Find crush.db
+        crush_db_path = self.config.victoria_home / ".crush" / "crush.db"
+        if not crush_db_path.exists():
+            logger.warning(f"Crush database not found at {crush_db_path}")
+            return
+
+        try:
+            conn = sqlite3.connect(str(crush_db_path))
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+
+            # Get latest session (excluding child sessions)
+            cursor.execute("""
+                SELECT id, title, prompt_tokens, completion_tokens, cost,
+                       created_at, updated_at
+                FROM sessions
+                WHERE parent_session_id IS NULL
+                ORDER BY updated_at DESC
+                LIMIT 1
+            """)
+
+            row = cursor.fetchone()
+            if not row:
+                logger.warning("No Crush sessions found to submit")
+                conn.close()
+                return
+
+            session = {
+                "id": row["id"],
+                "title": row["title"],
+                "prompt_tokens": row["prompt_tokens"],
+                "completion_tokens": row["completion_tokens"],
+                "cost": row["cost"],
+                "created_at": row["created_at"],
+                "updated_at": row["updated_at"],
+                "messages": [],
+            }
+
+            # Get messages for this session
+            cursor.execute("""
+                SELECT id, role, parts, model, provider, created_at, finished_at
+                FROM messages
+                WHERE session_id = ?
+                ORDER BY created_at ASC
+            """, (row["id"],))
+
+            for msg_row in cursor.fetchall():
+                session["messages"].append({
+                    "id": msg_row["id"],
+                    "role": msg_row["role"],
+                    "content": msg_row["parts"],
+                    "model": msg_row["model"],
+                    "provider": msg_row["provider"],
+                    "created_at": msg_row["created_at"],
+                    "finished_at": msg_row["finished_at"],
+                })
+
+            conn.close()
+
+            logger.info(f"Submitting logs for session {session['id']} with {len(session['messages'])} messages")
+
+            payload = {
+                "task_id": task_id,
+                "session": session,
+            }
+
+            with httpx.Client(timeout=30.0) as client:
+                response = client.post(
+                    f"{self.config.orchestrator_url}/logs",
+                    json=payload,
+                    headers={
+                        "X-API-Key": self.config.node_api_key,
+                        "User-Agent": "victoria-runner/1.0",
+                        "Content-Type": "application/json",
+                    },
+                )
+                response.raise_for_status()
+                logger.info("Logs submitted successfully")
+
+        except Exception as e:
+            logger.error(f"Failed to submit logs: {e}")
+
     def run(self):
         """Start the runner daemon."""
         logger.info("Starting remote runner")
@@ -514,6 +591,9 @@ class Runner:
                 poll_result = self.current_process.poll()
                 if poll_result is not None:
                     logger.info(f"Task completed with exit code {poll_result}")
+
+                    # Submit logs before reporting final status
+                    self._submit_logs(self.current_task_id)
 
                     # Report final status to orchestrator
                     if poll_result == 0:
@@ -559,6 +639,10 @@ class Runner:
                             task_files_dir=task_files_dir,
                         )
                         self.current_task_id = task["task_id"]
+
+                        # Immediately report that we are processing the task
+                        self._report_task_processing(self.current_task_id)
+
                     except Exception as e:
                         logger.error(f"Failed to start container: {e}")
 
