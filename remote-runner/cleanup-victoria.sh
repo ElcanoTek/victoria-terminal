@@ -74,20 +74,21 @@ cleanup_old_files() {
     
     echo "==> Cleaning $description in $dir"
     
-    # Find files older than N days
-    OLD_FILES=$(find "$dir" -name "$pattern" -type f -mtime +$DAYS_TO_KEEP 2>/dev/null || true)
+    # Find and count files older than N days
+    FILE_COUNT=$(find "$dir" -name "$pattern" -type f -mtime +$DAYS_TO_KEEP 2>/dev/null | wc -l || echo "0")
     
-    if [ -n "$OLD_FILES" ]; then
-        FILE_COUNT=$(echo "$OLD_FILES" | wc -l)
+    if [ "$FILE_COUNT" -gt 0 ]; then
         echo "  Found $FILE_COUNT old file(s) to remove"
         
         if [ "$DRY_RUN" = true ]; then
-            echo "$OLD_FILES" | head -5
+            # Show first 5 files for dry run
+            find "$dir" -name "$pattern" -type f -mtime +$DAYS_TO_KEEP 2>/dev/null | head -5
             if [ "$FILE_COUNT" -gt 5 ]; then
                 echo "  ... and $((FILE_COUNT - 5)) more"
             fi
         else
-            echo "$OLD_FILES" | xargs rm -f
+            # Use -print0 and xargs -0 to handle filenames with spaces/newlines
+            find "$dir" -name "$pattern" -type f -mtime +$DAYS_TO_KEEP -print0 2>/dev/null | xargs -0 rm -f
             echo "  Removed $FILE_COUNT file(s)"
         fi
     else
