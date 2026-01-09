@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # Victoria Folder Cleanup Script
-# Removes old task files, logs, and temporary data
+# Removes old files while preserving protected configuration and caches
 #
 # Usage: ./cleanup-victoria.sh [--dry-run] [--victoria-home /path/to/victoria]
 #
@@ -11,6 +11,17 @@ set -e
 DRY_RUN=false
 VICTORIA_HOME="${VICTORIA_HOME:-$HOME/victoria}"
 DAYS_TO_KEEP=7  # Keep files from last 7 days
+
+# Protected paths that should NEVER be cleaned
+PROTECTED_PATHS=(
+    "protocols"
+    "forecasting_data"
+    ".env"
+    "VICTORIA.md"
+    "email_last_checked.txt"
+    ".crush"
+    ".cache"
+)
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -44,6 +55,11 @@ echo "Starting Victoria cleanup at $(date)"
 echo "Victoria Home: $VICTORIA_HOME"
 echo "Keeping files from last $DAYS_TO_KEEP days"
 echo ""
+echo "Protected paths (never cleaned):"
+for path in "${PROTECTED_PATHS[@]}"; do
+    echo "  - $path"
+done
+echo ""
 
 # Check if Victoria home exists
 if [ ! -d "$VICTORIA_HOME" ]; then
@@ -52,100 +68,67 @@ if [ ! -d "$VICTORIA_HOME" ]; then
     exit 0
 fi
 
-# Function to run command or simulate in dry-run mode
-run_cmd() {
-    if [ "$DRY_RUN" = true ]; then
-        echo "[DRY RUN] Would execute: $*"
-    else
-        eval "$@"
-    fi
-}
+# Build find exclusion arguments
+EXCLUDE_ARGS=()
+for path in "${PROTECTED_PATHS[@]}"; do
+    EXCLUDE_ARGS+=("!" "-path" "$VICTORIA_HOME/$path" "!" "-path" "$VICTORIA_HOME/$path/*")
+done
 
-# Function to safely remove old files
-cleanup_old_files() {
-    local dir=$1
-    local pattern=$2
-    local description=$3
-    
-    if [ ! -d "$dir" ]; then
-        echo "  Directory not found: $dir (skipping)"
-        return
-    fi
-    
-    echo "==> Cleaning $description in $dir"
-    
-    # Find and count files older than N days
-    FILE_COUNT=$(find "$dir" -name "$pattern" -type f -mtime +$DAYS_TO_KEEP 2>/dev/null | wc -l || echo "0")
+echo "==> Finding old files (older than $DAYS_TO_KEEP days)"
+
+# Find all files older than N days, excluding protected paths
+if [ "$DRY_RUN" = true ]; then
+    OLD_FILES=$(find "$VICTORIA_HOME" -type f -mtime +$DAYS_TO_KEEP "${EXCLUDE_ARGS[@]}" 2>/dev/null || true)
+    FILE_COUNT=$(echo "$OLD_FILES" | grep -c . || echo "0")
     
     if [ "$FILE_COUNT" -gt 0 ]; then
         echo "  Found $FILE_COUNT old file(s) to remove"
-        
-        if [ "$DRY_RUN" = true ]; then
-            # Show first 5 files for dry run
-            find "$dir" -name "$pattern" -type f -mtime +$DAYS_TO_KEEP 2>/dev/null | head -5
-            if [ "$FILE_COUNT" -gt 5 ]; then
-                echo "  ... and $((FILE_COUNT - 5)) more"
-            fi
-        else
-            # Use -print0 and xargs -0 to handle filenames with spaces/newlines
-            find "$dir" -name "$pattern" -type f -mtime +$DAYS_TO_KEEP -print0 2>/dev/null | xargs -0 rm -f
-            echo "  Removed $FILE_COUNT file(s)"
+        echo ""
+        echo "Sample files (first 10):"
+        echo "$OLD_FILES" | head -10
+        if [ "$FILE_COUNT" -gt 10 ]; then
+            echo "  ... and $((FILE_COUNT - 10)) more"
         fi
     else
         echo "  No old files found"
     fi
-    echo ""
-}
+else
+    # Actually delete the files using -print0 and xargs -0 for safety
+    FILE_COUNT=$(find "$VICTORIA_HOME" -type f -mtime +$DAYS_TO_KEEP "${EXCLUDE_ARGS[@]}" -print0 2>/dev/null | xargs -0 rm -f | wc -l || echo "0")
+    
+    if [ "$FILE_COUNT" -gt 0 ]; then
+        echo "  Removed $FILE_COUNT old file(s)"
+    else
+        echo "  No old files found"
+    fi
+fi
 
-# 1. Clean old email attachments (often large)
-cleanup_old_files "$VICTORIA_HOME/email_attachments" "*" "email attachments"
+echo ""
 
-# 2. Clean old executive reports
-cleanup_old_files "$VICTORIA_HOME/executive_reports" "*.pdf" "executive report PDFs"
-cleanup_old_files "$VICTORIA_HOME/executive_reports" "*.html" "executive report HTML files"
-
-# 3. Clean old forecasting data
-cleanup_old_files "$VICTORIA_HOME/forecasting_data" "*.csv" "forecasting CSV files"
-cleanup_old_files "$VICTORIA_HOME/forecasting_data" "*.json" "forecasting JSON files"
-
-# 4. Clean old data directory files
-cleanup_old_files "$VICTORIA_HOME/data" "*.csv" "data CSV files"
-cleanup_old_files "$VICTORIA_HOME/data" "*.json" "data JSON files"
-cleanup_old_files "$VICTORIA_HOME/data" "*.xlsx" "data Excel files"
-
-# 5. Clean old task files (if exists)
-cleanup_old_files "$VICTORIA_HOME/tasks" "*.json" "task files"
-cleanup_old_files "$VICTORIA_HOME/tasks" "*.txt" "task metadata"
-
-# 6. Clean old log files (if exists)
-cleanup_old_files "$VICTORIA_HOME/logs" "*.log" "log files"
-cleanup_old_files "$VICTORIA_HOME/logs" "*.txt" "text logs"
-
-# 7. Clean old temporary files
-cleanup_old_files "$VICTORIA_HOME/tmp" "*" "temporary files"
-cleanup_old_files "$VICTORIA_HOME/temp" "*" "temporary files"
-
-# 8. Clean old downloaded files (if exists)
-cleanup_old_files "$VICTORIA_HOME/downloads" "*" "downloaded files"
-
-# Note: We intentionally do NOT clean .crush or .cache directories
-# These are application caches managed by Victoria Terminal and other tools
-# Cleaning them would degrade performance without saving significant space
-
-# 9. Clean empty directories (but preserve important structure)
+# Clean empty directories (but preserve protected paths and root-level structure)
 echo "==> Removing empty directories"
+
+# Build exclusion for empty directory cleanup
+EMPTY_EXCLUDE_ARGS=()
+for path in "${PROTECTED_PATHS[@]}"; do
+    EMPTY_EXCLUDE_ARGS+=("!" "-path" "$VICTORIA_HOME/$path/*")
+done
+
 if [ "$DRY_RUN" = true ]; then
-    # Exclude protocols and root-level directories from empty dir cleanup
-    EMPTY_DIRS=$(find "$VICTORIA_HOME" -mindepth 2 -type d -empty ! -path "$VICTORIA_HOME/protocols*" 2>/dev/null || true)
+    EMPTY_DIRS=$(find "$VICTORIA_HOME" -mindepth 2 -type d -empty "${EMPTY_EXCLUDE_ARGS[@]}" 2>/dev/null || true)
     if [ -n "$EMPTY_DIRS" ]; then
-        echo "  Would remove $(echo "$EMPTY_DIRS" | wc -l) empty directories"
+        EMPTY_COUNT=$(echo "$EMPTY_DIRS" | wc -l)
+        echo "  Would remove $EMPTY_COUNT empty director(ies)"
+        echo "$EMPTY_DIRS" | head -5
+        if [ "$EMPTY_COUNT" -gt 5 ]; then
+            echo "  ... and $((EMPTY_COUNT - 5)) more"
+        fi
     else
         echo "  No empty directories found"
     fi
 else
-    # Exclude protocols and root-level directories from empty dir cleanup
-    find "$VICTORIA_HOME" -mindepth 2 -type d -empty ! -path "$VICTORIA_HOME/protocols*" -delete 2>/dev/null || true
-    echo "  Removed empty directories (preserved protocols/)"
+    find "$VICTORIA_HOME" -mindepth 2 -type d -empty "${EMPTY_EXCLUDE_ARGS[@]}" -delete 2>/dev/null || true
+    echo "  Removed empty directories"
 fi
 
 echo ""
