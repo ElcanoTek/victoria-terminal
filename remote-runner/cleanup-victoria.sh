@@ -97,43 +97,71 @@ cleanup_old_files() {
     echo ""
 }
 
-# 1. Clean old task files
+# 1. Clean old email attachments (often large)
+cleanup_old_files "$VICTORIA_HOME/email_attachments" "*" "email attachments"
+
+# 2. Clean old executive reports
+cleanup_old_files "$VICTORIA_HOME/executive_reports" "*.pdf" "executive report PDFs"
+cleanup_old_files "$VICTORIA_HOME/executive_reports" "*.html" "executive report HTML files"
+
+# 3. Clean old forecasting data
+cleanup_old_files "$VICTORIA_HOME/forecasting_data" "*.csv" "forecasting CSV files"
+cleanup_old_files "$VICTORIA_HOME/forecasting_data" "*.json" "forecasting JSON files"
+
+# 4. Clean old data directory files
+cleanup_old_files "$VICTORIA_HOME/data" "*.csv" "data CSV files"
+cleanup_old_files "$VICTORIA_HOME/data" "*.json" "data JSON files"
+cleanup_old_files "$VICTORIA_HOME/data" "*.xlsx" "data Excel files"
+
+# 5. Clean old task files (if exists)
 cleanup_old_files "$VICTORIA_HOME/tasks" "*.json" "task files"
 cleanup_old_files "$VICTORIA_HOME/tasks" "*.txt" "task metadata"
 
-# 2. Clean old log files
+# 6. Clean old log files (if exists)
 cleanup_old_files "$VICTORIA_HOME/logs" "*.log" "log files"
 cleanup_old_files "$VICTORIA_HOME/logs" "*.txt" "text logs"
 
-# 3. Clean old temporary files
+# 7. Clean old temporary files
 cleanup_old_files "$VICTORIA_HOME/tmp" "*" "temporary files"
 cleanup_old_files "$VICTORIA_HOME/temp" "*" "temporary files"
 
-# 4. Clean old downloaded files (if exists)
+# 8. Clean old downloaded files (if exists)
 cleanup_old_files "$VICTORIA_HOME/downloads" "*" "downloaded files"
 
-# 5. Clean old cache files
-if [ -d "$VICTORIA_HOME/.cache" ]; then
-    echo "==> Cleaning cache directory"
-    CACHE_SIZE_BEFORE=$(du -sh "$VICTORIA_HOME/.cache" 2>/dev/null | awk '{print $1}' || echo "0")
-    run_cmd "find $VICTORIA_HOME/.cache -type f -mtime +$DAYS_TO_KEEP -delete"
-    CACHE_SIZE_AFTER=$(du -sh "$VICTORIA_HOME/.cache" 2>/dev/null | awk '{print $1}' || echo "0")
-    echo "  Cache size: $CACHE_SIZE_BEFORE -> $CACHE_SIZE_AFTER"
+# 9. Clean old .crush cache files
+if [ -d "$VICTORIA_HOME/.crush" ]; then
+    echo "==> Cleaning .crush cache directory"
+    CACHE_SIZE_BEFORE=$(du -sh "$VICTORIA_HOME/.crush" 2>/dev/null | awk '{print $1}' || echo "0")
+    run_cmd "find $VICTORIA_HOME/.crush -type f -mtime +$DAYS_TO_KEEP -delete"
+    CACHE_SIZE_AFTER=$(du -sh "$VICTORIA_HOME/.crush" 2>/dev/null | awk '{print $1}' || echo "0")
+    echo "  .crush cache size: $CACHE_SIZE_BEFORE -> $CACHE_SIZE_AFTER"
     echo ""
 fi
 
-# 6. Clean empty directories
+# 10. Clean old general cache files
+if [ -d "$VICTORIA_HOME/.cache" ]; then
+    echo "==> Cleaning .cache directory"
+    CACHE_SIZE_BEFORE=$(du -sh "$VICTORIA_HOME/.cache" 2>/dev/null | awk '{print $1}' || echo "0")
+    run_cmd "find $VICTORIA_HOME/.cache -type f -mtime +$DAYS_TO_KEEP -delete"
+    CACHE_SIZE_AFTER=$(du -sh "$VICTORIA_HOME/.cache" 2>/dev/null | awk '{print $1}' || echo "0")
+    echo "  .cache size: $CACHE_SIZE_BEFORE -> $CACHE_SIZE_AFTER"
+    echo ""
+fi
+
+# 11. Clean empty directories (but preserve important structure)
 echo "==> Removing empty directories"
 if [ "$DRY_RUN" = true ]; then
-    EMPTY_DIRS=$(find "$VICTORIA_HOME" -type d -empty 2>/dev/null || true)
+    # Exclude protocols and root-level directories from empty dir cleanup
+    EMPTY_DIRS=$(find "$VICTORIA_HOME" -mindepth 2 -type d -empty ! -path "$VICTORIA_HOME/protocols*" 2>/dev/null || true)
     if [ -n "$EMPTY_DIRS" ]; then
         echo "  Would remove $(echo "$EMPTY_DIRS" | wc -l) empty directories"
     else
         echo "  No empty directories found"
     fi
 else
-    find "$VICTORIA_HOME" -type d -empty -delete 2>/dev/null || true
-    echo "  Removed empty directories"
+    # Exclude protocols and root-level directories from empty dir cleanup
+    find "$VICTORIA_HOME" -mindepth 2 -type d -empty ! -path "$VICTORIA_HOME/protocols*" -delete 2>/dev/null || true
+    echo "  Removed empty directories (preserved protocols/)"
 fi
 
 echo ""
