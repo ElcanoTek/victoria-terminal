@@ -39,7 +39,7 @@ Cleans up podman containers, images, and volumes:
 Cleans up old Victoria folder files using a **whitelist approach**:
 
 **What it does:**
-- Removes ALL files older than 7 days (configurable with `--days N`)
+- Removes ALL files older than 15 days (configurable with `--days N`)
 - Removes empty directories
 - **EXCEPT** files/directories in the protected list below
 
