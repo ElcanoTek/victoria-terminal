@@ -38,11 +38,21 @@ Cleans up podman containers, images, and volumes:
 
 Cleans up old Victoria folder files:
 
+- Removes email attachments older than 7 days
+- Removes executive reports (PDF/HTML) older than 7 days
+- Removes forecasting data (CSV/JSON) older than 7 days
+- Removes data directory files (CSV/JSON/XLSX) older than 7 days
 - Removes task files older than 7 days
 - Removes log files older than 7 days
 - Removes temporary files
-- Cleans cache directory
-- Removes empty directories
+- Cleans `.crush` and `.cache` directories
+- Removes empty directories (preserves `protocols/`)
+
+**Protected files/directories (never deleted):**
+- `protocols/` - Protocol definitions
+- `.env` - Environment configuration
+- `VICTORIA.md` - Documentation
+- `email_last_checked.txt` - Email tracking state
 
 ```bash
 # Run Victoria cleanup (uses $HOME/victoria by default)
