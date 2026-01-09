@@ -128,27 +128,11 @@ cleanup_old_files "$VICTORIA_HOME/temp" "*" "temporary files"
 # 8. Clean old downloaded files (if exists)
 cleanup_old_files "$VICTORIA_HOME/downloads" "*" "downloaded files"
 
-# 9. Clean old .crush cache files
-if [ -d "$VICTORIA_HOME/.crush" ]; then
-    echo "==> Cleaning .crush cache directory"
-    CACHE_SIZE_BEFORE=$(du -sh "$VICTORIA_HOME/.crush" 2>/dev/null | awk '{print $1}' || echo "0")
-    run_cmd "find $VICTORIA_HOME/.crush -type f -mtime +$DAYS_TO_KEEP -delete"
-    CACHE_SIZE_AFTER=$(du -sh "$VICTORIA_HOME/.crush" 2>/dev/null | awk '{print $1}' || echo "0")
-    echo "  .crush cache size: $CACHE_SIZE_BEFORE -> $CACHE_SIZE_AFTER"
-    echo ""
-fi
+# Note: We intentionally do NOT clean .crush or .cache directories
+# These are application caches managed by Victoria Terminal and other tools
+# Cleaning them would degrade performance without saving significant space
 
-# 10. Clean old general cache files
-if [ -d "$VICTORIA_HOME/.cache" ]; then
-    echo "==> Cleaning .cache directory"
-    CACHE_SIZE_BEFORE=$(du -sh "$VICTORIA_HOME/.cache" 2>/dev/null | awk '{print $1}' || echo "0")
-    run_cmd "find $VICTORIA_HOME/.cache -type f -mtime +$DAYS_TO_KEEP -delete"
-    CACHE_SIZE_AFTER=$(du -sh "$VICTORIA_HOME/.cache" 2>/dev/null | awk '{print $1}' || echo "0")
-    echo "  .cache size: $CACHE_SIZE_BEFORE -> $CACHE_SIZE_AFTER"
-    echo ""
-fi
-
-# 11. Clean empty directories (but preserve important structure)
+# 9. Clean empty directories (but preserve important structure)
 echo "==> Removing empty directories"
 if [ "$DRY_RUN" = true ]; then
     # Exclude protocols and root-level directories from empty dir cleanup

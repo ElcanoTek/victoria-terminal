@@ -45,7 +45,6 @@ Cleans up old Victoria folder files:
 - Removes task files older than 7 days
 - Removes log files older than 7 days
 - Removes temporary files
-- Cleans `.crush` and `.cache` directories
 - Removes empty directories (preserves `protocols/`)
 
 **Protected files/directories (never deleted):**
@@ -53,6 +52,8 @@ Cleans up old Victoria folder files:
 - `.env` - Environment configuration
 - `VICTORIA.md` - Documentation
 - `email_last_checked.txt` - Email tracking state
+- `.crush/` - Application cache (managed by Victoria Terminal)
+- `.cache/` - Application cache (managed by other tools)
 
 ```bash
 # Run Victoria cleanup (uses $HOME/victoria by default)
