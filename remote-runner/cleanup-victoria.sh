@@ -10,7 +10,7 @@ set -e
 
 DRY_RUN=false
 VICTORIA_HOME="${VICTORIA_HOME:-$HOME/victoria}"
-DAYS_TO_KEEP=7  # Keep files from last 7 days
+DAYS_TO_KEEP=15  # Keep files from last 15 days
 
 # Protected paths that should NEVER be cleaned
 PROTECTED_PATHS=(
@@ -79,7 +79,11 @@ echo "==> Finding old files (older than $DAYS_TO_KEEP days)"
 # Find all files older than N days, excluding protected paths
 if [ "$DRY_RUN" = true ]; then
     OLD_FILES=$(find "$VICTORIA_HOME" -type f -mtime +$DAYS_TO_KEEP "${EXCLUDE_ARGS[@]}" 2>/dev/null || true)
-    FILE_COUNT=$(echo "$OLD_FILES" | grep -c . || echo "0")
+    if [ -n "$OLD_FILES" ]; then
+        FILE_COUNT=$(echo "$OLD_FILES" | wc -l)
+    else
+        FILE_COUNT=0
+    fi
     
     if [ "$FILE_COUNT" -gt 0 ]; then
         echo "  Found $FILE_COUNT old file(s) to remove"
