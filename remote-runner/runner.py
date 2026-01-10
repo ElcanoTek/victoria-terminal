@@ -25,9 +25,10 @@ HTTPS connections to the orchestrator, requiring no inbound ports to be opened.
 from __future__ import annotations
 
 import argparse
-import hashlib
-import logging
 import datetime
+import hashlib
+import json
+import logging
 import platform
 import shutil
 import signal
@@ -59,6 +60,7 @@ REGISTRATION_RETRY_DELAY = 10  # seconds
 # Log submission configuration
 # Maximum log submission size in bytes (10MB) - must match orchestrator limit
 MAX_LOG_SUBMISSION_SIZE = 10 * 1024 * 1024
+TRUNCATION_PREFIX = "[truncated] "
 
 
 @dataclass
@@ -104,6 +106,73 @@ def detect_os_type() -> str:
     elif system == "darwin":
         return "macos"
     return system
+
+
+def _json_payload_size(payload: Dict[str, Any]) -> int:
+    return len(json.dumps(payload, ensure_ascii=False).encode("utf-8"))
+
+
+def _truncate_session_messages(session: Dict[str, Any], task_id: str) -> None:
+    messages = session.get("messages", [])
+    if not messages:
+        return
+
+    payload = {"task_id": task_id, "session": session}
+    dropped_messages = 0
+
+    while messages and _json_payload_size(payload) > MAX_LOG_SUBMISSION_SIZE:
+        messages.pop(0)
+        dropped_messages += 1
+
+    if dropped_messages:
+        logger.warning(
+            "Log payload exceeded %s bytes; dropped %s oldest message(s) to fit limit",
+            MAX_LOG_SUBMISSION_SIZE,
+            dropped_messages,
+        )
+
+    if not messages:
+        return
+
+    if _json_payload_size(payload) <= MAX_LOG_SUBMISSION_SIZE:
+        return
+
+    last_message = messages[-1]
+    content = last_message.get("content") or ""
+    if not isinstance(content, str):
+        content = str(content)
+
+    def size_with_tail(tail_length: int) -> int:
+        if tail_length >= len(content):
+            last_message["content"] = content
+        else:
+            last_message["content"] = f"{TRUNCATION_PREFIX}{content[-tail_length:]}"
+        return _json_payload_size(payload)
+
+    low, high = 0, len(content)
+    best = 0
+    while low <= high:
+        mid = (low + high) // 2
+        size = size_with_tail(mid)
+        if size <= MAX_LOG_SUBMISSION_SIZE:
+            best = mid
+            low = mid + 1
+        else:
+            high = mid - 1
+
+    size_with_tail(best)
+    if best < len(content):
+        logger.warning(
+            "Truncated latest message content to fit %s byte log limit",
+            MAX_LOG_SUBMISSION_SIZE,
+        )
+
+    if _json_payload_size(payload) > MAX_LOG_SUBMISSION_SIZE:
+        logger.warning(
+            "Log payload still exceeds %s bytes after truncation; submitting without messages",
+            MAX_LOG_SUBMISSION_SIZE,
+        )
+        session["messages"] = []
 
 
 def run_container(
@@ -536,6 +605,8 @@ class Runner:
                 })
 
             conn.close()
+
+            _truncate_session_messages(session, task_id)
 
             logger.info(f"Submitting logs for session {session['id']} with {len(session['messages'])} messages")
 
