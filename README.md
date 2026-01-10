@@ -45,7 +45,7 @@ Run a headless task:
 victoria --task "analyze this week's campaign performance and email the report to brad@elcanotek.com"
 ```
 
-Need manual commands or the full dev workflow? See [CONTRIBUTING.md](CONTRIBUTING.md). Use [example.env](example.env) as a starter template for your `~/Victoria/.env`.
+Need manual commands or the full dev workflow? See [docs/DEVELOPMENT_WORKFLOW.md](docs/DEVELOPMENT_WORKFLOW.md) and [docs/RUNNING_LOCALLY.md](docs/RUNNING_LOCALLY.md). Use [example.env](example.env) as a starter template for your `~/Victoria/.env`.
 
 ---
 
@@ -76,7 +76,9 @@ We run Victoria inside [Podman](https://podman.io) to keep the agent boxed in. P
 
 ## MCP Catalog
 
-MCP servers define what Victoria can reach. The default configuration lives in [`configs/crush/crush.template.json`](configs/crush/crush.template.json). MCP server are automatically configured if you fill out the required variables in your ```~/Victoria/.env``` file. See [example.env](example.env) for the full list of required variables for each MCP server.
+MCP servers define what Victoria can reach, and they are built on the [Model Context Protocol](https://modelcontextprotocol.io/). The default configuration lives in [`configs/crush/crush.template.json`](configs/crush/crush.template.json). MCP server are automatically configured if you fill out the required variables in your ```~/Victoria/.env``` file. See [example.env](example.env) for the full list of required variables for each MCP server.
+
+Looking to build or customize MCP servers? See [docs/MCP_DEVELOPMENT.md](docs/MCP_DEVELOPMENT.md).
 
 
 **External MCPs we integrate with:**
@@ -118,6 +120,5 @@ Crush supports nearly every provider under the sun. We lean on [OpenRouter](http
 
 ## Learn More
 
-- [Model Context Protocol](https://modelcontextprotocol.io/)
 - [Elcano Dev Blog](https://elcanotek.substack.com)
 - [Elcano Website](https://www.elcanotek.com/)
