@@ -76,7 +76,8 @@ We run Victoria inside [Podman](https://podman.io) to keep the agent boxed in. P
 
 ## MCP Catalog
 
-MCP servers define what Victoria can reach. The default configuration lives in [`configs/crush/crush.template.json`](configs/crush/crush.template.json).
+MCP servers define what Victoria can reach. The default configuration lives in [`configs/crush/crush.template.json`](configs/crush/crush.template.json). MCP server are automatically configured if you fill out the required variables in your ```~/Victoria/.env``` file. See [example.env](example.env) for the full list of required variables for each MCP server.
+
 
 **External MCPs we integrate with:**
 - [Snowflake MCP](https://github.com/Snowflake-Labs/mcp) (setup guide: [SNOWFLAKE_SETUP.md](docs/SNOWFLAKE_SETUP.md))
