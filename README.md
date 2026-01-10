@@ -102,7 +102,7 @@ See [docs/ORCHESTRATION.md](docs/ORCHESTRATION.md) for a concise overview.
 
 ## LLM Providers
 
-Crush supports nearly every provider under the sun. We lean on **OpenRouter** to access the latest frontier models across our fleet, and we also run local models 24×7 on-prem (NVIDIA DGX Spark clusters) for background jobs. Victoria works well with local LLMs on Mac Studios too. See the [Crush docs](https://charm.land/crush) for the latest provider setup guidance.
+Crush supports nearly every provider under the sun. We lean on [OpenRouter](https://openrouter.ai/) to access the latest frontier models across our fleet, and we also run local models 24×7 on-prem ([NVIDIA DGX Spark](https://www.nvidia.com/en-us/products/workstations/dgx-spark/) clusters) for background jobs. Victoria works well with local LLMs on [Mac Studio](https://www.apple.com/mac-studio/) rigs too, and we use [Ollama](https://ollama.com/) to run models locally on both. See the [Crush docs](https://charm.land/crush) for the latest provider setup guidance.
 
 ---
 
